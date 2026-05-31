@@ -1,0 +1,44 @@
+<!-- COMPONENT: heroes/hero-a | TEXT OVER IMAGE
+TOKENS:
+  {{HERO_IMAGE_URL}}  — Klaviyo-hosted lifestyle image URL (600×500px display)
+  {{SUPER_LABEL}}     — e.g. "Mother's Day · May 2026"
+  {{HEADLINE}}        — Cervanttis font — MUST be lowercase (e.g. "for the one who does it all")
+  {{SUBHEADLINE}}     — 1–2 lines supporting copy
+  {{CTA_TEXT}}        — e.g. "Shop the Edit"
+  {{CTA_URL}}         — full URL
+RULES:
+  - Headline is ALWAYS lowercase — write the token value in lowercase
+  - 30% black mask is locked — do not remove
+  - CTA is white button on dark background
+-->
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#a89070">
+  <tr>
+    <td align="center" valign="middle"
+        bgcolor="#a89070"
+        background="{{HERO_IMAGE_URL}}"
+        style="background-image:url({{HERO_IMAGE_URL}});background-size:cover;background-position:center 20%;background-color:#a89070;padding:0;">
+      <!--[if gte mso 9]>
+      <v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:500px;">
+        <v:fill type="frame" src="{{HERO_IMAGE_URL}}" color="#a89070"/>
+        <v:textbox inset="0,0,0,0">
+      <![endif]-->
+      <table width="600" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="hp" align="center" valign="middle"
+              style="background:rgba(0,0,0,0.30);padding:80px 64px;text-align:center;height:500px;vertical-align:middle;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:rgba(255,255,255,0.65);margin:0 0 18px 0;">{{SUPER_LABEL}}</p>
+            <h1 class="hh" style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:52px;color:#ffffff;line-height:0.95;text-shadow:0 2px 32px rgba(0,0,0,0.28);margin:0 0 20px 0;">{{HEADLINE}}</h1>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:rgba(255,255,255,0.88);max-width:300px;line-height:1.75;margin:0 auto 28px auto;">{{SUBHEADLINE}}</p>
+            <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#ffffff;color:#000000;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+          </td>
+        </tr>
+      </table>
+      <!--[if gte mso 9]>
+        </v:textbox>
+      </v:rect>
+      <![endif]-->
+    </td>
+  </tr>
+</table>
+</td></tr>

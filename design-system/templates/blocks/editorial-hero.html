@@ -1,0 +1,38 @@
+<!-- COMPONENT: blocks/editorial-hero | DESIGNED BLOCK — PHOTO + OVERLAPPING EDITORIAL PLATE
+TOKENS:
+  {{HERO_IMAGE_URL}}  — full-bleed lifestyle photo (600×440px display, ~3:2 crop)
+  {{SUPER_LABEL}}     — NeuzeitGro Bold caps micro-label (e.g. "Fig & Bloom · Notes")
+  {{ACCENT_SCRIPT}}   — Cervanttis script accent — MUST be lowercase (e.g. "with love,")
+  {{HEADLINE}}        — Lust display headline — SENTENCE CASE (e.g. "When the card is the hard part")
+  {{SUBHEADLINE}}     — NeuzeitGro Light supporting line (~20 words)
+  {{CTA_TEXT}}        — button label
+  {{CTA_URL}}         — button href
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The plate overlaps the photo via a negative margin and
+    the script accent layers over the serif headline — neither survives as live email HTML.
+  - ACCENT_SCRIPT is Cervanttis → lowercase; HEADLINE is Lust → sentence case.
+  - White plate overlaps the photo by 88px (the "layering") — locked.
+  - Square black button only — no rounded corners.
+  - 600px wide, variable height. Drops into the single column like any sliced component.
+-->
+<tr><td style="padding:0;background:#ffffff;">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:0;overflow:hidden;line-height:0;">
+      <img src="{{HERO_IMAGE_URL}}" width="600" height="440" alt="{{HEADLINE}}" style="display:block;width:600px;height:440px;object-fit:cover;object-position:center;">
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 50px 48px;text-align:center;">
+      <!-- Editorial plate — pulled up over the photo (the layering) -->
+      <div style="position:relative;margin:-88px auto 0;max-width:472px;background:#ffffff;border:1px solid #e8e2da;padding:42px 44px 44px;text-align:center;">
+        <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:#aaaaaa;margin:0 0 14px 0;">{{SUPER_LABEL}}</p>
+        <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:30px;color:#000000;line-height:1.0;margin:0 0 6px 0;">{{ACCENT_SCRIPT}}</p>
+        <h1 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:30px;color:#000000;line-height:1.15;margin:0 0 16px 0;">{{HEADLINE}}</h1>
+        <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#444444;line-height:1.75;max-width:360px;margin:0 auto 26px auto;">{{SUBHEADLINE}}</p>
+        <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+      </div>
+    </td>
+  </tr>
+</table>
+</td></tr>

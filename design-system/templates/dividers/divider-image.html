@@ -1,0 +1,19 @@
+<!-- COMPONENT: dividers/divider-image | FULL-BLEED LIFESTYLE IMAGE STRIP
+TOKENS:
+  {{DIVIDER_IMAGE_URL}} — lifestyle photography only (studio shots too static at 180px)
+                          Minimum source: 600×360px. Object-position: center 25%
+RULES:
+  - Lifestyle photography ONLY — studio shots don't work at this crop height
+  - No text overlay — pure visual pause
+  - Use max once per email
+-->
+<tr><td style="padding:0;overflow:hidden;">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td height="180" style="height:180px;padding:0;overflow:hidden;">
+      <img src="{{DIVIDER_IMAGE_URL}}" width="600" height="180" alt=""
+           style="display:block;width:600px;height:180px;object-fit:cover;object-position:center 25%;">
+    </td>
+  </tr>
+</table>
+</td></tr>

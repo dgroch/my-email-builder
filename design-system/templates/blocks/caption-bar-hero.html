@@ -1,0 +1,38 @@
+<!-- COMPONENT: blocks/caption-bar-hero | DESIGNED BLOCK — FULL-BLEED PHOTO + CAPTION/LABEL BAR
+TOKENS:
+  {{HERO_IMAGE_URL}}  — full-bleed lifestyle photo (600 wide; height = {{IMG_HEIGHT}})
+  {{IMG_HEIGHT}}      — LAYOUT lever: "600" (square, photo-led) or "440" (editorial 3:2). Locked to these two.
+  {{SUPER_LABEL}}     — NeuzeitGro Bold caps micro-label (e.g. "FLOWER OF THE MONTH")
+  {{CAPTION}}         — Cervanttis script caption — MUST be lowercase (e.g. "peonies are back")
+  {{CTA_TEXT}}        — button label
+  {{CTA_URL}}         — button href
+  PALETTE TOKENS (fill ALL FOUR by copying ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG (or GIF if the photo is an animated hero — see SKILL Step 5e).
+  - CAPTION is Cervanttis → lowercase. The caption bar overlaps the photo by 1px border seam.
+  - Square black/white button only — no rounded corners. On noir, the button is white (see preset).
+  - 600px wide, variable height. The corpus's most common opener for editorial/occasion/FotM sends.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens; BTN_BG/BTN_TEXT are baked per preset):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#000000  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da   (button: black on white — DEFAULT below)
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9   (button: black on white)
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#ffffff  PANEL_SUB=#aaaaaa  PANEL_BORDER=#2c2825   (button: white on black — set BTN to #ffffff/#000000)
+  Button defaults below are black-on-white (works for white/clay). For the NOIR preset, swap the
+  button background to #ffffff and the button text to #000000.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:0;overflow:hidden;line-height:0;">
+      <img src="{{HERO_IMAGE_URL}}" width="600" height="{{IMG_HEIGHT}}" alt="{{CAPTION}}" style="display:block;width:600px;height:{{IMG_HEIGHT}}px;object-fit:cover;object-position:center;">
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:30px 50px 36px;text-align:center;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{SUPER_LABEL}}</p>
+      <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:34px;color:{{PANEL_TEXT}};line-height:1.0;margin:0 0 20px 0;">{{CAPTION}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

@@ -1,0 +1,105 @@
+<!-- COMPONENT: blocks/howto-steps | DESIGNED BLOCK — VERTICAL NUMBERED HOW-TO / CARE SEQUENCE
+TOKENS:
+  {{SUPER_LABEL}}       — NeuzeitGro Bold caps micro-label (e.g. "FLOWER CARE")
+  {{HEADLINE}}          — Lust display headline — SENTENCE CASE (e.g. "Make your flowers last longer")
+  {{INTRO}}             — NeuzeitGro Light intro line (use "" to hide)
+  Three steps (number + title + body + photo):
+  {{STEP_1_NUMBER}}     — the numeral, written plain (e.g. "1")
+  {{STEP_1_TITLE}}      — NeuzeitGro Bold short title (caps) (e.g. "TRIM THE STEMS")
+  {{STEP_1_TEXT}}       — NeuzeitGro Light one/two-liner
+  {{STEP_1_IMAGE_URL}}  — square step photo (108×108px display)
+  {{STEP_2_NUMBER}} {{STEP_2_TITLE}} {{STEP_2_TEXT}} {{STEP_2_IMAGE_URL}}   — "
+  {{STEP_3_NUMBER}} {{STEP_3_TITLE}} {{STEP_3_TEXT}} {{STEP_3_IMAGE_URL}}   — "
+  {{CTA_TEXT}}          — button label
+  {{CTA_URL}}           — button href
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The oversized Lust step numerals overlap the rows via negative
+    margin and the framed step photos sit in tilted polaroid frames — neither survives as live
+    email HTML, so this block must be rasterised.
+  - This is the VERTICAL how-to (one image per step). For a compact horizontal 3-col partner-flow
+    use sections/three-column-steps-*; for reasons-to-believe bullets use blocks/feature-list.
+  - HEADLINE is Lust → sentence case; STEP titles are NeuzeitGro Bold caps. Exactly three steps.
+  - Square black button only. On the NOIR preset, swap the button to white-on-black.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#666666  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
+  50clay:  PANEL_BG=#EBE5DF  PANEL_TEXT=#666666  PANEL_SUB=#8a8178  PANEL_BORDER=#ded7cf
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#cfcac3  PANEL_SUB=#888888  PANEL_BORDER=#2c2825   (swap button to #fff/#000)
+  HEADLINE, step numerals and step titles render in the brand extreme: #000000 on light presets,
+  #ffffff on the noir preset.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:46px 50px 22px;text-align:center;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{SUPER_LABEL}}</p>
+      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:28px;color:#000000;line-height:1.15;margin:0 0 10px 0;">{{HEADLINE}}</h2>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:{{PANEL_TEXT}};line-height:1.7;max-width:400px;margin:0 auto;">{{INTRO}}</p>
+    </td>
+  </tr>
+  <!-- STEP 1 -->
+  <tr>
+    <td style="padding:14px 50px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="64" valign="top" style="width:64px;vertical-align:top;">
+          <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:50px;line-height:0.9;color:#000000;margin:0;">{{STEP_1_NUMBER}}</p>
+        </td>
+        <td valign="middle" style="padding:0 16px;vertical-align:middle;">
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 4px 0;">{{STEP_1_TITLE}}</p>
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.6;margin:0;">{{STEP_1_TEXT}}</p>
+        </td>
+        <td width="120" align="right" valign="middle" style="width:120px;vertical-align:middle;">
+          <div style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:7px 7px 9px;box-shadow:0 8px 18px rgba(0,0,0,0.10);transform:rotate(-3deg);">
+            <img src="{{STEP_1_IMAGE_URL}}" width="108" height="108" alt="" style="display:block;width:108px;height:108px;object-fit:cover;object-position:center;">
+          </div>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+  <!-- STEP 2 -->
+  <tr>
+    <td style="padding:14px 50px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="120" valign="middle" style="width:120px;vertical-align:middle;">
+          <div style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:7px 7px 9px;box-shadow:0 8px 18px rgba(0,0,0,0.10);transform:rotate(3deg);">
+            <img src="{{STEP_2_IMAGE_URL}}" width="108" height="108" alt="" style="display:block;width:108px;height:108px;object-fit:cover;object-position:center;">
+          </div>
+        </td>
+        <td valign="middle" style="padding:0 16px;vertical-align:middle;text-align:right;">
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 4px 0;">{{STEP_2_TITLE}}</p>
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.6;margin:0;">{{STEP_2_TEXT}}</p>
+        </td>
+        <td width="64" align="right" valign="top" style="width:64px;vertical-align:top;">
+          <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:50px;line-height:0.9;color:#000000;margin:0;text-align:right;">{{STEP_2_NUMBER}}</p>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+  <!-- STEP 3 -->
+  <tr>
+    <td style="padding:14px 50px 30px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="64" valign="top" style="width:64px;vertical-align:top;">
+          <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:50px;line-height:0.9;color:#000000;margin:0;">{{STEP_3_NUMBER}}</p>
+        </td>
+        <td valign="middle" style="padding:0 16px;vertical-align:middle;">
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 4px 0;">{{STEP_3_TITLE}}</p>
+          <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.6;margin:0;">{{STEP_3_TEXT}}</p>
+        </td>
+        <td width="120" align="right" valign="middle" style="width:120px;vertical-align:middle;">
+          <div style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:7px 7px 9px;box-shadow:0 8px 18px rgba(0,0,0,0.10);transform:rotate(-3deg);">
+            <img src="{{STEP_3_IMAGE_URL}}" width="108" height="108" alt="" style="display:block;width:108px;height:108px;object-fit:cover;object-position:center;">
+          </div>
+        </td>
+      </tr></table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:8px 50px 48px;text-align:center;">
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

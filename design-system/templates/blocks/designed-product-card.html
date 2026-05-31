@@ -1,0 +1,48 @@
+<!-- COMPONENT: blocks/designed-product-card | DESIGNED BLOCK — PRODUCT SPOTLIGHT + TILTED BADGE + PRICE PLATE
+TOKENS:
+  {{PRODUCT_IMAGE_URL}} — product photo (4:5 crop, 280×350px display)
+  {{BADGE_TEXT}}        — Cervanttis script badge ribbon — MUST be lowercase (e.g. "bestseller",
+                          "low stock", "new"). Use "" to hide the ribbon entirely.
+  {{PRODUCT_LABEL}}     — NeuzeitGro Bold caps micro-label (e.g. "SPOTLIGHT")
+  {{PRODUCT_NAME}}      — Lust display name — SENTENCE CASE (e.g. "Osaka")
+  {{PRODUCT_OCCASION}}  — NeuzeitGro Light one-liner (e.g. "For the cherry-blossom moment")
+  {{PRODUCT_PRICE}}     — Lust price (e.g. "$89")
+  {{CTA_TEXT}}          — button label
+  {{CTA_URL}}           — button href
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The badge ribbon (transform:rotate) and the price plate that
+    overlaps the image corner (negative margin) do not survive as live email HTML.
+  - BADGE_TEXT is Cervanttis → lowercase; PRODUCT_NAME is Lust → sentence case.
+  - This is the RICH product spotlight — for plain grids keep using products/card-* components.
+  - Square black button only. On the NOIR preset, swap the button to white-on-black.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#666666  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
+  50clay:  PANEL_BG=#EBE5DF  PANEL_TEXT=#666666  PANEL_SUB=#8a8178  PANEL_BORDER=#ded7cf
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#cfcac3  PANEL_SUB=#888888  PANEL_BORDER=#2c2825   (swap button to #fff/#000)
+  PRODUCT_NAME and PRODUCT_PRICE always render in the brand extreme: #000000 on light presets,
+  #ffffff on the noir preset.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <!-- Product image column with tilted badge ribbon -->
+    <td width="320" valign="middle" align="center" style="width:320px;padding:46px 0 46px 40px;vertical-align:middle;">
+      <div style="position:relative;display:inline-block;">
+        <img src="{{PRODUCT_IMAGE_URL}}" width="280" height="350" alt="{{PRODUCT_NAME}}" style="display:block;width:280px;height:350px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};">
+        <div style="position:absolute;top:18px;left:-10px;background:#000000;color:#ffffff;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;line-height:1.0;padding:7px 18px;transform:rotate(-6deg);box-shadow:0 6px 16px rgba(0,0,0,0.22);">{{BADGE_TEXT}}</div>
+      </div>
+    </td>
+    <!-- Detail column -->
+    <td valign="middle" style="padding:46px 40px 46px 30px;vertical-align:middle;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{PRODUCT_LABEL}}</p>
+      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:30px;color:#000000;line-height:1.1;margin:0 0 8px 0;">{{PRODUCT_NAME}}</h2>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.65;margin:0 0 18px 0;">{{PRODUCT_OCCASION}}</p>
+      <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;letter-spacing:.04em;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

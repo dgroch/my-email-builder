@@ -1,0 +1,31 @@
+<!-- COMPONENT: sections/upsell-noir | DARK CLOSING BEAT — NOIR BG
+TOKENS:
+  {{SUPER_LABEL}}  — e.g. "Add to your gift"
+  {{HEADLINE}}        — Cervanttis font — MUST be lowercase (e.g. "for the one who does it all")
+  {{BODY}}         — supporting copy, max ~30 words
+  {{CTA_TEXT}}
+  {{CTA_URL}}
+RULES:
+  - Headline MUST be lowercase
+  - Flanking illustrations (HandFlower + HandRose) are locked
+  - Background #000 is locked
+  - Use max once per email — closing beat near bottom
+-->
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000">
+  <tr>
+    <td class="ud" align="center" valign="middle" bgcolor="#000000"
+        style="background:#000000;min-height:440px;padding:64px;text-align:center;position:relative;overflow:hidden;vertical-align:middle;">
+      <!-- HandFlower left — bottom-anchored, 360px total, locked -->
+      <img src="{{ASSETS_BASE}}/HandRose_White.png" class="uil" alt="" style="position:absolute;left:-16px;bottom:-60px;height:360px;width:auto;opacity:0.28;display:block;">
+      <!-- HandRose right — mirrored, locked -->
+      <img src="{{ASSETS_BASE}}/HandRose_White.png" class="uil" alt="" style="position:absolute;right:-16px;bottom:-60px;height:360px;width:auto;opacity:0.22;display:block;transform:scaleX(-1);">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,0.40);margin:0 0 22px 0;position:relative;z-index:1;">{{SUPER_LABEL}}</p>
+      <h2 class="uh" style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:36px;color:#ffffff;line-height:1.0;margin:0 0 18px 0;position:relative;z-index:1;">{{HEADLINE}}</h2>
+      <div style="width:36px;height:1px;background:rgba(255,255,255,0.22);margin:0 auto 22px auto;position:relative;z-index:1;"></div>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:rgba(255,255,255,0.70);max-width:300px;margin:0 auto 28px auto;line-height:1.75;position:relative;z-index:1;">{{BODY}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#ffffff;color:#000000;text-decoration:none;padding:14px 40px;display:inline-block;position:relative;z-index:1;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

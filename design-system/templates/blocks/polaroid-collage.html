@@ -1,0 +1,51 @@
+<!-- COMPONENT: blocks/polaroid-collage | DESIGNED BLOCK — TILTED POLAROID COLLAGE + PULL-QUOTE
+TOKENS:
+  {{PHOTO_1_URL}}        — left polaroid photo (square crop, 168×168px display)
+  {{PHOTO_1_CAPTION}}    — Cervanttis caption — MUST be lowercase
+  {{PHOTO_2_URL}}        — centre polaroid photo (front, 176×176px display)
+  {{PHOTO_2_CAPTION}}    — Cervanttis caption — MUST be lowercase
+  {{PHOTO_3_URL}}        — right polaroid photo (square crop, 168×168px display)
+  {{PHOTO_3_CAPTION}}    — Cervanttis caption — MUST be lowercase
+  {{QUOTE_ACCENT}}       — Cervanttis accent line — MUST be lowercase (e.g. "in their words")
+  {{PULL_QUOTE}}         — Lust pull-quote — SENTENCE CASE (~12 words)
+  {{QUOTE_ATTRIBUTION}}  — NeuzeitGro Bold attribution (e.g. "— Sarah, Brisbane")
+RULES:
+  - DESIGNED BLOCK: slice to PNG. Overlapping, rotated polaroids (transform + position:absolute)
+    do not survive as live email HTML — this block must be rasterised.
+  - All captions and QUOTE_ACCENT are Cervanttis → lowercase; PULL_QUOTE is Lust → sentence case.
+  - Clay (#D8CCBE) background, polaroid angles (-7° / +2° / +8°) and overlap — locked.
+  - The collage region has a fixed 340px height so the rotated, absolutely-positioned
+    polaroids are captured by the slicer (position:absolute does not expand the row).
+-->
+<tr><td style="padding:0;background:#D8CCBE;">
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE">
+  <tr>
+    <td style="padding:0;background:#D8CCBE;">
+      <!-- Collage region — fixed height so absolute polaroids are captured -->
+      <div style="position:relative;width:600px;height:340px;">
+        <!-- left polaroid -->
+        <div style="position:absolute;left:50px;top:56px;transform:rotate(-7deg);background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+          <img src="{{PHOTO_1_URL}}" width="168" height="168" alt="" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
+          <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_1_CAPTION}}</p>
+        </div>
+        <!-- right polaroid -->
+        <div style="position:absolute;left:386px;top:62px;transform:rotate(8deg);background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+          <img src="{{PHOTO_3_URL}}" width="168" height="168" alt="" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
+          <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_3_CAPTION}}</p>
+        </div>
+        <!-- centre polaroid (front) -->
+        <div style="position:absolute;left:206px;top:32px;transform:rotate(2deg);background:#ffffff;border:1px solid #e8e2da;padding:11px 11px 11px;box-shadow:0 14px 34px rgba(0,0,0,0.22);z-index:2;">
+          <img src="{{PHOTO_2_URL}}" width="176" height="176" alt="" style="display:block;width:176px;height:176px;object-fit:cover;object-position:center;">
+          <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_2_CAPTION}}</p>
+        </div>
+      </div>
+      <!-- Pull-quote -->
+      <div style="padding:4px 72px 50px;text-align:center;">
+        <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:rgba(0,0,0,0.55);line-height:1.0;margin:0 0 12px 0;">{{QUOTE_ACCENT}}</p>
+        <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.4;max-width:430px;margin:0 auto 16px auto;">{{PULL_QUOTE}}</p>
+        <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(0,0,0,0.55);margin:0;">{{QUOTE_ATTRIBUTION}}</p>
+      </div>
+    </td>
+  </tr>
+</table>
+</td></tr>

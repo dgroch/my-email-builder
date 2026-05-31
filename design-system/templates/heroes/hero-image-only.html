@@ -1,0 +1,37 @@
+<!-- COMPONENT: heroes/hero-image-only | FULL-WIDTH IMAGE, NO TEXT
+TOKENS:
+  {{HERO_IMAGE_URL}}  — Klaviyo-hosted image URL. 600px wide, 4:5 ratio (displayed at 600×750px).
+  {{HERO_IMAGE_ALT}}  — Alt text describing the image (required for accessibility).
+  {{HERO_LINK_URL}}   — Optional href wrapping the image. Set to "#" or omit wrapping <a> if not linking.
+RULES:
+  - No text overlay, no headline, no button — image tells the story.
+  - No logo — assumes header.html is placed above this component.
+  - Background white (#ffffff).
+  - 4:5 aspect ratio locked: 600×750px display dimensions.
+  - object-fit:cover; object-position:center (MSO fallback via v:fill).
+  - Classification: slice-to-PNG (Klaviyo renders as image block; not inline HTML).
+-->
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff">
+  <tr>
+    <td align="center" valign="top" style="padding:0;background:#ffffff;">
+      <a href="{{HERO_LINK_URL}}" style="display:block;line-height:0;font-size:0;text-decoration:none;" target="_blank">
+        <!--[if gte mso 9]>
+        <v:image xmlns:v="urn:schemas-microsoft-com:vml"
+          src="{{HERO_IMAGE_URL}}"
+          style="width:600px;height:750px;"
+          cropbottom="0" cropleft="0" cropright="0" croptop="0"/>
+        <![endif]-->
+        <!--[if !gte mso 9]><!-->
+        <img src="{{HERO_IMAGE_URL}}"
+             alt="{{HERO_IMAGE_ALT}}"
+             width="600"
+             height="750"
+             border="0"
+             style="display:block;width:100%;max-width:600px;height:auto;object-fit:cover;object-position:center;" />
+        <!--<![endif]-->
+      </a>
+    </td>
+  </tr>
+</table>
+</td></tr>

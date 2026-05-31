@@ -1,0 +1,61 @@
+<!-- COMPONENT: products/card-lifestyle-studio | LIFESTYLE ABOVE + STUDIO BELOW
+TOKENS:
+  {{SECTION_SUPER}}       — e.g. "Mother's Day · Spotlight"
+  {{SECTION_HEADLINE}}    — Lust headline (font-weight:normal locked)
+  {{LIFESTYLE_IMAGE_URL}} — lifestyle/contextual photo (600×400px display)
+  {{STUDIO_IMAGE_URL}}    — studio/clean-bg product photo (600×500px display)
+  {{PRODUCT_LABEL}}       — e.g. "Bouquet · Seasonal · Same Day Available"
+  {{PRODUCT_NAME}}      — Lust font — SENTENCE CASE        — product name
+  {{PRODUCT_OCCASION}}    — occasion headline, italic
+  {{PRODUCT_DESC}}        — 1–2 sentence description
+  {{PRODUCT_PRICE}}       — e.g. "From $89 · Same Day Available"
+  {{CTA_TEXT}}            — e.g. "Shop Garden Natives"
+  {{CTA_URL}}
+RULES:
+  - Reserve for one hero/spotlight product per email only
+  - Lifestyle image uses object-position:center 25% to show subject not background
+  - Studio image uses object-position:center top to show arrangement not base
+  - HandFlower illustration bottom-right of info section is locked
+-->
+<tr><td>
+<!-- Section intro headline -->
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
+  <tr>
+    <td class="sp" align="center" style="padding:40px 48px 24px;background:#ffffff;text-align:center;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 14px 0;">{{SECTION_SUPER}}</p>
+      <h2 class="sh" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:26px;color:#000000;line-height:1.2;margin:0;">{{SECTION_HEADLINE}}</h2>
+    </td>
+  </tr>
+</table>
+<!-- Lifestyle image — 600×400, object-position:center 25% shows subject -->
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:0;overflow:hidden;">
+      <img src="{{LIFESTYLE_IMAGE_URL}}" width="600" height="400" alt="" style="display:block;width:600px;height:400px;object-fit:cover;object-position:center 25%;">
+    </td>
+  </tr>
+</table>
+<!-- Studio image — 600×500, object-position:center top shows arrangement -->
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
+  <tr>
+    <td style="padding:0;overflow:hidden;">
+      <img src="{{STUDIO_IMAGE_URL}}" width="600" height="500" alt="" style="display:block;width:600px;height:500px;object-fit:cover;object-position:center top;">
+    </td>
+  </tr>
+</table>
+<!-- Product info -->
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
+  <tr>
+    <td class="sp" align="center" style="padding:40px 64px;background:#ffffff;text-align:center;position:relative;overflow:hidden;">
+      <!-- HandFlower illustration — bottom-right, 220px, locked -->
+      <img src="{{ASSETS_BASE}}/HandRose_White.png" alt="" style="position:absolute;right:-20px;bottom:-20px;height:220px;width:auto;opacity:0.09;display:block;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 10px 0;position:relative;z-index:1;">{{PRODUCT_LABEL}}</p>
+      <h3 class="pn" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.15;margin:0 0 10px 0;position:relative;z-index:1;">{{PRODUCT_NAME}}</h3>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#666666;line-height:1.7;margin:0 0 8px 0;font-style:italic;position:relative;z-index:1;">{{PRODUCT_OCCASION}}</p>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.75;margin:0 0 22px 0;max-width:400px;margin-left:auto;margin-right:auto;position:relative;z-index:1;">{{PRODUCT_DESC}}</p>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:14px;color:#000000;margin:0 0 26px 0;position:relative;z-index:1;">{{PRODUCT_PRICE}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;position:relative;z-index:1;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

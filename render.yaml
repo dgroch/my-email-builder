@@ -1,0 +1,13 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# In Render: New → Blueprint → connect the repo → this file is auto-detected.
+services:
+  - type: web
+    name: my-email-builder
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: CHROMIUM_PATH
+        value: /usr/bin/chromium

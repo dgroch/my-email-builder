@@ -1,0 +1,29 @@
+<!-- COMPONENT: products/card-horizontal-reversed | HORIZONTAL CARD — IMAGE RIGHT / INFO LEFT
+TOKENS:
+  {{PRODUCT_IMAGE_URL}} — 4:5 product photo (280×350px display, 560×700px source min)
+  {{PRODUCT_LABEL}}     — e.g. "Vase Arrangement · Signature"
+  {{PRODUCT_NAME}}      — Lust font — SENTENCE CASE      — product name (Lust, font-weight:normal — LOCKED)
+  {{PRODUCT_OCCASION}}  — occasion headline, italic
+  {{PRODUCT_PRICE}}     — e.g. "From $139"
+  {{PRODUCT_URL}}       — product page URL
+RULES:
+  - Alternate card-horizontal and card-horizontal-reversed for visual rhythm
+  - font-weight:normal on product name is locked — Lust renders as intended
+  - Image 4:5 ratio ONLY — other ratios will distort in this template
+-->
+<tr><td style="border-top:1px solid #e8e2da;">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td class="hinfo" valign="middle" style="padding:32px 32px 32px 28px;vertical-align:middle;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 8px 0;">{{PRODUCT_LABEL}}</p>
+      <h3 class="pn" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;line-height:1.15;margin:0 0 8px 0;">{{PRODUCT_NAME}}</h3>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:#666666;line-height:1.6;margin:0 0 14px 0;font-style:italic;">{{PRODUCT_OCCASION}}</p>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:13px;color:#000000;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
+      <a href="{{PRODUCT_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:10px 24px;display:inline-block;">SHOP NOW</a>
+    </td><td class="hi" width="280" valign="top" style="width:280px;height:350px;padding:0;overflow:hidden;vertical-align:top;">
+      <img src="{{PRODUCT_IMAGE_URL}}" width="280" height="350" alt="{{PRODUCT_NAME}}"
+           style="display:block;width:280px;height:350px;object-fit:cover;object-position:center top;">
+    </td>
+  </tr>
+</table>
+</td></tr>

@@ -1,0 +1,66 @@
+<!-- COMPONENT: blocks/comparison-vs | DESIGNED BLOCK — SIDE-BY-SIDE "VS" COMPARISON
+TOKENS:
+  {{SUPER_LABEL}}      — NeuzeitGro Bold caps micro-label (e.g. "THE DIFFERENCE")
+  {{HEADLINE}}         — Lust display headline — SENTENCE CASE (e.g. "What you order vs what arrives")
+  {{LEFT_LABEL}}       — NeuzeitGro Bold caps column label (e.g. "OTHERS" / "WHAT WE BOUGHT")
+  {{LEFT_IMAGE_URL}}   — left photo (square crop, 210×210px display)
+  {{LEFT_CAPTION}}     — NeuzeitGro Light one-liner under the left photo
+  {{VS_ACCENT}}        — Cervanttis script badge between the columns — MUST be lowercase (e.g. "vs")
+  {{RIGHT_LABEL}}      — NeuzeitGro Bold caps column label (e.g. "FIG & BLOOM" / "WHAT WE GOT")
+  {{RIGHT_IMAGE_URL}}  — right photo (square crop, 210×210px display)
+  {{RIGHT_CAPTION}}    — NeuzeitGro Light one-liner under the right photo
+  {{CTA_TEXT}}         — button label
+  {{CTA_URL}}          — button href
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The circular Cervanttis "vs" badge is absolutely positioned so
+    it straddles both columns — that overlap does not survive as live email HTML.
+  - VS_ACCENT is Cervanttis → lowercase; HEADLINE is Lust → sentence case.
+  - Symmetric two-column layout (left = the "before"/"others", right = the "after"/"us").
+  - Square black button only. On the NOIR preset, swap the button to white-on-black.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#666666  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
+  50clay:  PANEL_BG=#EBE5DF  PANEL_TEXT=#666666  PANEL_SUB=#8a8178  PANEL_BORDER=#ded7cf
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#cfcac3  PANEL_SUB=#888888  PANEL_BORDER=#2c2825   (swap button to #fff/#000)
+  HEADLINE and column labels render in the brand extreme: #000000 on light presets, #ffffff on noir.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding:46px 50px 26px;text-align:center;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{SUPER_LABEL}}</p>
+      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:28px;color:#000000;line-height:1.15;margin:0;">{{HEADLINE}}</h2>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 40px 30px;">
+      <!-- relative wrapper so the round "vs" badge can straddle both columns -->
+      <div style="position:relative;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td width="50%" align="center" valign="top" style="width:50%;vertical-align:top;padding:0 6px;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 12px 0;">{{LEFT_LABEL}}</p>
+            <img src="{{LEFT_IMAGE_URL}}" width="210" height="210" alt="{{LEFT_LABEL}}" style="display:block;width:210px;height:210px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};margin:0 auto;filter:grayscale(100%);">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:{{PANEL_TEXT}};line-height:1.55;margin:14px 4px 0;">{{LEFT_CAPTION}}</p>
+          </td>
+          <td width="50%" align="center" valign="top" style="width:50%;vertical-align:top;padding:0 6px;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#000000;margin:0 0 12px 0;">{{RIGHT_LABEL}}</p>
+            <img src="{{RIGHT_IMAGE_URL}}" width="210" height="210" alt="{{RIGHT_LABEL}}" style="display:block;width:210px;height:210px;object-fit:cover;object-position:center;border:1px solid #000000;margin:0 auto;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:{{PANEL_TEXT}};line-height:1.55;margin:14px 4px 0;">{{RIGHT_CAPTION}}</p>
+          </td>
+        </tr></table>
+        <!-- centre "vs" badge straddling the two columns -->
+        <div style="position:absolute;top:64px;left:50%;margin-left:-27px;width:54px;height:54px;border-radius:50%;background:#000000;text-align:center;box-shadow:0 8px 20px rgba(0,0,0,0.28);">
+          <span style="display:inline-block;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:24px;line-height:54px;color:#ffffff;">{{VS_ACCENT}}</span>
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 50px 48px;text-align:center;">
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

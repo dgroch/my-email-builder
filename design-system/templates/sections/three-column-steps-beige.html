@@ -1,0 +1,55 @@
+<!-- COMPONENT: sections/three-column-steps-beige | NUMBERED STEPS — 3 COLUMNS — BEIGE BG (#faf5f0)
+TOKENS:
+  {{HEADLINE}}       — Lust font — SENTENCE CASE (e.g. "Create a Moonpig Card in Minutes")
+  {{STEP_1_NUMBER}}  — e.g. "1."
+  {{STEP_1_TEXT}}    — Step 1 description (NeuzeitGro Light)
+  {{STEP_2_NUMBER}}  — e.g. "2."
+  {{STEP_2_TEXT}}    — Step 2 description
+  {{STEP_3_NUMBER}}  — e.g. "3."
+  {{STEP_3_TEXT}}    — Step 3 description
+  {{CTA_TEXT}}       — Button label (e.g. "Shop Now")
+  {{CTA_URL}}        — Button href
+  {{PADDING_TOP}}    — Top padding in px (e.g. "48px"). Default: 48px.
+  {{PADDING_BOTTOM}} — Bottom padding in px (e.g. "48px"). Default: 48px.
+RULES:
+  - Background: #faf5f0 (warm beige). Hardcoded — use -clay or -white variant for other backgrounds.
+  - Headline: Lust font, SENTENCE CASE, black (#000000).
+  - Numbers: Lust font, black (#000000), 40px.
+  - Step text: NeuzeitGro Light, #444444.
+  - Button: Primary black (background #000000, text #ffffff) per brand docs.
+  - Three equal-width columns. HTML-safe classification — no slicing required.
+-->
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#faf5f0">
+  <tr>
+    <td align="center" style="padding:{{PADDING_TOP}} 32px 16px;background:#faf5f0;">
+      <h2 class="sh" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:26px;color:#000000;line-height:1.2;margin:0 0 36px 0;text-align:center;">{{HEADLINE}}</h2>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 24px 8px;background:#faf5f0;">
+      <table width="552" cellpadding="0" cellspacing="0" border="0" role="presentation">
+        <tr>
+          <td width="168" valign="top" align="center" style="padding:0 12px 32px;">
+            <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:40px;color:#000000;margin:0 0 12px 0;line-height:1;">{{STEP_1_NUMBER}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.65;margin:0;text-align:center;">{{STEP_1_TEXT}}</p>
+          </td>
+          <td width="168" valign="top" align="center" style="padding:0 12px 32px;">
+            <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:40px;color:#000000;margin:0 0 12px 0;line-height:1;">{{STEP_2_NUMBER}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.65;margin:0;text-align:center;">{{STEP_2_TEXT}}</p>
+          </td>
+          <td width="168" valign="top" align="center" style="padding:0 12px 32px;">
+            <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:40px;color:#000000;margin:0 0 12px 0;line-height:1;">{{STEP_3_NUMBER}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.65;margin:0;text-align:center;">{{STEP_3_TEXT}}</p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding:0 32px {{PADDING_BOTTOM}};background:#faf5f0;">
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

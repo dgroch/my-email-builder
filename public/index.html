@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fig &amp; Bloom · Email Builder</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Fig<span>&amp;</span>Bloom <em>email builder</em></div>
+  <div class="campaign-meta">
+    <label>Campaign <input id="campaignName" type="text" placeholder="Email subject / name"></label>
+    <label>Body bg <input id="bodyBg" type="text" value="#2c2825" class="hex"></label>
+  </div>
+  <div class="actions">
+    <button id="btnSample" class="ghost" title="Load the “card is the hard part” sample">Sample</button>
+    <button id="btnImport" class="ghost">Import JSON</button>
+    <input id="fileImport" type="file" accept="application/json" hidden>
+    <button id="btnExportJson" class="ghost">Export JSON</button>
+    <button id="btnExportHtml" class="ghost">Export HTML</button>
+    <button id="btnRender" class="primary">Render PNG</button>
+  </div>
+</header>
+
+<main>
+  <section class="builder" id="builder">
+    <div class="add-row">
+      <select id="addSelect"><option value="">+ Add a block…</option></select>
+      <button id="btnAdd">Add</button>
+    </div>
+    <div id="blocks" class="blocks"><p class="empty">No blocks yet. Add one above, or click <b>Sample</b>.</p></div>
+  </section>
+
+  <section class="preview">
+    <div class="preview-tabs">
+      <button data-tab="live" class="tab active">Live preview</button>
+      <button data-tab="png" class="tab">Rendered PNG</button>
+      <span id="status" class="status"></span>
+    </div>
+    <div class="preview-body">
+      <iframe id="liveFrame" title="live preview"></iframe>
+      <div id="pngWrap" class="png-wrap hidden"><img id="pngImg" alt="rendered email"></div>
+    </div>
+  </section>
+</main>
+
+<template id="blockCardTpl">
+  <div class="block-card">
+    <div class="block-head">
+      <span class="block-name"></span>
+      <span class="block-tag"></span>
+      <span class="spacer"></span>
+      <button class="mini up" title="Move up">↑</button>
+      <button class="mini down" title="Move down">↓</button>
+      <button class="mini collapse" title="Collapse">–</button>
+      <button class="mini remove" title="Remove">✕</button>
+    </div>
+    <div class="block-fields"></div>
+  </div>
+</template>
+
+<script src="/app.js"></script>
+</body>
+</html>

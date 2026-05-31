@@ -1,0 +1,77 @@
+<!-- COMPONENT: blocks/feature-list | DESIGNED BLOCK — TILTED POLAROID + ICON-BULLET FEATURE LIST
+TOKENS:
+  {{SECTION_SUPER}}      — NeuzeitGro Bold caps micro-label
+  {{HEADLINE}}           — Lust display headline — SENTENCE CASE
+  {{FEATURE_1_TITLE}}    — NeuzeitGro Bold short title (caps)
+  {{FEATURE_1_TEXT}}     — NeuzeitGro Light one-liner
+  {{FEATURE_2_TITLE}}    — "
+  {{FEATURE_2_TEXT}}     — "
+  {{FEATURE_3_TITLE}}    — "
+  {{FEATURE_3_TEXT}}     — "
+  {{POLAROID_IMAGE_URL}} — product/lifestyle photo (square crop, 192×216px display)
+  {{POLAROID_CAPTION}}   — Cervanttis caption — MUST be lowercase (e.g. "osaka, our bestseller")
+  {{CTA_TEXT}}           — button label
+  {{CTA_URL}}            — button href
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The tilted polaroid (transform:rotate) and clay disc
+    bullets do not survive as live email HTML — this block must be rasterised.
+  - POLAROID_CAPTION is Cervanttis → lowercase; HEADLINE is Lust → sentence case.
+  - Polaroid tilt (-4deg), 26px clay disc bullets, square black button — locked.
+  - On mobile this slice scales as one image; keep titles short so text stays legible.
+-->
+<tr><td style="padding:0;background:#ffffff;border-top:1px solid #e8e2da;">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <!-- Polaroid column -->
+    <td width="252" valign="middle" align="center" style="width:252px;padding:46px 0 46px 40px;vertical-align:middle;">
+      <div style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:12px 12px 14px;box-shadow:0 10px 26px rgba(0,0,0,0.12);transform:rotate(-4deg);">
+        <img src="{{POLAROID_IMAGE_URL}}" width="192" height="216" alt="" style="display:block;width:192px;height:216px;object-fit:cover;object-position:center;">
+        <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:22px;color:#000000;line-height:1.0;margin:16px 0 4px 0;text-align:center;">{{POLAROID_CAPTION}}</p>
+      </div>
+    </td>
+    <!-- Feature list column -->
+    <td valign="middle" style="padding:46px 40px 46px 28px;vertical-align:middle;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 10px 0;">{{SECTION_SUPER}}</p>
+      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:26px;color:#000000;line-height:1.15;margin:0 0 24px 0;">{{HEADLINE}}</h2>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="40" valign="top" style="width:40px;padding:0 0 18px 0;vertical-align:top;">
+            <div style="width:26px;height:26px;border-radius:50%;background:#D8CCBE;text-align:center;line-height:26px;font-size:0;">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#000000;vertical-align:middle;"></span>
+            </div>
+          </td>
+          <td valign="top" style="padding:0 0 18px 0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 3px 0;">{{FEATURE_1_TITLE}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#666666;line-height:1.6;margin:0;">{{FEATURE_1_TEXT}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td width="40" valign="top" style="width:40px;padding:0 0 18px 0;vertical-align:top;">
+            <div style="width:26px;height:26px;border-radius:50%;background:#D8CCBE;text-align:center;line-height:26px;font-size:0;">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#000000;vertical-align:middle;"></span>
+            </div>
+          </td>
+          <td valign="top" style="padding:0 0 18px 0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 3px 0;">{{FEATURE_2_TITLE}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#666666;line-height:1.6;margin:0;">{{FEATURE_2_TEXT}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td width="40" valign="top" style="width:40px;padding:0 0 4px 0;vertical-align:top;">
+            <div style="width:26px;height:26px;border-radius:50%;background:#D8CCBE;text-align:center;line-height:26px;font-size:0;">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#000000;vertical-align:middle;"></span>
+            </div>
+          </td>
+          <td valign="top" style="padding:0 0 4px 0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#000000;margin:0 0 3px 0;">{{FEATURE_3_TITLE}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#666666;line-height:1.6;margin:0;">{{FEATURE_3_TEXT}}</p>
+          </td>
+        </tr>
+      </table>
+      <div style="margin:26px 0 0 0;">
+        <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+      </div>
+    </td>
+  </tr>
+</table>
+</td></tr>

@@ -1,0 +1,47 @@
+<!-- COMPONENT: blocks/story | DESIGNED BLOCK — PORTRAIT + NARRATIVE + SCRIPT SIGNATURE
+TOKENS:
+  {{PORTRAIT_IMAGE_URL}} — portrait / behind-the-scenes photo (square crop, 240×300px display)
+  {{SUPER_LABEL}}        — NeuzeitGro Bold caps micro-label (e.g. "FROM THE FOUNDERS")
+  {{HEADLINE}}           — Lust display headline — SENTENCE CASE (e.g. "A note from our family to yours")
+  {{BODY_P1}}            — NeuzeitGro Light narrative paragraph
+  {{BODY_P2}}            — second paragraph (use "" if only one)
+  {{SIGNATURE}}          — Cervanttis script sign-off — MUST be lowercase (e.g. "— dan & kellie")
+  {{CTA_TEXT}}           — button label
+  {{CTA_URL}}            — button href
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The portrait sits in a tilted polaroid frame (transform:rotate)
+    and the script signature layers under the body — neither survives as live email HTML.
+  - SIGNATURE is Cervanttis → lowercase; HEADLINE is Lust → sentence case.
+  - Layout is portrait-LEFT, text-RIGHT (the corpus norm for founder/story beats). One per email.
+  - Square black button only. On the NOIR preset, swap the button to white-on-black.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#444444  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
+  50clay:  PANEL_BG=#EBE5DF  PANEL_TEXT=#444444  PANEL_SUB=#8a8178  PANEL_BORDER=#ded7cf
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#cfcac3  PANEL_SUB=#888888  PANEL_BORDER=#2c2825   (swap button to #fff/#000)
+  Headlines/signature always render in the brand black/white extreme: on light presets use #000000,
+  on noir use #ffffff. Set those two inline colours to match the preset's extreme.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <!-- Portrait column (tilted polaroid) -->
+    <td width="288" valign="middle" align="center" style="width:288px;padding:48px 0 48px 40px;vertical-align:middle;">
+      <div style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:12px 12px 14px;box-shadow:0 12px 28px rgba(0,0,0,0.14);transform:rotate(-3deg);">
+        <img src="{{PORTRAIT_IMAGE_URL}}" width="240" height="300" alt="" style="display:block;width:240px;height:300px;object-fit:cover;object-position:center;">
+      </div>
+    </td>
+    <!-- Narrative column -->
+    <td valign="middle" style="padding:48px 40px 48px 28px;vertical-align:middle;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 12px 0;">{{SUPER_LABEL}}</p>
+      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:26px;color:#000000;line-height:1.18;margin:0 0 16px 0;">{{HEADLINE}}</h2>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:{{PANEL_TEXT}};line-height:1.75;margin:0 0 12px 0;">{{BODY_P1}}</p>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:{{PANEL_TEXT}};line-height:1.75;margin:0 0 14px 0;">{{BODY_P2}}</p>
+      <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:#000000;line-height:1.0;margin:0 0 22px 0;">{{SIGNATURE}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

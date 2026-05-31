@@ -1,0 +1,274 @@
+'use strict';
+// app.js — Fig & Bloom email builder UI. Generates token forms from /api/schema,
+// keeps a campaign model, live-previews via /api/assemble, rasterises via /api/render.
+
+let SCHEMA = null;
+const byName = {};                          // component name -> schema entry
+let campaign = { campaignName: '', bodyBg: '#2c2825', blocks: [] };
+let uid = 1;
+
+const $ = s => document.querySelector(s);
+const el = (tag, props = {}, kids = []) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v;
+    else if (k === 'html') n.innerHTML = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  for (const c of [].concat(kids)) if (c) n.append(c);
+  return n;
+};
+
+const LONG = /BODY|TEXT|INTRO|SUB|QUOTE|DESC|ADDRESS/;
+const isLong = name => LONG.test(name);
+
+// ── boot ──────────────────────────────────────────────────────────────────────
+fetch('/api/schema').then(r => r.json()).then(s => {
+  SCHEMA = s;
+  const groups = {};
+  for (const c of s.components) { byName[c.name] = c; (groups[c.group] ||= []).push(c); }
+  const sel = $('#addSelect');
+  for (const g of Object.keys(groups).sort()) {
+    const og = el('optgroup', { label: g });
+    for (const c of groups[g]) og.append(el('option', { value: c.name, text: c.name.split('/').pop() + (c.designed ? '  ◆' : '') }));
+    sel.append(og);
+  }
+  bindToolbar();
+});
+
+// ── campaign model helpers ──────────────────────────────────────────────────────
+function defaultsFor(comp) {
+  const tokens = {};
+  for (const t of comp.tokens) tokens[t.name] = '';
+  // palette: seed from first preset
+  if (comp.palettePresets && comp.palettePresets.length) Object.assign(tokens, comp.palettePresets[0].values);
+  // enum: seed first option
+  for (const t of comp.tokens) if (t.type === 'enum' && t.enumOptions && t.enumOptions[0]) tokens[t.name] = t.enumOptions[0];
+  return tokens;
+}
+function addBlock(name) {
+  const comp = byName[name]; if (!comp) return;
+  const block = { id: uid++, component: name, tokens: defaultsFor(comp) };
+  if (comp.palettePresets && comp.palettePresets.length) block.palette = comp.palettePresets[0].name;
+  campaign.blocks.push(block); renderBlocks(); livePreview();
+}
+function move(i, d) { const j = i + d; if (j < 0 || j >= campaign.blocks.length) return; [campaign.blocks[i], campaign.blocks[j]] = [campaign.blocks[j], campaign.blocks[i]]; renderBlocks(); livePreview(); }
+function remove(i) { campaign.blocks.splice(i, 1); renderBlocks(); livePreview(); }
+
+// ── case helpers ────────────────────────────────────────────────────────────────
+const violatesLower = v => v && /[A-Z]/.test(v);
+const violatesSentence = v => v && (v === v.toUpperCase() && /[A-Z]/.test(v) || /^[a-z]/.test(v));
+function fixLower(v) { return v.toLowerCase(); }
+function fixSentence(v) { let s = v; if (s === s.toUpperCase()) s = s.toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ── render block cards & fields ───────────────────────────────────────────────
+function renderBlocks() {
+  const wrap = $('#blocks'); wrap.innerHTML = '';
+  if (!campaign.blocks.length) { wrap.append(el('p', { class: 'empty', html: 'No blocks yet. Add one above, or click <b>Sample</b>.' })); return; }
+  campaign.blocks.forEach((block, i) => {
+    const comp = byName[block.component]; if (!comp) return;
+    const card = $('#blockCardTpl').content.firstElementChild.cloneNode(true);
+    card.querySelector('.block-name').textContent = block.component;
+    const tag = card.querySelector('.block-tag');
+    if (comp.designed) tag.textContent = 'designed'; else if (comp.static) { tag.textContent = 'static'; tag.classList.add('plain'); } else { tag.textContent = 'text'; tag.classList.add('plain'); }
+    card.querySelector('.up').onclick = () => move(i, -1);
+    card.querySelector('.down').onclick = () => move(i, 1);
+    card.querySelector('.remove').onclick = () => remove(i);
+    card.querySelector('.collapse').onclick = () => card.classList.toggle('collapsed');
+    const fields = card.querySelector('.block-fields');
+    if (comp.static) fields.append(el('p', { class: 'desc', text: 'Static block — no editable tokens.' }));
+    else buildFields(fields, comp, block);
+    wrap.append(card);
+  });
+}
+
+function buildFields(container, comp, block) {
+  // palette selector (once, if present)
+  if (comp.palettePresets && comp.palettePresets.length) {
+    const sel = el('select', { onchange: e => {
+      const p = comp.palettePresets.find(x => x.name === e.target.value);
+      block.palette = e.target.value; Object.assign(block.tokens, p.values); renderBlocks(); livePreview();
+    } });
+    for (const p of comp.palettePresets) sel.append(el('option', { value: p.name, text: p.name, ...(block.palette === p.name ? { selected: 'selected' } : {}) }));
+    const swatches = el('div', { class: 'palette-swatches' });
+    const cur = comp.palettePresets.find(x => x.name === block.palette) || comp.palettePresets[0];
+    for (const v of Object.values(cur.values)) swatches.append(el('span', { class: 'sw', style: `background:${v}` }));
+    container.append(el('div', { class: 'field' }, [el('label', { text: 'Palette preset' }), sel, swatches]));
+  }
+  for (const t of comp.tokens) {
+    if (t.type === 'palette') continue; // handled by preset selector
+    container.append(fieldFor(t, block));
+  }
+}
+
+function fieldFor(t, block) {
+  const wrap = el('div', { class: 'field' });
+  const lab = el('label', { text: t.name });
+  if (t.case) lab.append(el('span', { class: 'case-chip ' + t.case, text: t.case === 'lower' ? 'lowercase' : 'Sentence case' }));
+  wrap.append(lab);
+  if (t.desc) wrap.append(el('p', { class: 'desc', text: t.desc }));
+
+  const commit = (v) => { block.tokens[t.name] = v; scheduleLive(); };
+  let input;
+  if (t.type === 'enum') {
+    input = el('select', { onchange: e => commit(e.target.value) });
+    for (const o of t.enumOptions) input.append(el('option', { value: o, text: o, ...(block.tokens[t.name] === o ? { selected: 'selected' } : {}) }));
+    wrap.append(input);
+  } else if (t.type === 'image' || t.type === 'url') {
+    const thumb = el('img', { class: 'thumb', ...(t.type === 'image' && block.tokens[t.name] ? { src: block.tokens[t.name] } : {}) });
+    input = el('input', { type: 'url', value: block.tokens[t.name] || '', placeholder: 'https://…', oninput: e => { commit(e.target.value); if (t.type === 'image') thumb.src = e.target.value; } });
+    wrap.append(el('div', { class: 'row' }, t.type === 'image' ? [thumb, input] : [input]));
+  } else {
+    input = el(isLong(t.name) ? 'textarea' : 'input', { value: block.tokens[t.name] || '', oninput: e => { commit(e.target.value); validate(); } });
+    if (!isLong(t.name)) input.type = 'text';
+    else input.textContent = block.tokens[t.name] || '';
+    wrap.append(input);
+  }
+
+  // live case validation
+  const warn = el('div', { class: 'warn hidden' });
+  wrap.append(warn);
+  function validate() {
+    const v = block.tokens[t.name] || '';
+    let bad = false, msg = '';
+    if (t.case === 'lower' && violatesLower(v)) { bad = true; msg = 'Should be lowercase (Cervanttis).'; }
+    if (t.case === 'sentence' && violatesSentence(v)) { bad = true; msg = 'Should be Sentence case (Lust).'; }
+    warn.classList.toggle('hidden', !bad);
+    if (bad) {
+      warn.innerHTML = msg;
+      const fix = el('button', { class: 'fix', text: 'fix', onclick: () => { const nv = t.case === 'lower' ? fixLower(v) : fixSentence(v); block.tokens[t.name] = nv; input.value = nv; validate(); scheduleLive(); } });
+      warn.append(fix);
+    }
+  }
+  validate();
+  return wrap;
+}
+
+// ── preview ───────────────────────────────────────────────────────────────────
+let liveTimer = null;
+function scheduleLive() { clearTimeout(liveTimer); liveTimer = setTimeout(livePreview, 450); }
+function setStatus(msg, cls = '') { const s = $('#status'); s.textContent = msg; s.className = 'status ' + cls; }
+
+async function livePreview() {
+  campaign.campaignName = $('#campaignName').value;
+  campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  if (!campaign.blocks.length) { $('#liveFrame').srcdoc = ''; return; }
+  setStatus('rendering…');
+  try {
+    const r = await fetch('/api/assemble', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+    const { html, unfilled } = await r.json();
+    $('#liveFrame').srcdoc = html;
+    if (unfilled.length) setStatus(`${unfilled.length} empty token${unfilled.length > 1 ? 's' : ''}`, 'warn');
+    else setStatus('preview up to date', 'ok');
+  } catch (e) { setStatus('preview error', 'warn'); }
+}
+
+async function renderPng() {
+  setStatus('rasterising (Puppeteer)…');
+  showTab('png');
+  try {
+    const r = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+    const { pngBase64, brokenImages } = await r.json();
+    $('#pngImg').src = 'data:image/png;base64,' + pngBase64;
+    if (brokenImages && brokenImages.length) setStatus(`${brokenImages.length} broken image(s)`, 'warn');
+    else setStatus('rendered ✓', 'ok');
+  } catch (e) { setStatus('render failed', 'warn'); }
+}
+
+function showTab(which) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === which));
+  $('#liveFrame').classList.toggle('hidden', which !== 'live');
+  $('#pngWrap').classList.toggle('hidden', which !== 'png');
+}
+
+// ── export / import ─────────────────────────────────────────────────────────────
+function download(name, content, type) {
+  const blob = new Blob([content], { type }); const a = el('a', { href: URL.createObjectURL(blob), download: name }); a.click(); URL.revokeObjectURL(a.href);
+}
+async function exportHtml() {
+  const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+  const { html } = await r.json();
+  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', html, 'text/html');
+}
+function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
+function importJson(file) {
+  const fr = new FileReader();
+  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; hydrate(); } catch (e) { alert('Invalid JSON'); } };
+  fr.readAsText(file);
+}
+function hydrate() {
+  $('#campaignName').value = campaign.campaignName || '';
+  $('#bodyBg').value = campaign.bodyBg || '#2c2825';
+  renderBlocks(); livePreview();
+}
+
+// ── toolbar ─────────────────────────────────────────────────────────────────────
+function bindToolbar() {
+  $('#btnAdd').onclick = () => { const v = $('#addSelect').value; if (v) addBlock(v); };
+  $('#addSelect').onchange = e => { if (e.target.value) { addBlock(e.target.value); e.target.value = ''; } };
+  $('#campaignName').oninput = scheduleLive;
+  $('#bodyBg').oninput = scheduleLive;
+  $('#btnRender').onclick = renderPng;
+  $('#btnExportHtml').onclick = exportHtml;
+  $('#btnExportJson').onclick = exportJson;
+  $('#btnImport').onclick = () => $('#fileImport').click();
+  $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
+  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; hydrate(); };
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+}
+
+// ── sample campaign (the “card is the hard part” build, public CDN imagery) ──────
+const P = 'https://cdn.shopify.com/s/files/1/0657/8723/2489/files/';
+const BLOG = 'https://figandbloom.com/blogs/news/what-to-write-on-flower-card';
+const SAMPLE = {
+  campaignName: 'When the card is the hard part',
+  bodyBg: '#2c2825',
+  blocks: [
+    { id: 1, component: 'header', tokens: {} },
+    { id: 2, component: 'blocks/editorial-hero', tokens: {
+      HERO_IMAGE_URL: P + 'WithLoveCard.jpg?v=1771723389', SUPER_LABEL: 'FIG & BLOOM · NOTES',
+      ACCENT_SCRIPT: 'with love,', HEADLINE: 'When the card is the hard part',
+      SUBHEADLINE: 'The flowers say a great deal before the card is even opened. Here is how to write the few words they keep — for birthdays, thank-yous, sympathy and just because.',
+      CTA_TEXT: 'READ THE GUIDE', CTA_URL: BLOG } },
+    { id: 3, component: 'blocks/feature-list', tokens: {
+      SECTION_SUPER: 'WHY THE WORDS MATTER', HEADLINE: 'A few words they will keep',
+      FEATURE_1_TITLE: 'THE RIGHT WORDS', FEATURE_1_TEXT: 'Message ideas for every occasion, ready to make your own.',
+      FEATURE_2_TITLE: 'HANDWRITTEN, FREE', FEATURE_2_TEXT: 'We write your note by hand on a quality card with every order.',
+      FEATURE_3_TITLE: 'SAME-DAY DELIVERY', FEATURE_3_TEXT: 'Order before 1pm for same-day delivery across the city.',
+      POLAROID_IMAGE_URL: P + 'WithLoveCardCU.jpg?v=1771723389', POLAROID_CAPTION: 'with love,',
+      CTA_TEXT: 'READ THE GUIDE', CTA_URL: BLOG } },
+    { id: 4, component: 'blocks/howto-steps', palette: 'white', tokens: {
+      PANEL_BG: '#ffffff', PANEL_TEXT: '#666666', PANEL_SUB: '#aaaaaa', PANEL_BORDER: '#e8e2da',
+      SUPER_LABEL: 'HOW TO WRITE IT', HEADLINE: 'Start with the feeling, not the phrasing',
+      INTRO: 'Stuck at the message box? Decide what you want them to feel — then keep it this simple.',
+      STEP_1_NUMBER: '1', STEP_1_TITLE: 'NAME THEM', STEP_1_TEXT: 'Open with their name. It makes the whole note feel meant for them.', STEP_1_IMAGE_URL: P + 'SingleStemCardCU.jpg?v=1726026290',
+      STEP_2_NUMBER: '2', STEP_2_TITLE: 'SAY WHY YOU SENT THEM', STEP_2_TEXT: 'One honest reason — celebrating you, thinking of you, or simply thank you.', STEP_2_IMAGE_URL: P + 'TulipGreetingCard.jpg?v=1732250184',
+      STEP_3_NUMBER: '3', STEP_3_TITLE: 'ADD ONE TRUE THOUGHT', STEP_3_TEXT: 'A single specific line they will remember, then sign off in your own voice.', STEP_3_IMAGE_URL: P + 'FlowersCardCU.jpg?v=1726026071',
+      CTA_TEXT: 'SEE ALL THE WORDS', CTA_URL: BLOG } },
+    { id: 5, component: 'sections/body-copy-plain', tokens: {
+      SUPER_LABEL: 'BORROW OUR WORDS', HEADLINE: 'If you are still stuck, start here.',
+      BODY_P1: '<em>Birthday</em> &nbsp;·&nbsp; “I hope today feels as bright and generous as you are.”<br><em>Thank you</em> &nbsp;·&nbsp; “A small thank you for the very large difference you made.”',
+      BODY_P2: '<em>Sympathy</em> &nbsp;·&nbsp; “No words feel enough, but please know I am here.”<br><em>Just because</em> &nbsp;·&nbsp; “Saw these and thought of you.”' } },
+    { id: 6, component: 'sections/section-headline', tokens: { SUPER_LABEL: 'BEGIN WITH THE FLOWERS', HEADLINE: 'A bloom for every message.' } },
+    { id: 7, component: 'products/card-horizontal', tokens: {
+      PRODUCT_IMAGE_URL: P + 'Lucerne-Large_2.jpg?v=1764283956', PRODUCT_LABEL: 'SYMPATHY · THANK YOU', PRODUCT_NAME: 'Lucerne',
+      PRODUCT_OCCASION: 'Contemporary white blooms for the gentlest moments.', PRODUCT_PRICE: 'From $105', PRODUCT_URL: 'https://figandbloom.com/products/lucerne' } },
+    { id: 8, component: 'products/card-horizontal-reversed', tokens: {
+      PRODUCT_IMAGE_URL: P + 'MonacoVaseArrangementPink_9.jpg?v=1764284295', PRODUCT_LABEL: 'HAPPY BIRTHDAY', PRODUCT_NAME: 'Monaco',
+      PRODUCT_OCCASION: 'Whimsical pinks, made to be properly celebrated.', PRODUCT_PRICE: 'From $115', PRODUCT_URL: 'https://figandbloom.com/products/monaco-pink-vase-arrangement-regular' } },
+    { id: 9, component: 'products/card-horizontal', tokens: {
+      PRODUCT_IMAGE_URL: P + 'Savoie-Cover.webp?v=1764284279', PRODUCT_LABEL: 'JUST BECAUSE', PRODUCT_NAME: 'Savoie',
+      PRODUCT_OCCASION: 'Crisp white and green, with a quiet pop of indigo.', PRODUCT_PRICE: 'From $225', PRODUCT_URL: 'https://figandbloom.com/products/savoie-vase' } },
+    { id: 10, component: 'blocks/polaroid-collage', tokens: {
+      PHOTO_1_URL: P + 'GreetingCard-ThankYou.webp?v=1709067806', PHOTO_1_CAPTION: 'thank you,',
+      PHOTO_2_URL: P + 'WithLoveCardCU.jpg?v=1771723389', PHOTO_2_CAPTION: 'with love,',
+      PHOTO_3_URL: P + 'ThinkingofYouDoveGreetingCard.jpg?v=1732250194', PHOTO_3_CAPTION: 'thinking of you,',
+      QUOTE_ACCENT: 'in their words', PULL_QUOTE: 'The flowers were beautiful, and the card said exactly what I couldn’t.', QUOTE_ATTRIBUTION: '— Sarah, Brisbane' } },
+    { id: 11, component: 'sections/upsell-noir', tokens: {
+      SUPER_LABEL: 'Ready when you are', HEADLINE: 'for the moment they feel what you meant',
+      BODY: 'Choose the flowers, add your note at checkout, and we hand-write it onto a card — free with every order.',
+      CTA_TEXT: 'SEND WITH A NOTE', CTA_URL: 'https://figandbloom.com/collections/bouquets' } },
+    { id: 12, component: 'sections/trust-bar', tokens: {} },
+    { id: 13, component: 'footer', tokens: {} },
+  ],
+};

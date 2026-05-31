@@ -1,0 +1,26 @@
+<!-- COMPONENT: sections/promo-code | DASHED PROMO CODE BOX
+TOKENS:
+  {{PROMO_LABEL}}  — e.g. "Your exclusive offer"
+  {{PROMO_CODE}}   — the code, e.g. "MUMDAY25"
+  {{PROMO_TERMS}}  — e.g. "Orders over $130. Valid until May 5."
+  {{CTA_TEXT}}     — e.g. "Shop Now"
+  {{CTA_URL}}
+RULES:
+  - Background is white (not clay) — code must pop
+  - Promo code uses Lust font — font-weight:normal locked
+  - Dashed border is locked (2px dashed #000)
+-->
+<tr><td>
+<table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
+  <tr>
+    <td class="sp" align="center" style="padding:40px 48px;background:#ffffff;text-align:center;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#aaaaaa;margin:0 0 14px 0;">{{PROMO_LABEL}}</p>
+      <div style="display:inline-block;border:2px dashed #000000;padding:12px 32px;margin:0 0 12px 0;">
+        <span style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:20px;color:#000000;letter-spacing:.08em;">{{PROMO_CODE}}</span>
+      </div>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:#666666;margin:0 0 22px 0;">{{PROMO_TERMS}}</p>
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+    </td>
+  </tr>
+</table>
+</td></tr>

@@ -1,0 +1,838 @@
+{
+  "version": "4.0",
+  "description": "Fig & Bloom email template library. Agent selects templates and injects content tokens. No HTML is generated \u2014 only token values.",
+  "assembly": {
+    "shell_preview": "shell/shell-preview.html",
+    "shell_production": "shell/shell-production.html",
+    "shell_tokens": {
+      "CAMPAIGN_NAME": "Email subject line or campaign name",
+      "BODY_BG": "Body background colour (default: #2c2825)",
+      "FONT_CDN_LINK": "Production only: <link> tag for hosted font CSS. Omit if not configured.",
+      "COMPONENTS": "Assembled component HTML \u2014 injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->"
+    },
+    "method": "1. Select components. 2. Fill all {{TOKEN}} values. 3. Read each template file. 4. Replace tokens. 5. Concatenate. 6. Inject into shell between markers. 7. Validate no {{}} remain.",
+    "html_only_components": [
+      "opt-out",
+      "section-headline",
+      "delivery-cutoffs",
+      "footer",
+      "body-copy-plain",
+      "divider-line",
+      "divider-whitespace"
+    ],
+    "slice_components": [
+      "header",
+      "all hero variants (including hero-image-only)",
+      "all product cards",
+      "all designed blocks (blocks/*)",
+      "body-copy",
+      "testimonial",
+      "upsell-noir",
+      "trust-bar",
+      "divider-illo-*"
+    ],
+    "note": "body-copy (with HandRose illustration) is sliced because the position:absolute illustration does not render in email clients as inline HTML. For pure typographic body copy without an illustration, use body-copy-plain (HTML-safe). Prefer body-copy-plain when no accent illustration is desired — keeps text selectable, accessible, and responsive."
+  },
+  "ordering_rules": {
+    "required": [
+      "header",
+      "hero (one)",
+      "body-copy",
+      "section-headline",
+      "products (1-5)",
+      "trust-bar",
+      "footer"
+    ],
+    "optional_positions": {
+      "opt-out": "Immediately after hero \u2014 position 3. Required for: Mothers Day, Fathers Day, Valentines Day, pregnancy/baby, memorial.",
+      "divider": "Max one non-line divider per email. Between body-copy and products.",
+      "testimonial": "After products, before promo-code.",
+      "promo-code": "After testimonial, before upsell.",
+      "upsell-noir": "Near bottom \u2014 closing beat. After promo-code.",
+      "delivery-cutoffs": "After upsell, before trust-bar.",
+      "three-column-steps-*": "After body-copy or after products. Use when a step-by-step partner flow (e.g. card creation) needs explaining. Max one per email. Choose variant by background: -beige (warm off-white), -50clay (50% clay, token clay_50, #EBE5DF), -clay (brand clay), or -white (silk white)."
+    }
+  },
+  "components": {
+    "header": {
+      "file": "templates/header.html",
+      "static": true,
+      "tokens": []
+    },
+    "footer": {
+      "file": "templates/footer.html",
+      "static": false,
+      "tokens": []
+    },
+    "heroes": {
+      "hero-a": {
+        "file": "templates/heroes/hero-a.html",
+        "description": "Text over lifestyle image. Maximum photo impact.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-b-white": {
+        "file": "templates/heroes/hero-b-white.html",
+        "description": "Text above image. White band.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "HERO_IMAGE_URL"
+        ]
+      },
+      "hero-b-clay": {
+        "file": "templates/heroes/hero-b-clay.html",
+        "description": "Text above image. Clay band.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "HERO_IMAGE_URL"
+        ]
+      },
+      "hero-b-noir": {
+        "file": "templates/heroes/hero-b-noir.html",
+        "description": "Text above image. Noir band.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "HERO_IMAGE_URL"
+        ]
+      },
+      "hero-c1": {
+        "file": "templates/heroes/hero-c1.html",
+        "description": "Split: image left, text right. White col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-c2": {
+        "file": "templates/heroes/hero-c2.html",
+        "description": "Split: text left, image right. White col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-c1-clay": {
+        "file": "templates/heroes/hero-c1-clay.html",
+        "description": "Split: image left, text right. Clay col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-c2-clay": {
+        "file": "templates/heroes/hero-c2-clay.html",
+        "description": "Split: text left, image right. Clay col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-c1-noir": {
+        "file": "templates/heroes/hero-c1-noir.html",
+        "description": "Split: image left, text right. Noir col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-c2-noir": {
+        "file": "templates/heroes/hero-c2-noir.html",
+        "description": "Split: text left, image right. Noir col.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-d-noir": {
+        "file": "templates/heroes/hero-d-noir.html",
+        "description": "Type-forward, no photo. Noir bg. Max brand statement.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-d-clay": {
+        "file": "templates/heroes/hero-d-clay.html",
+        "description": "Type-forward, no photo. Clay bg.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-d-white": {
+        "file": "templates/heroes/hero-d-white.html",
+        "description": "Type-forward, no photo. White bg.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "hero-image-only": {
+        "file": "templates/heroes/hero-image-only.html",
+        "description": "Full-bleed image hero with no text overlay or button. 600×750px (4:5 ratio). Used when the image tells the story — mascot creative, lifestyle photography. Slice-to-PNG classification.",
+        "classification": "slice",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "HERO_IMAGE_ALT",
+          "HERO_LINK_URL"
+        ]
+      }
+    },
+    "products": {
+      "card-horizontal": {
+        "file": "templates/products/card-horizontal.html",
+        "description": "Image left. Alternate with reversed for rhythm.",
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_PRICE",
+          "PRODUCT_URL"
+        ]
+      },
+      "card-horizontal-reversed": {
+        "file": "templates/products/card-horizontal-reversed.html",
+        "description": "Image right. Pair with card-horizontal.",
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_PRICE",
+          "PRODUCT_URL"
+        ]
+      },
+      "card-lifestyle-studio": {
+        "file": "templates/products/card-lifestyle-studio.html",
+        "description": "Hero spotlight. Lifestyle + studio stacked. One per email max.",
+        "tokens": [
+          "SECTION_SUPER",
+          "SECTION_HEADLINE",
+          "LIFESTYLE_IMAGE_URL",
+          "STUDIO_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_DESC",
+          "PRODUCT_PRICE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "card-single-testimonial": {
+        "file": "templates/products/card-single-testimonial.html",
+        "description": "Product + review side by side. Use when strong review copy exists.",
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_PRICE",
+          "PRODUCT_URL",
+          "REVIEW_STARS",
+          "REVIEW_TEXT",
+          "REVIEWER_NAME"
+        ]
+      }
+    },
+    "sections": {
+      "body-copy": {
+        "file": "templates/sections/body-copy.html",
+        "description": "Body copy with HandRose accent illustration (bottom-right, 10% opacity). Rendered as a sliced PNG because the position:absolute illustration does not survive inline HTML in email clients.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "BODY_P1",
+          "BODY_P2"
+        ]
+      },
+      "body-copy-plain": {
+        "file": "templates/sections/body-copy-plain.html",
+        "description": "Body copy without illustration. Rendered as inline HTML — text stays selectable, accessible, and responsive. Preferred when no accent illustration is needed.",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "BODY_P1",
+          "BODY_P2"
+        ]
+      },
+      "section-headline": {
+        "file": "templates/sections/section-headline.html",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE"
+        ]
+      },
+      "opt-out": {
+        "file": "templates/sections/opt-out.html",
+        "tokens": [
+          "OPT_OUT_HEADLINE",
+          "OPT_OUT_BODY",
+          "UNSUBSCRIBE_URL"
+        ]
+      },
+      "promo-code": {
+        "file": "templates/sections/promo-code.html",
+        "tokens": [
+          "PROMO_LABEL",
+          "PROMO_CODE",
+          "PROMO_TERMS",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "testimonial": {
+        "file": "templates/sections/testimonial.html",
+        "tokens": [
+          "REVIEW_STARS",
+          "REVIEW_TEXT",
+          "REVIEWER_NAME"
+        ]
+      },
+      "upsell-noir": {
+        "file": "templates/sections/upsell-noir.html",
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "BODY",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "delivery-cutoffs": {
+        "file": "templates/sections/delivery-cutoffs.html",
+        "tokens": [
+          "REGION_1",
+          "CUTOFF_1",
+          "REGION_2",
+          "CUTOFF_2",
+          "CUTOFF_NOTE"
+        ]
+      },
+      "trust-bar": {
+        "file": "templates/sections/trust-bar.html",
+        "static": true,
+        "tokens": []
+      },
+      "three-column-steps-beige": {
+        "file": "templates/sections/three-column-steps-beige.html",
+        "description": "Headline + 3-col numbered steps + CTA. Beige background (#faf5f0). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "classification": "html-safe",
+        "tokens": [
+          "HEADLINE",
+          "STEP_1_NUMBER",
+          "STEP_1_TEXT",
+          "STEP_2_NUMBER",
+          "STEP_2_TEXT",
+          "STEP_3_NUMBER",
+          "STEP_3_TEXT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "48px",
+          "PADDING_BOTTOM": "48px"
+        }
+      },
+      "three-column-steps-clay": {
+        "file": "templates/sections/three-column-steps-clay.html",
+        "description": "Headline + 3-col numbered steps + CTA. Clay background (#D8CCBE). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "classification": "html-safe",
+        "tokens": [
+          "HEADLINE",
+          "STEP_1_NUMBER",
+          "STEP_1_TEXT",
+          "STEP_2_NUMBER",
+          "STEP_2_TEXT",
+          "STEP_3_NUMBER",
+          "STEP_3_TEXT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "48px",
+          "PADDING_BOTTOM": "48px"
+        }
+      },
+      "three-column-steps-50clay": {
+        "file": "templates/sections/three-column-steps-50clay.html",
+        "description": "Headline + 3-col numbered steps + CTA. 50% clay background (#EBE5DF, token clay_50). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "classification": "html-safe",
+        "tokens": [
+          "HEADLINE",
+          "STEP_1_NUMBER",
+          "STEP_1_TEXT",
+          "STEP_2_NUMBER",
+          "STEP_2_TEXT",
+          "STEP_3_NUMBER",
+          "STEP_3_TEXT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "48px",
+          "PADDING_BOTTOM": "48px"
+        }
+      },
+      "three-column-steps-white": {
+        "file": "templates/sections/three-column-steps-white.html",
+        "description": "Headline + 3-col numbered steps + CTA. White background (#ffffff). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing. Add divider-line if adjacent to another white section.",
+        "classification": "html-safe",
+        "tokens": [
+          "HEADLINE",
+          "STEP_1_NUMBER",
+          "STEP_1_TEXT",
+          "STEP_2_NUMBER",
+          "STEP_2_TEXT",
+          "STEP_3_NUMBER",
+          "STEP_3_TEXT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "48px",
+          "PADDING_BOTTOM": "48px"
+        }
+      }
+    },
+    "dividers": {
+      "divider-line": {
+        "file": "templates/dividers/divider-line.html",
+        "static": true,
+        "tokens": [],
+        "description": "Default between all sections."
+      },
+      "divider-whitespace": {
+        "file": "templates/dividers/divider-whitespace.html",
+        "static": true,
+        "tokens": [],
+        "description": "48px gap. Most editorial. Between two text-heavy sections."
+      },
+      "divider-illo-clay": {
+        "file": "templates/dividers/divider-illo-clay.html",
+        "static": true,
+        "tokens": [],
+        "description": "BodyFlower strip. Clay bg."
+      },
+      "divider-illo-50clay": {
+        "file": "templates/dividers/divider-illo-50clay.html",
+        "static": true,
+        "tokens": [],
+        "description": "BodyFlower strip. 50% Clay bg."
+      },
+      "divider-illo-white": {
+        "file": "templates/dividers/divider-illo-white.html",
+        "static": true,
+        "tokens": [],
+        "description": "BodyFlower strip. White bg. Has 1px borders."
+      },
+      "divider-illo-noir": {
+        "file": "templates/dividers/divider-illo-noir.html",
+        "static": true,
+        "tokens": [],
+        "description": "BodyFlower strip. Noir bg. Max once per email."
+      },
+      "divider-image": {
+        "file": "templates/dividers/divider-image.html",
+        "static": false,
+        "tokens": [
+          "DIVIDER_IMAGE_URL"
+        ],
+        "description": "180px lifestyle photo strip. No text."
+      }
+    },
+    "blocks": {
+      "_about": "Designed blocks are graphic-designed, fully-composed image blocks (600px wide, variable height) that are ALWAYS sliced to PNG. Because they are rasterised, they may use rich CSS — transform:rotate, position:absolute layering, box-shadow, negative-margin overlap — that does not survive as live email HTML. They drop into the single 600px column exactly like any other sliced component. Tokens are filled, then the block is rendered via the puppeteer slicer (Step 5). Fonts, illustrations and palette are locked, identical to the rest of the v4 system: Cervanttis (lowercase script), Lust (sentence-case display), NeuzeitGro (sans), Noir/Clay(#D8CCBE)/White, square black buttons.",
+      "editorial-hero": {
+        "file": "templates/blocks/editorial-hero.html",
+        "classification": "slice",
+        "description": "Photo + serif (Lust) headline + Cervanttis script accent + square button on a white plate that overlaps the photo (the 'layering'). The most editorial hero. Use as the opening beat of an engagement/editorial send when a single strong photo carries the story.",
+        "when_to_use": "Opening beat for editorial/engagement campaigns (not promo). One per email. Pair with a normal header component above it.",
+        "assets_needed": "One full-bleed lifestyle photo (600×440 display). No illustration assets.",
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "SUPER_LABEL",
+          "ACCENT_SCRIPT",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "feature-list": {
+        "file": "templates/blocks/feature-list.html",
+        "classification": "slice",
+        "description": "Tilted polaroid (left) + icon-bullet feature list (right): Lust headline, three clay disc bullets with bold title + light one-liner, square button. Cervanttis polaroid caption.",
+        "when_to_use": "When explaining 2–4 reasons-to-believe or value props beside a single product polaroid. Mid-email, after the hero/body. Max one per email.",
+        "assets_needed": "One square-crop product/lifestyle photo (192×216 display). Clay disc bullets are CSS-drawn — no icon assets.",
+        "tokens": [
+          "SECTION_SUPER",
+          "HEADLINE",
+          "FEATURE_1_TITLE",
+          "FEATURE_1_TEXT",
+          "FEATURE_2_TITLE",
+          "FEATURE_2_TEXT",
+          "FEATURE_3_TITLE",
+          "FEATURE_3_TEXT",
+          "POLAROID_IMAGE_URL",
+          "POLAROID_CAPTION",
+          "CTA_TEXT",
+          "CTA_URL"
+        ]
+      },
+      "polaroid-collage": {
+        "file": "templates/blocks/polaroid-collage.html",
+        "classification": "slice",
+        "description": "Three tilted, overlapping polaroids (angles -7°/+2°/+8°) on a Clay panel, each with a Cervanttis caption, above a Lust pull-quote + attribution. Warm, scrapbook/social-proof beat.",
+        "when_to_use": "Social-proof or 'in their words' moment, or a multi-occasion montage. After products, before the closing beat. Max one per email.",
+        "assets_needed": "Three square-crop photos (168–176px display). No illustration assets. The collage region is a fixed 340px so the absolutely-positioned polaroids are captured by the slicer.",
+        "tokens": [
+          "PHOTO_1_URL",
+          "PHOTO_1_CAPTION",
+          "PHOTO_2_URL",
+          "PHOTO_2_CAPTION",
+          "PHOTO_3_URL",
+          "PHOTO_3_CAPTION",
+          "QUOTE_ACCENT",
+          "PULL_QUOTE",
+          "QUOTE_ATTRIBUTION"
+        ]
+      },
+      "caption-bar-hero": {
+        "file": "templates/blocks/caption-bar-hero.html",
+        "classification": "slice",
+        "description": "Full-bleed photo above a caption/super-label bar: NeuzeitGro caps label + Cervanttis lowercase script caption + square button. The corpus's most common photo-led opener (editorial / occasion / flower-of-the-month). ~40% of sampled emails.",
+        "when_to_use": "Opening beat when one photo carries the story and the message is a short caption, not a paragraph. Differs from editorial-hero (which adds a Lust headline + plate). One per email; pair with a normal header above it.",
+        "assets_needed": "One full-bleed photo (600 wide; height = IMG_HEIGHT, 600 square or 440 editorial). For an ANIMATED hero, supply frames and render via slice-gif.js (see SKILL Step 5e).",
+        "parametrised": {
+          "palette": "white | clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "layout": "IMG_HEIGHT = 600 (square) or 440 (editorial 3:2)",
+          "animated": "yes — first-class GIF-hero candidate (see gif_hero below)"
+        },
+        "tokens": [
+          "HERO_IMAGE_URL",
+          "IMG_HEIGHT",
+          "SUPER_LABEL",
+          "CAPTION",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "story": {
+        "file": "templates/blocks/story.html",
+        "classification": "slice",
+        "description": "Tilted-polaroid portrait (left) + narrative copy (right): NeuzeitGro super-label, Lust headline, two Neuzeit paragraphs, Cervanttis lowercase script signature, square button. Founder / behind-the-scenes / editorial 'note' beat. ~18% of sampled emails.",
+        "when_to_use": "Founder or brand-story moment (e.g. 'from the founders', an interview, a values note). Mid-email, usually after the hero. Max one per email.",
+        "assets_needed": "One portrait / behind-the-scenes photo (square crop, 240×300 display). No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "layout": "portrait-left, text-right (locked to the corpus norm)"
+        },
+        "tokens": [
+          "PORTRAIT_IMAGE_URL",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "BODY_P1",
+          "BODY_P2",
+          "SIGNATURE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "designed-product-card": {
+        "file": "templates/blocks/designed-product-card.html",
+        "classification": "slice",
+        "description": "Rich product spotlight: photo with a tilted Cervanttis badge ribbon (bestseller / low stock / new), Lust product name, Neuzeit occasion line, Lust price, square button. The designed alternative to the plain products/card-* components. ~48% of sampled emails carry a designed spotlight.",
+        "when_to_use": "A single hero/spotlight product that needs a designed treatment (badge, big serif name + price). For plain 3–5 product grids keep using products/card-horizontal / card-lifestyle-studio. Max one designed-product-card per email.",
+        "assets_needed": "One product photo (4:5 crop, 280×350 display). Badge ribbon is CSS-drawn — no icon assets. Set BADGE_TEXT to \"\" to hide the ribbon.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "badge": "BADGE_TEXT lowercase Cervanttis, or \"\" to hide"
+        },
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "BADGE_TEXT",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_PRICE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "offer-panel": {
+        "file": "templates/blocks/offer-panel.html",
+        "classification": "slice",
+        "description": "Bold designed offer / promo HERO: NeuzeitGro caps super-label, huge Lust offer value, Lust supporting line, terms, a dashed promo-code box, a rotated Cervanttis 'sticker' ribbon, and a square button. The designed (sliced) hero version of an offer — distinct from the small inline sections/promo-code component. Confirmed across the 157-email review as the recurring promo/sale/free-ship/rewards beat (~17% of corpus).",
+        "when_to_use": "Promo / sale / flash / Black Friday / free-shipping / rewards sends — as the OPEN beat or a strong CLOSE beat. One per email. For a GIVEAWAY, use GIVEAWAY MODE (PROMO_CODE=\"\", prize in OFFER_VALUE, mechanic in SUBHEADLINE).",
+        "assets_needed": "None — type + dashed box + CSS ribbon only. No photo or illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens), or a seasonal campaign accent on PANEL_BG for occasion/promo only",
+          "code_box": "PROMO_CODE text, or \"\" to hide the whole code box",
+          "ribbon": "ACCENT_RIBBON lowercase Cervanttis, or \"\" to hide",
+          "animated": "yes — sale/urgency flash GIF candidate (see gif_hero)"
+        },
+        "tokens": [
+          "SUPER_LABEL",
+          "OFFER_VALUE",
+          "HEADLINE",
+          "SUBHEADLINE",
+          "ACCENT_RIBBON",
+          "CODE_LABEL",
+          "PROMO_CODE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "howto-steps": {
+        "file": "templates/blocks/howto-steps.html",
+        "classification": "slice",
+        "description": "Vertical numbered how-to / care sequence: super-label, Lust headline, intro, then exactly three steps (oversized Lust numeral + NeuzeitGro caps title + body + a tilted framed step photo, alternating sides), and a square button. The corpus's care/how-to beat (~5-7%) — refresh, dry, make-last, eucalyptus, arranging, home-spots.",
+        "when_to_use": "Editorial care / how-to / ritual sends that teach a 3-step method with an image per step. Mid-email. One per email. NOT for a compact horizontal partner-flow (use sections/three-column-steps-*) or reasons-to-believe bullets (use blocks/feature-list).",
+        "assets_needed": "Three square step photos (108×108 display). No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "layout": "fixed 3-step alternating rhythm (number-left/photo-right ↔ photo-left/number-right)"
+        },
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "INTRO",
+          "STEP_1_NUMBER",
+          "STEP_1_TITLE",
+          "STEP_1_TEXT",
+          "STEP_1_IMAGE_URL",
+          "STEP_2_NUMBER",
+          "STEP_2_TITLE",
+          "STEP_2_TEXT",
+          "STEP_2_IMAGE_URL",
+          "STEP_3_NUMBER",
+          "STEP_3_TITLE",
+          "STEP_3_TEXT",
+          "STEP_3_IMAGE_URL",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "comparison-vs": {
+        "file": "templates/blocks/comparison-vs.html",
+        "classification": "slice",
+        "description": "Side-by-side 'vs' comparison: super-label, Lust headline, two square photos with caps labels + captions, and a circular Cervanttis 'vs' badge straddling the columns. The left/'others'/'before' photo is desaturated; the right/'us'/'after' photo is full colour with a black border. The corpus's us-vs-them / what-we-bought-vs-got / before-after beat (niche, ~1-2%).",
+        "when_to_use": "A direct before/after or us-vs-them contrast. Mid-email. One per email.",
+        "assets_needed": "Two square photos (210×210 display). No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "layout": "symmetric two-column (left = before/others, right = after/us)"
+        },
+        "tokens": [
+          "SUPER_LABEL",
+          "HEADLINE",
+          "LEFT_LABEL",
+          "LEFT_IMAGE_URL",
+          "LEFT_CAPTION",
+          "VS_ACCENT",
+          "RIGHT_LABEL",
+          "RIGHT_IMAGE_URL",
+          "RIGHT_CAPTION",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      }
+    },
+    "block_palette_presets": {
+      "_about": "Designed blocks are PARAMETRISED on palette via four PANEL_* tokens. Fill all four by copying ONE preset row verbatim — the agent never invents hex. Keeps every variation inside the locked Noir/Clay/White system. Buttons stay square black on light presets; on the noir preset swap the button to white-on-black.",
+      "white": { "PANEL_BG": "#ffffff", "PANEL_TEXT": "#444444", "PANEL_SUB": "#aaaaaa", "PANEL_BORDER": "#e8e2da" },
+      "clay": { "PANEL_BG": "#D8CCBE", "PANEL_TEXT": "#000000", "PANEL_SUB": "#5f574d", "PANEL_BORDER": "#c7b9a9" },
+      "50clay": { "PANEL_BG": "#EBE5DF", "PANEL_TEXT": "#666666", "PANEL_SUB": "#8a8178", "PANEL_BORDER": "#ded7cf" },
+      "noir": { "PANEL_BG": "#000000", "PANEL_TEXT": "#cfcac3", "PANEL_SUB": "#888888", "PANEL_BORDER": "#2c2825", "button": "white-on-black" }
+    },
+    "variation_rules": {
+      "_about": "Derived from the corpus mine (references/research/freq.json). Goal: consecutive sends must not feel same-y, while every variation stays inside the locked system. Variation comes from (1) which designed block opens/affirms/closes, (2) the palette preset, and (3) the layout lever — NOT from new colours, fonts or illustrations.",
+      "beats": {
+        "OPEN": ["editorial-hero", "caption-bar-hero", "offer-panel (promo sends)", "hero-a", "hero-b-*", "hero-c*", "hero-d-*", "hero-image-only"],
+        "AFFIRM": ["feature-list", "story", "polaroid-collage", "testimonial", "designed-product-card", "howto-steps", "comparison-vs"],
+        "CLOSE": ["upsell-noir", "offer-panel", "promo-code", "designed-product-card"]
+      },
+      "rotation": "Across a campaign series, rotate the OPEN block and its palette so no two consecutive sends repeat the same opener+palette pair. Track the last send's (open_block, palette) and pick a different combination. Editorial/newsletter sends (the corpus's largest bucket, 25.5%) should lean on caption-bar-hero + story; promo sends on editorial-hero + designed-product-card. Care-guide / how-to sends affirm with howto-steps; us-vs-them / before-after sends affirm with comparison-vs.",
+      "no_repeat": [
+        "Do not use the same designed block twice in one email (each is 'max one per email').",
+        "Do not stack two designed blocks back-to-back without a divider.",
+        "Do not repeat the same palette preset on the OPEN block in consecutive sends of a series.",
+        "Accent colour (non-mono) only on occasion/promo sends, only as a panel/border — never type."
+      ]
+    },
+    "gif_hero": {
+      "_about": "Animated GIF heroes are FIRST-CLASS: ~31% of the corpus ships one, and image/gif ALWAYS means an animated hero (see research/freq.json). The static slicer (slice.js) emits PNG; the animated path uses slice-gif.js in the puppeteer skill.",
+      "when": "Use a GIF hero for reveal moments (flower-of-the-month / product reveals, 2–4 frames), UGC / review carousels (8–18 frames), or sale/urgency flashes (4–5 frames).",
+      "applies_to_blocks": ["caption-bar-hero", "editorial-hero", "hero-image-only"],
+      "workflow_ref": "SKILL.md Step 5e — produce N frame HTML states of the SAME block, render to one looping GIF via reference/reference-puppeteer/references/scripts/slice-gif.js, then upload/link like any other slice.",
+      "slicer": "scripts/slice-gif.js (deps: gifenc, pngjs — installed by the same npm install as slice.js)"
+    }
+  },
+  "token_rules": {
+    "HEADLINE": "Case depends on font: CERVANTTIS templates (heroes, upsell-noir, opt-out) \u2192 MUST be lowercase. LUST templates (body-copy, section-headline, products) \u2192 Sentence case. Check the template comment to confirm which font is used before writing the value.",
+    "OPT_OUT_HEADLINE": "Cervanttis font \u2014 MUST be lowercase. e.g. 'a gentle note'.",
+    "UNSUBSCRIBE_URL": "Use exact Klaviyo syntax: {{ unsubscribe_url }} \u2014 single braces, with spaces inside.",
+    "REVIEW_STARS": "Use actual Unicode star characters: \u2605\u2605\u2605\u2605\u2605",
+    "PRODUCT_IMAGE_URL": "Must be 4:5 ratio (1000\u00d71250px source min). Hosted on Klaviyo media library.",
+    "HERO_IMAGE_URL": "Hosted on Klaviyo media library. Lifestyle photography preferred.",
+    "BODY_P2": "Leave empty string if only one paragraph needed.",
+    "PRODUCT_NAME": "Lust font \u2014 sentence case. e.g. 'Blush & Wild', 'Garden Natives'.",
+    "ACCENT_SCRIPT": "Designed-block Cervanttis script accent (editorial-hero) \u2014 MUST be lowercase. e.g. 'with love,'.",
+    "POLAROID_CAPTION": "Designed-block Cervanttis polaroid caption (feature-list) \u2014 MUST be lowercase. e.g. 'osaka, our bestseller'.",
+    "PHOTO_1_CAPTION / PHOTO_2_CAPTION / PHOTO_3_CAPTION": "Designed-block Cervanttis polaroid captions (polaroid-collage) \u2014 MUST be lowercase.",
+    "QUOTE_ACCENT": "Designed-block Cervanttis accent line (polaroid-collage) \u2014 MUST be lowercase. e.g. 'in their words'.",
+    "PULL_QUOTE": "Designed-block Lust pull-quote (polaroid-collage) \u2014 sentence case.",
+    "designed_block_HEADLINE": "In designed blocks (editorial-hero, feature-list) HEADLINE is Lust \u2192 sentence case. The Cervanttis accent lives in a separate token (ACCENT_SCRIPT), which is lowercase."
+  },
+  "locked_styles": {
+    "note": "The following are baked into templates. Do not attempt to override via tokens.",
+    "font_lust": "font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;",
+    "font_cervanttis": "font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-synthesis:none;",
+    "font_nz_light": "font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;",
+    "font_nz_bold": "font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;",
+    "colours": {
+      "primary": "#000000",
+      "body": "#444444",
+      "secondary": "#666666",
+      "fine_print": "#aaaaaa",
+      "stars": "#C8A888",
+      "clay": "#D8CCBE",
+      "clay_50": "#EBE5DF",
+      "border": "#e8e2da"
+    },
+    "body_background": "#2c2825"
+  },
+  "font_cdn": {
+    "status": "complete \u2014 all fonts confirmed on Shopify CDN",
+    "cervanttis": {
+      "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cervanttis.ttf",
+      "format": "truetype",
+      "weight": 400,
+      "status": "confirmed"
+    },
+    "lust": {
+      "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lust-Regular.woff2",
+      "format": "woff2",
+      "weight": "normal",
+      "status": "confirmed"
+    },
+    "neuzeit_grotesk_light": {
+      "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Lig.otf",
+      "format": "opentype",
+      "weight": 300,
+      "status": "confirmed"
+    },
+    "neuzeit_grotesk_bold": {
+      "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Bol.otf",
+      "format": "opentype",
+      "weight": 700,
+      "status": "confirmed"
+    },
+    "note": "All 7 @font-face rules are live in shell-production.html. No further action needed.",
+    "gill_sans": {
+      "light": {
+        "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans%20Light.otf",
+        "weight": 300,
+        "status": "confirmed"
+      },
+      "regular": {
+        "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans.otf",
+        "weight": 400,
+        "status": "confirmed"
+      },
+      "bold": {
+        "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans%20Bold.otf",
+        "weight": 700,
+        "status": "confirmed"
+      },
+      "purpose": "Web-loaded fallback for NeuzeitGro. Ensures correct rendering in Android/Samsung Mail where Gill Sans is not a system font."
+    }
+  },
+  "logo_cdn_url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/F_B_Logo_Horizontal_BLK_914x200_0eb09d11-e91b-4f05-8ef4-9e54a99cb903.png",
+  "logo_dimensions": "914\u00d7200px source, displayed at 120\u00d726px in email"
+}
