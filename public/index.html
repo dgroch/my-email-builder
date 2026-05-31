@@ -20,6 +20,7 @@
     <button id="btnExportJson" class="ghost">Export JSON</button>
     <button id="btnExportHtml" class="ghost">Export HTML</button>
     <button id="btnRender" class="primary">Render PNG</button>
+    <button id="btnKlaviyo" class="primary" title="Create a draft campaign in Klaviyo">Push to Klaviyo</button>
   </div>
 </header>
 
@@ -36,11 +37,20 @@
     <div class="preview-tabs">
       <button data-tab="live" class="tab active">Live preview</button>
       <button data-tab="png" class="tab">Rendered PNG</button>
+      <button data-tab="slices" class="tab">Slices</button>
       <span id="status" class="status"></span>
     </div>
     <div class="preview-body">
       <iframe id="liveFrame" title="live preview"></iframe>
       <div id="pngWrap" class="png-wrap hidden"><img id="pngImg" alt="rendered email"></div>
+      <div id="slicesWrap" class="slices-wrap hidden">
+        <div class="slices-bar">
+          <button id="btnRenderSlices" class="primary">Render slices</button>
+          <button id="btnDownloadSlices" class="ghost" disabled>Download all (.zip)</button>
+          <span class="slices-hint">One PNG per block — drop each into a Klaviyo image block.</span>
+        </div>
+        <div id="slices" class="slices"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -59,6 +69,37 @@
     <div class="block-fields"></div>
   </div>
 </template>
+
+<dialog id="klaviyoDialog" class="kv-dialog">
+  <form method="dialog" class="kv-form">
+    <h2>Push draft to Klaviyo</h2>
+    <p class="kv-note">Creates a <b>draft</b> campaign (never sends). The server needs
+      <code>KLAVIYO_API_KEY</code> set. Audience &amp; sender are remembered in this browser.</p>
+    <label>Audience — list or segment ID
+      <input id="kvListId" type="text" placeholder="e.g. XxXxXx" required>
+    </label>
+    <label>From email
+      <input id="kvFromEmail" type="email" placeholder="hello@figandbloom.com.au" required>
+    </label>
+    <label>From label (sender name)
+      <input id="kvFromLabel" type="text" placeholder="Fig &amp; Bloom">
+    </label>
+    <label>Reply-to email (optional)
+      <input id="kvReplyTo" type="email" placeholder="optional">
+    </label>
+    <label>Subject line
+      <input id="kvSubject" type="text" placeholder="Defaults to campaign name">
+    </label>
+    <label>Preview text
+      <input id="kvPreview" type="text" placeholder="Shown after the subject in the inbox">
+    </label>
+    <div id="kvResult" class="kv-result hidden"></div>
+    <div class="kv-actions">
+      <button type="submit" value="cancel" class="ghost">Close</button>
+      <button type="button" id="kvSubmit" class="primary">Create draft</button>
+    </div>
+  </form>
+</dialog>
 
 <script src="/app.js"></script>
 </body>

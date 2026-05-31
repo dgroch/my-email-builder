@@ -179,7 +179,79 @@ function showTab(which) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === which));
   $('#liveFrame').classList.toggle('hidden', which !== 'live');
   $('#pngWrap').classList.toggle('hidden', which !== 'png');
+  $('#slicesWrap').classList.toggle('hidden', which !== 'slices');
 }
+
+// ── slices (one PNG per block, for hand-assembly in Klaviyo) ────────────────────
+let SLICES = [];
+async function renderSlices() {
+  if (!campaign.blocks.length) { setStatus('add a block first', 'warn'); return; }
+  setStatus('slicing (Puppeteer)…');
+  $('#btnDownloadSlices').disabled = true;
+  try {
+    const r = await fetch('/api/render-slices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+    const { slices, brokenImages } = await r.json();
+    SLICES = slices || [];
+    const wrap = $('#slices'); wrap.innerHTML = '';
+    SLICES.forEach((s) => {
+      const name = sliceName(s);
+      const card = el('div', { class: 'slice' }, [
+        el('div', { class: 'slice-head' }, [
+          el('span', { class: 'slice-name', text: name }),
+          el('a', { class: 'slice-dl', text: 'download', download: name, href: 'data:image/png;base64,' + s.pngBase64 }),
+        ]),
+        el('img', { class: 'slice-img', src: 'data:image/png;base64,' + s.pngBase64, alt: s.component }),
+      ]);
+      wrap.append(card);
+    });
+    $('#btnDownloadSlices').disabled = !SLICES.length;
+    if (brokenImages && brokenImages.length) setStatus(`${SLICES.length} slices · ${brokenImages.length} broken image(s)`, 'warn');
+    else setStatus(`${SLICES.length} slices ✓`, 'ok');
+  } catch (e) { setStatus('slicing failed', 'warn'); }
+}
+function sliceName(s) {
+  const n = String(s.index + 1).padStart(2, '0');
+  return `${n}-${s.component.replace(/[\/]+/g, '-')}.png`;
+}
+async function downloadSlices() {
+  if (!SLICES.length) return;
+  const files = SLICES.map(s => ({ name: sliceName(s), bytes: b64ToBytes(s.pngBase64) }));
+  const blob = zipStore(files);
+  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '-slices.zip', blob, 'application/zip');
+}
+
+// base64 → Uint8Array
+function b64ToBytes(b64) {
+  const bin = atob(b64); const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Minimal ZIP (STORE / no compression) — PNGs are already compressed. Returns a Blob.
+function zipStore(files) {
+  const enc = new TextEncoder();
+  const chunks = [], central = [];
+  let offset = 0;
+  const u16 = n => [n & 255, (n >> 8) & 255];
+  const u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  for (const f of files) {
+    const name = enc.encode(f.name), data = f.bytes, crc = crc32(data);
+    const local = [].concat(u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0));
+    chunks.push(new Uint8Array(local), name, data);
+    central.push([].concat(u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
+      u32(crc), u32(data.length), u32(data.length), u16(name.length), u16(0), u16(0), u16(0), u16(0),
+      u32(0), u32(offset)), name);
+    offset += local.length + name.length + data.length;
+  }
+  const cenStart = offset; let cenSize = 0;
+  for (const c of central) { const a = c instanceof Uint8Array ? c : new Uint8Array(c); chunks.push(a); cenSize += a.length; }
+  const end = [].concat(u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(cenSize), u32(cenStart), u16(0));
+  chunks.push(new Uint8Array(end));
+  return new Blob(chunks, { type: 'application/zip' });
+}
+const CRC_TABLE = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xffffffff; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
 
 // ── export / import ─────────────────────────────────────────────────────────────
 function download(name, content, type) {
@@ -209,12 +281,61 @@ function bindToolbar() {
   $('#campaignName').oninput = scheduleLive;
   $('#bodyBg').oninput = scheduleLive;
   $('#btnRender').onclick = renderPng;
+  $('#btnRenderSlices').onclick = renderSlices;
+  $('#btnDownloadSlices').onclick = downloadSlices;
   $('#btnExportHtml').onclick = exportHtml;
   $('#btnExportJson').onclick = exportJson;
   $('#btnImport').onclick = () => $('#fileImport').click();
   $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
   $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; hydrate(); };
+  $('#btnKlaviyo').onclick = openKlaviyo;
+  $('#kvSubmit').onclick = submitKlaviyo;
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+}
+
+// ── push draft to Klaviyo ───────────────────────────────────────────────────────
+const KV_KEYS = { kvListId: 'kvListId', kvFromEmail: 'kvFromEmail', kvFromLabel: 'kvFromLabel', kvReplyTo: 'kvReplyTo' };
+function openKlaviyo() {
+  if (!campaign.blocks.length) { setStatus('add a block first', 'warn'); return; }
+  for (const id of Object.keys(KV_KEYS)) { const v = localStorage.getItem(KV_KEYS[id]); if (v != null) $('#' + id).value = v; }
+  if (!$('#kvSubject').value) $('#kvSubject').value = campaign.campaignName || '';
+  const result = $('#kvResult'); result.classList.add('hidden'); result.textContent = '';
+  $('#klaviyoDialog').showModal();
+}
+async function submitKlaviyo() {
+  const listId = $('#kvListId').value.trim();
+  const fromEmail = $('#kvFromEmail').value.trim();
+  const result = $('#kvResult');
+  if (!listId || !fromEmail) { showKvResult('List/segment ID and from email are required.', true); return; }
+  // remember audience + sender for next time
+  for (const id of Object.keys(KV_KEYS)) localStorage.setItem(KV_KEYS[id], $('#' + id).value.trim());
+  const btn = $('#kvSubmit'); btn.disabled = true; showKvResult('Creating draft in Klaviyo…', false);
+  try {
+    const r = await fetch('/api/klaviyo-draft', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaign, listId, fromEmail,
+        fromLabel: $('#kvFromLabel').value.trim(),
+        replyToEmail: $('#kvReplyTo').value.trim(),
+        subject: $('#kvSubject').value.trim(),
+        previewText: $('#kvPreview').value.trim(),
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) { showKvResult('Klaviyo error: ' + (data.error || r.status), true); return; }
+    result.innerHTML = '';
+    result.append(
+      el('p', { text: '✓ Draft created in Klaviyo.' }),
+      el('a', { href: data.editUrl, target: '_blank', text: 'Open the draft in Klaviyo →' }),
+    );
+    result.classList.remove('hidden', 'err');
+    setStatus('pushed to Klaviyo ✓', 'ok');
+  } catch (e) {
+    showKvResult('Request failed: ' + (e.message || e), true);
+  } finally { btn.disabled = false; }
+}
+function showKvResult(msg, isErr) {
+  const r = $('#kvResult'); r.textContent = msg; r.classList.remove('hidden'); r.classList.toggle('err', !!isErr);
 }
 
 // ── sample campaign (the “card is the hard part” build, public CDN imagery) ──────

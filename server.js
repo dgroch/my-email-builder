@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
+const klaviyo = require('./lib/klaviyo');
 
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
@@ -75,6 +76,41 @@ const server = http.createServer(async (req, res) => {
       const { campaign } = await readBody(req);
       const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}' });
       return json(res, 200, { html, unfilled, campaign });
+    }
+
+    // Rasterise every block to its own PNG ("slices") for hand-assembly in Klaviyo.
+    if (req.method === 'POST' && p === '/api/render-slices') {
+      const { campaign } = await readBody(req);
+      const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
+      const { slices, brokenImages } = await render.renderSlices(html);
+      return json(res, 200, {
+        brokenImages,
+        slices: slices.map(s => ({
+          index: s.index, component: s.component, width: s.width, height: s.height,
+          pngBase64: s.buffer.toString('base64'),
+        })),
+      });
+    }
+
+    // Create a *draft* campaign in Klaviyo from the assembled HTML (never sends).
+    if (req.method === 'POST' && p === '/api/klaviyo-draft') {
+      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText } = await readBody(req);
+      const apiKey = process.env.KLAVIYO_API_KEY;
+      if (!apiKey) return json(res, 400, { error: 'KLAVIYO_API_KEY is not set on the server. Add it as an environment variable and restart.' });
+      // Production HTML: keep real Klaviyo merge tags, and point {{ASSETS_BASE}} at this
+      // server's public URL so the line-art assets resolve from Klaviyo's side.
+      const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+      const assetsBase = `${proto}://${req.headers.host}/design-system/assets`;
+      const { html } = render.assemble(campaign || {}, { assetsBase, production: true });
+      try {
+        const result = await klaviyo.createDraftCampaign({
+          apiKey, listId, fromEmail, fromLabel, replyToEmail, subject, previewText,
+          name: (campaign && campaign.campaignName) || 'Untitled campaign', html,
+        });
+        return json(res, 200, result);
+      } catch (e) {
+        return json(res, 502, { error: String((e && e.message) || e) });
+      }
     }
 
     send(res, 404, 'Not found');
