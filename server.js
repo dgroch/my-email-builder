@@ -9,6 +9,7 @@ const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
+const designs = require('./lib/designs');
 
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
@@ -60,8 +61,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && p === '/api/schema') return json(res, 200, buildSchema(DS));
 
     if (req.method === 'POST' && p === '/api/assemble') {
-      const { campaign } = await readBody(req);
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '/design-system/assets' });
+      const { campaign, markBlocks } = await readBody(req);
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '/design-system/assets', markBlocks: !!markBlocks });
       return json(res, 200, { html, unfilled });
     }
 
@@ -141,6 +142,31 @@ const server = http.createServer(async (req, res) => {
         return json(res, 200, { ...result, sliceCount: slices.length });
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
+      }
+    }
+
+    // ── persisted designs (save / reopen / clone / delete) ───────────────────────
+    if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: designs.list() });
+
+    if (req.method === 'POST' && p === '/api/designs') {
+      const { name, campaign } = await readBody(req);
+      return json(res, 200, designs.create({ name, campaign }));
+    }
+
+    // /api/designs/:id  and  /api/designs/:id/clone
+    if (p.startsWith('/api/designs/')) {
+      const rest = p.slice('/api/designs/'.length);
+      const [id, action] = rest.split('/');
+
+      if (req.method === 'POST' && action === 'clone') {
+        const { name } = await readBody(req);
+        const d = designs.clone(id, name);
+        return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' });
+      }
+      if (!action) {
+        if (req.method === 'GET') { const d = designs.get(id); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'PUT') { const { name, campaign } = await readBody(req); const d = designs.update(id, { name, campaign }); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'DELETE') return designs.remove(id) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Design not found.' });
       }
     }
 

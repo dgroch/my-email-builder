@@ -4,10 +4,19 @@ services:
   - type: web
     name: my-email-builder
     runtime: docker
-    plan: free
+    # A persistent disk (below) requires a paid instance type; the free plan has an
+    # ephemeral filesystem, so saved designs would be lost on each redeploy/restart.
+    plan: starter
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: CHROMIUM_PATH
         value: /usr/bin/chromium
+      - key: DATA_DIR
+        value: /data/designs
+    # Persistent storage for saved designs (lib/designs.js writes JSON here).
+    disk:
+      name: designs
+      mountPath: /data
+      sizeGB: 1

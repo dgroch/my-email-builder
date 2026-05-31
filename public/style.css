@@ -23,6 +23,8 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 .add-row select{flex:1;font:inherit;font-size:13px;padding:9px;border:1px solid var(--line);border-radius:6px;background:#fff;}
 .empty{color:var(--sub);font-size:13px;text-align:center;padding:40px 0;}
 .block-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+.block-card.flash{animation:cardflash 1.1s ease-out;}
+@keyframes cardflash{0%{box-shadow:0 0 0 2px var(--accent);border-color:var(--accent);}100%{box-shadow:0 0 0 0 transparent;}}
 .block-head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#faf8f4;border-bottom:1px solid var(--line);}
 .block-name{font-family:Georgia,serif;font-size:14px;}
 .block-tag{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#fff;background:#000;border-radius:3px;padding:2px 6px;}
@@ -52,7 +54,10 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 .status.warn{color:var(--warn);}
 .status.ok{color:var(--ok);}
 .preview-body{flex:1;overflow:auto;background:#2c2825;display:flex;justify-content:center;}
-#liveFrame{width:600px;border:none;background:#fff;min-height:100%;}
+/* 640px (not 600) so the email's max-width:600px mobile breakpoint doesn't fire in the
+   preview — it would stack horizontal cards like a phone. The 600px email centres inside,
+   matching the rasterised PNG (which renders at the same 640px width). */
+#liveFrame{width:640px;border:none;background:#fff;min-height:100%;}
 .png-wrap{padding:16px;}
 .png-wrap img{width:600px;display:block;box-shadow:0 4px 24px #0006;}
 .hidden{display:none!important;}
@@ -85,5 +90,14 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 .kv-result.err{color:var(--warn);background:#f6ebe2;}
 .kv-result a{color:inherit;font-weight:600;}
 .kv-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;}
+
+/* My designs list */
+.designs-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;}
+.design-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#faf8f4;}
+.design-row.current{border-color:var(--accent);}
+.design-meta{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.design-name{font-family:Georgia,serif;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.design-when{font-size:10px;color:var(--sub);}
+.design-actions{display:flex;gap:6px;flex:none;}
 
 @media (max-width:900px){main{grid-template-columns:1fr;height:auto;}.preview{height:80vh;}.slice{width:100%;}}

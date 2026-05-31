@@ -15,6 +15,8 @@
   </div>
   <div class="actions">
     <button id="btnSample" class="ghost" title="Load the “card is the hard part” sample">Sample</button>
+    <button id="btnDesigns" class="ghost" title="Open a saved design">My designs</button>
+    <button id="btnSave" class="ghost" title="Save this design to the server">Save</button>
     <button id="btnImport" class="ghost">Import JSON</button>
     <input id="fileImport" type="file" accept="application/json" hidden>
     <button id="btnExportJson" class="ghost">Export JSON</button>
@@ -103,6 +105,18 @@
       <button type="button" id="kvSubmit" class="primary">Create draft</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="designsDialog" class="kv-dialog">
+  <div class="kv-form">
+    <h2>My designs</h2>
+    <p class="kv-note">Saved on the server so you can reopen or clone them later. (Persists across
+      sessions when the server has a persistent disk.)</p>
+    <div id="designsList" class="designs-list"></div>
+    <div class="kv-actions">
+      <button type="button" id="designsClose" class="ghost">Close</button>
+    </div>
+  </div>
 </dialog>
 
 <script src="/app.js"></script>
