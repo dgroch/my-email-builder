@@ -68,6 +68,7 @@ function renderBlocks() {
   campaign.blocks.forEach((block, i) => {
     const comp = byName[block.component]; if (!comp) return;
     const card = $('#blockCardTpl').content.firstElementChild.cloneNode(true);
+    card.dataset.index = i;
     card.querySelector('.block-name').textContent = block.component;
     const tag = card.querySelector('.block-tag');
     if (comp.designed) tag.textContent = 'designed'; else if (comp.static) { tag.textContent = 'static'; tag.classList.add('plain'); } else { tag.textContent = 'text'; tag.classList.add('plain'); }
@@ -152,15 +153,47 @@ function setStatus(msg, cls = '') { const s = $('#status'); s.textContent = msg;
 async function livePreview() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
-  if (!campaign.blocks.length) { $('#liveFrame').srcdoc = ''; return; }
+  const frame = $('#liveFrame');
+  if (!campaign.blocks.length) { frame.srcdoc = ''; return; }
   setStatus('rendering…');
+  // Preserve the preview's scroll position so an edit doesn't yank it back to the top.
+  let prevScroll = 0;
+  try { prevScroll = (frame.contentWindow && frame.contentWindow.scrollY) || 0; } catch (_) {}
   try {
-    const r = await fetch('/api/assemble', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+    const r = await fetch('/api/assemble', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign, markBlocks: true }) });
     const { html, unfilled } = await r.json();
-    $('#liveFrame').srcdoc = html;
+    frame.onload = () => {
+      frame.onload = null;
+      try { frame.contentWindow.scrollTo(0, prevScroll); } catch (_) {}
+      wirePreviewClicks(frame);
+    };
+    frame.srcdoc = html;
     if (unfilled.length) setStatus(`${unfilled.length} empty token${unfilled.length > 1 ? 's' : ''}`, 'warn');
     else setStatus('preview up to date', 'ok');
   } catch (e) { setStatus('preview error', 'warn'); }
+}
+
+// Click a block in the preview → focus its builder card on the left.
+function wirePreviewClicks(frame) {
+  let doc; try { doc = frame.contentDocument; } catch (_) { return; }
+  if (!doc) return;
+  doc.querySelectorAll('[data-eb-block]').forEach((node) => {
+    node.style.cursor = 'pointer';
+    node.addEventListener('click', (e) => {
+      // don't hijack real links/buttons inside the block
+      if (e.target.closest('a,button')) return;
+      focusBlockCard(Number(node.getAttribute('data-eb-block')));
+    });
+  });
+}
+
+// Scroll the matching builder card into view and flash a highlight.
+function focusBlockCard(index) {
+  const card = document.querySelector(`#blocks .block-card[data-index="${index}"]`);
+  if (!card) return;
+  card.classList.remove('collapsed');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash');
 }
 
 async function renderPng() {
@@ -275,7 +308,7 @@ async function exportHtml() {
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {
   const fr = new FileReader();
-  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; hydrate(); } catch (e) { alert('Invalid JSON'); } };
+  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; currentDesignId = null; hydrate(); } catch (e) { alert('Invalid JSON'); } };
   fr.readAsText(file);
 }
 function hydrate() {
@@ -297,10 +330,92 @@ function bindToolbar() {
   $('#btnExportJson').onclick = exportJson;
   $('#btnImport').onclick = () => $('#fileImport').click();
   $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
-  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; hydrate(); };
+  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; currentDesignId = null; hydrate(); };
   $('#btnKlaviyo').onclick = openKlaviyo;
   $('#kvSubmit').onclick = submitKlaviyo;
+  $('#btnSave').onclick = saveDesign;
+  $('#btnDesigns').onclick = openDesigns;
+  $('#designsClose').onclick = () => $('#designsDialog').close();
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+}
+
+// ── persisted designs (save / reopen / clone / delete) ──────────────────────────
+let currentDesignId = null;   // server id of the design currently loaded (null = unsaved)
+
+async function saveDesign() {
+  campaign.campaignName = $('#campaignName').value;
+  campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
+  try {
+    let r;
+    if (currentDesignId) {
+      r = await fetch('/api/designs/' + currentDesignId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: campaign.campaignName, campaign }) });
+    } else {
+      const name = prompt('Name this design:', campaign.campaignName || 'Untitled design');
+      if (name === null) return;
+      r = await fetch('/api/designs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, campaign }) });
+    }
+    if (!r.ok) throw new Error('save failed');
+    const d = await r.json();
+    currentDesignId = d.id;
+    setStatus('saved ✓', 'ok');
+  } catch (e) { setStatus('save failed', 'warn'); }
+}
+
+async function openDesigns() {
+  const list = $('#designsList');
+  list.innerHTML = '<p class="desc">Loading…</p>';
+  $('#designsDialog').showModal();
+  try {
+    const { designs } = await (await fetch('/api/designs')).json();
+    list.innerHTML = '';
+    if (!designs.length) { list.innerHTML = '<p class="desc">No saved designs yet. Build something and click <b>Save</b>.</p>'; return; }
+    for (const d of designs) {
+      const when = d.updatedAt ? new Date(d.updatedAt).toLocaleString() : '';
+      const row = el('div', { class: 'design-row' + (d.id === currentDesignId ? ' current' : '') }, [
+        el('div', { class: 'design-meta' }, [
+          el('span', { class: 'design-name', text: d.name || 'Untitled design' }),
+          el('span', { class: 'design-when', text: when }),
+        ]),
+        el('div', { class: 'design-actions' }, [
+          el('button', { class: 'mini', text: 'Open', onclick: () => loadDesign(d.id) }),
+          el('button', { class: 'mini', text: 'Clone', onclick: () => cloneDesign(d.id) }),
+          el('button', { class: 'mini', text: 'Delete', onclick: () => deleteDesign(d.id, row) }),
+        ]),
+      ]);
+      list.append(row);
+    }
+  } catch (e) { list.innerHTML = '<p class="desc warn">Could not load designs.</p>'; }
+}
+
+async function loadDesign(id) {
+  try {
+    const d = await (await fetch('/api/designs/' + id)).json();
+    if (!d || !d.campaign) throw new Error('bad design');
+    campaign = d.campaign;
+    uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1;
+    currentDesignId = d.id;
+    $('#designsDialog').close();
+    hydrate();
+    setStatus('opened “' + (d.name || 'design') + '”', 'ok');
+  } catch (e) { setStatus('open failed', 'warn'); }
+}
+
+async function cloneDesign(id) {
+  try {
+    const d = await (await fetch('/api/designs/' + id + '/clone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).json();
+    await openDesigns();          // refresh list to show the copy
+    if (d && d.id) loadDesign(d.id); // open the clone for editing
+  } catch (e) { setStatus('clone failed', 'warn'); }
+}
+
+async function deleteDesign(id, row) {
+  if (!confirm('Delete this design? This cannot be undone.')) return;
+  try {
+    await fetch('/api/designs/' + id, { method: 'DELETE' });
+    if (id === currentDesignId) currentDesignId = null;
+    row.remove();
+  } catch (e) { setStatus('delete failed', 'warn'); }
 }
 
 // ── push draft to Klaviyo ───────────────────────────────────────────────────────

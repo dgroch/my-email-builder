@@ -61,15 +61,18 @@ git push -u origin main
   one giant PNG.
 - **Push to Klaviyo** — creates a **draft** campaign in Klaviyo straight from the builder
   (template + campaign + message, all draft — nothing is ever sent).
+- **Saved designs** — **Save** a design to the server and reopen, **clone** or delete it later
+  from **My designs**. Click a block in the preview to jump to its card on the left.
 - **Case validation** — warns + one-click fixes Cervanttis/Lust case violations as you type.
 - **Import / Export** — round-trip a `campaign.json`, or export the assembled HTML.
 
 ## Layout
 ```
-server.js                 zero-dependency HTTP server (UI + /api/{schema,assemble,render,render-slices,export,klaviyo-draft})
+server.js                 zero-dependency HTTP server (UI + /api/{schema,assemble,render,render-slices,export,klaviyo-draft,designs})
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
+lib/designs.js            saves/loads/clones campaign designs as JSON files under DATA_DIR
 public/                   editor UI (index.html, app.js, style.css)
 design-system/            bundled copy of the template library, shells, fonts, assets, manifest
 ```
@@ -78,13 +81,31 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | Method | Path | Body | Returns |
 |---|---|---|---|
 | GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), ordering & token rules |
-| POST | `/api/assemble` | `{campaign}` | `{html, unfilled}` — assembled preview HTML |
+| POST | `/api/assemble` | `{campaign, markBlocks?}` | `{html, unfilled}` — assembled preview HTML (`markBlocks` adds `data-eb-block` anchors) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
 | POST | `/api/export`   | `{campaign}` | `{html, unfilled, campaign}` (HTML keeps `{{ASSETS_BASE}}` + Klaviyo tags) |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
+| GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt}]}` (metadata only) |
+| POST | `/api/designs`        | `{name?, campaign}` | the saved design `{id, name, createdAt, updatedAt, campaign}` |
+| GET  | `/api/designs/:id`    | — | the full saved design |
+| PUT  | `/api/designs/:id`    | `{name?, campaign?}` | the updated design |
+| POST | `/api/designs/:id/clone` | `{name?}` | a new design copied from `:id` |
+| DELETE | `/api/designs/:id`  | — | `{ok:true}` |
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
+
+## Saving designs (persistence)
+**Save** writes the current design to the server as a JSON file; **My designs** lists them to
+reopen, **clone**, or delete. Designs are stored under `DATA_DIR` (default `./data`, set to a
+mounted disk in production). Clicking a block in the live preview scrolls to and highlights its
+card in the builder.
+
+On Render this needs a **persistent disk** so saved designs survive redeploys — the bundled
+`render.yaml` mounts a 1 GB disk at `/data` and points `DATA_DIR=/data/designs`. A persistent disk
+requires a **paid** instance type (the blueprint sets `plan: starter`); on the free plan the
+filesystem is ephemeral and saved designs are lost on each redeploy/restart. Export/Import JSON
+remains the portable, storage-independent backup.
 
 ## Production handoff
 The exported HTML keeps `{{ASSETS_BASE}}` and the footer's Klaviyo merge tags. To ship:
