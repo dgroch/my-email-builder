@@ -103,6 +103,18 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
+    // List the account's lists + segments so the UI can offer an audience picker
+    // (users choose by name; we send the real ID to Klaviyo).
+    if (req.method === 'GET' && p === '/api/klaviyo-audiences') {
+      const apiKey = process.env.KLAVIYO_API_KEY;
+      if (!apiKey) return json(res, 400, { error: 'KLAVIYO_API_KEY is not set on the server. Add it as an environment variable and restart.' });
+      try {
+        return json(res, 200, await klaviyo.listAudiences(apiKey));
+      } catch (e) {
+        return json(res, 502, { error: String((e && e.message) || e) });
+      }
+    }
+
     // Create a *draft* campaign in Klaviyo, built from per-block image slices so each block
     // becomes its own image with its own link (never one giant PNG). The footer stays live
     // HTML so its {% unsubscribe %} tag works. `links` is an optional {index: url} override.

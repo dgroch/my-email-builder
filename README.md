@@ -85,6 +85,7 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
 | POST | `/api/export`   | `{campaign}` | `{html, unfilled, campaign}` (HTML keeps `{{ASSETS_BASE}}` + Klaviyo tags) |
+| GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
 | GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt}]}` (metadata only) |
 | POST | `/api/designs`        | `{name?, campaign}` | the saved design `{id, name, createdAt, updatedAt, campaign}` |
@@ -146,13 +147,13 @@ Those overrides are sent with the push, so each block links wherever you want.
 
 Setup:
 1. Create a Klaviyo **private API key** with `campaigns:write` + `templates:write` + `images:write`
-   scopes (the last is needed to upload the slices).
+   (upload the slices) + `lists:read` + `segments:read` (populate the audience picker) scopes.
 2. Give it to the **server** as an env var (never the browser): `KLAVIYO_API_KEY=pk_xxx`.
    On Render, add it under the service's *Environment*. Optionally pin `KLAVIYO_REVISION`
    (defaults to a recent stable revision).
-3. In the dialog, fill the **audience** (a Klaviyo list or segment ID), **from email**, and
-   optionally from-label / reply-to / subject / preview text. Audience + sender are remembered
-   in your browser's localStorage for next time.
+3. In the dialog, pick the **audience** from the list/segment dropdown (or paste an ID),
+   set the **from email**, and optionally from-label / reply-to / subject / preview text.
+   Audience + sender are remembered in your browser's localStorage for next time.
 
 Note: line-art assets in the slices are baked into the uploaded PNGs, so they don't depend on the
 server being reachable. Push from the deployed (Render) instance rather than localhost so Chromium

@@ -79,9 +79,13 @@
       image slices</b> — each block is its own image with its own link, not one giant PNG. The
       footer stays live HTML so the unsubscribe link works. The server needs
       <code>KLAVIYO_API_KEY</code> (scopes <code>campaigns:write</code>,
-      <code>templates:write</code>, <code>images:write</code>). Set per-block links in the
-      <b>Slices</b> tab first. Audience &amp; sender are remembered in this browser.</p>
-    <label>Audience — list or segment ID
+      <code>templates:write</code>, <code>images:write</code>, <code>lists:read</code>,
+      <code>segments:read</code>). Set per-block links in the <b>Slices</b> tab first.
+      Audience &amp; sender are remembered in this browser.</p>
+    <label>Audience — list or segment
+      <select id="kvAudience"><option value="">Loading audiences…</option></select>
+    </label>
+    <label class="kv-manual">ID (override / paste manually)
       <input id="kvListId" type="text" placeholder="e.g. XxXxXx" required>
     </label>
     <label>From email
