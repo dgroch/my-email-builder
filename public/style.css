@@ -67,6 +67,10 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 .slice-name{font-family:Georgia,serif;font-size:12px;color:var(--ink);}
 .slice-dl{font-size:11px;color:var(--accent);text-decoration:underline;cursor:pointer;}
 .slice-img{display:block;width:100%;}
+.slice-link{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#faf8f4;border-top:1px solid var(--line);font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--ink);}
+.slice-link span{flex:none;}
+.slice-link-input{flex:1;font:inherit;font-size:12px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:6px 9px;}
+.slice-link.note{font-weight:400;color:var(--sub);font-style:italic;}
 
 /* Klaviyo dialog */
 .kv-dialog{border:none;border-radius:12px;padding:0;max-width:440px;width:92vw;box-shadow:0 16px 60px #0005;}

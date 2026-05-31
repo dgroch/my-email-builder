@@ -80,9 +80,9 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), ordering & token rules |
 | POST | `/api/assemble` | `{campaign}` | `{html, unfilled}` — assembled preview HTML |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
-| POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64}], brokenImages}` |
+| POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
 | POST | `/api/export`   | `{campaign}` | `{html, unfilled, campaign}` (HTML keeps `{{ASSETS_BASE}}` + Klaviyo tags) |
-| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?}` | `{campaignId, messageId, templateId, editUrl}` |
+| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
 
@@ -99,14 +99,33 @@ its own Klaviyo image block so every section keeps its own click-through URL and
 classic "sliced email" build, but generated for you. The zip is built in the browser (no extra
 dependency); the PNGs are 2× for retina.
 
+Each slice also shows an editable **Link URL** (pre-filled from the block's tokens). These are the
+same per-block links used by **Push to Klaviyo** below, so set them here once. The unsubscribe
+footer is flagged as live HTML rather than an image.
+
 ## Push draft to Klaviyo
 The **Push to Klaviyo** button creates a **draft** campaign in your Klaviyo account — it never
-sends. Under the hood it (1) creates a `CODE` template from the assembled HTML, (2) creates a
-draft campaign with one email message, and (3) assigns the template to that message. You then
-finish/schedule/send it inside Klaviyo.
+sends. The draft is built from **per-block image slices, not one giant PNG**, so each block is its
+own image with its own click-through link. Under the hood it:
+
+1. rasterises each block to its own PNG (same engine as the **Slices** tab);
+2. uploads each PNG to your Klaviyo **media library** (`POST /api/image-upload`), getting a hosted
+   `image_url`;
+3. assembles a `CODE` template where every block is a `<tr>` with that hosted image wrapped in its
+   own `<a href>` link;
+4. creates a draft campaign + message and assigns the template.
+
+The **footer stays live HTML** (not an image) so its `{% unsubscribe %}` merge tag still works —
+rasterising it would break the legally-required unsubscribe link. You then finish/schedule/send the
+draft inside Klaviyo.
+
+**Per-block links:** open the **Slices** tab and click **Render slices** first — each image block
+gets an editable *Link URL* (pre-filled from its tokens: `CTA_URL` / `PRODUCT_URL` / `HERO_LINK_URL`).
+Those overrides are sent with the push, so each block links wherever you want.
 
 Setup:
-1. Create a Klaviyo **private API key** with `campaigns:write` + `templates:write` scopes.
+1. Create a Klaviyo **private API key** with `campaigns:write` + `templates:write` + `images:write`
+   scopes (the last is needed to upload the slices).
 2. Give it to the **server** as an env var (never the browser): `KLAVIYO_API_KEY=pk_xxx`.
    On Render, add it under the service's *Environment*. Optionally pin `KLAVIYO_REVISION`
    (defaults to a recent stable revision).
@@ -114,10 +133,10 @@ Setup:
    optionally from-label / reply-to / subject / preview text. Audience + sender are remembered
    in your browser's localStorage for next time.
 
-Notes: the draft's `{{ASSETS_BASE}}` is pointed at *this server's* public URL so the line-art
-assets resolve from Klaviyo's side — so push from the deployed (Render) instance, not localhost,
-if you want those images to load. Product images already use absolute CDN URLs. For a fully
-hand-tuned build, the **Slices** workflow above gives you per-block PNGs to place manually.
+Note: line-art assets in the slices are baked into the uploaded PNGs, so they don't depend on the
+server being reachable. Push from the deployed (Render) instance rather than localhost so Chromium
+can load your CDN product imagery while rasterising. For a fully hand-tuned build, the **Slices**
+tab also lets you download the PNGs and place them in Klaviyo yourself.
 
 ## Generating campaigns in future (and the "email builder skill")
 This interface is **template-driven**, not an exporter you upload *into*. The campaign you build

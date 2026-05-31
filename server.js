@@ -78,36 +78,67 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { html, unfilled, campaign });
     }
 
-    // Rasterise every block to its own PNG ("slices") for hand-assembly in Klaviyo.
+    // Rasterise every block to its own PNG ("slices"). Also returns each block's default
+    // click-through URL (from its tokens) and whether it's the live-HTML unsubscribe block,
+    // so the UI can show/override per-block links before pushing the sliced draft.
     if (req.method === 'POST' && p === '/api/render-slices') {
       const { campaign } = await readBody(req);
       const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
       const { slices, brokenImages } = await render.renderSlices(html);
+      const meta = render.assembleBlocks(campaign || {});
+      const byIndex = {};
+      for (const b of meta.blocks) byIndex[b.index] = b;
       return json(res, 200, {
         brokenImages,
-        slices: slices.map(s => ({
-          index: s.index, component: s.component, width: s.width, height: s.height,
-          pngBase64: s.buffer.toString('base64'),
-        })),
+        slices: slices.map(s => {
+          const b = byIndex[s.index] || {};
+          return {
+            index: s.index, component: s.component, width: s.width, height: s.height,
+            pngBase64: s.buffer.toString('base64'),
+            link: render.deriveLink(b.tokens),
+            keepHtml: render.isUnsubscribeBlock(s.component, b.html),
+          };
+        }),
       });
     }
 
-    // Create a *draft* campaign in Klaviyo from the assembled HTML (never sends).
+    // Create a *draft* campaign in Klaviyo, built from per-block image slices so each block
+    // becomes its own image with its own link (never one giant PNG). The footer stays live
+    // HTML so its {% unsubscribe %} tag works. `links` is an optional {index: url} override.
     if (req.method === 'POST' && p === '/api/klaviyo-draft') {
-      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText } = await readBody(req);
+      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links } = await readBody(req);
       const apiKey = process.env.KLAVIYO_API_KEY;
       if (!apiKey) return json(res, 400, { error: 'KLAVIYO_API_KEY is not set on the server. Add it as an environment variable and restart.' });
-      // Production HTML: keep real Klaviyo merge tags, and point {{ASSETS_BASE}} at this
-      // server's public URL so the line-art assets resolve from Klaviyo's side.
       const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
       const assetsBase = `${proto}://${req.headers.host}/design-system/assets`;
-      const { html } = render.assemble(campaign || {}, { assetsBase, production: true });
+      const linkOverride = links || {};
       try {
+        // 1. Rasterise each block from the production-shelled, block-marked HTML.
+        const { html: markedHtml } = render.assemble(campaign || {}, { assetsBase, production: true, markBlocks: true });
+        const { slices } = await render.renderSlices(markedHtml);
+        const sliceByIndex = {};
+        for (const s of slices) sliceByIndex[s.index] = s;
+
+        // 2. Per block, either keep live HTML (footer/unsubscribe) or upload its PNG and
+        //    emit a linked image row. Each non-footer block = its own image with its own URL.
+        const meta = render.assembleBlocks(campaign || {}, { assetsBase });
+        const rows = [];
+        for (const b of meta.blocks) {
+          if (render.isUnsubscribeBlock(b.component, b.html)) { rows.push(b.html); continue; }
+          const slice = sliceByIndex[b.index];
+          if (!slice) { rows.push(b.html); continue; } // fallback: live HTML if no slice
+          const imageUrl = await klaviyo.uploadImage(apiKey, slice.buffer, `${String(b.index + 1).padStart(2, '0')}-${b.component.replace(/[\/]+/g, '-')}`);
+          const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
+          rows.push(klaviyo.imageRow(imageUrl, { href, alt: b.tokens.HEADLINE || b.component }));
+        }
+        const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase });
+
+        // 3. Create the draft (template → campaign → assign template).
         const result = await klaviyo.createDraftCampaign({
           apiKey, listId, fromEmail, fromLabel, replyToEmail, subject, previewText,
-          name: (campaign && campaign.campaignName) || 'Untitled campaign', html,
+          name: meta.campaignName, html: fullHtml,
         });
-        return json(res, 200, result);
+        return json(res, 200, { ...result, sliceCount: slices.length });
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
       }

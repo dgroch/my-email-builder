@@ -195,12 +195,22 @@ async function renderSlices() {
     const wrap = $('#slices'); wrap.innerHTML = '';
     SLICES.forEach((s) => {
       const name = sliceName(s);
+      // Per-block link: editable for image blocks; the unsubscribe footer stays live HTML.
+      let linkRow;
+      if (s.keepHtml) {
+        linkRow = el('div', { class: 'slice-link note', text: 'Stays as live HTML (keeps the unsubscribe link) — not an image.' });
+      } else {
+        const input = el('input', { type: 'url', class: 'slice-link-input', value: s.link || '', placeholder: 'https://… (this block’s click-through URL)',
+          oninput: e => { s.link = e.target.value; } });
+        linkRow = el('label', { class: 'slice-link' }, [el('span', { text: 'Link URL' }), input]);
+      }
       const card = el('div', { class: 'slice' }, [
         el('div', { class: 'slice-head' }, [
           el('span', { class: 'slice-name', text: name }),
           el('a', { class: 'slice-dl', text: 'download', download: name, href: 'data:image/png;base64,' + s.pngBase64 }),
         ]),
         el('img', { class: 'slice-img', src: 'data:image/png;base64,' + s.pngBase64, alt: s.component }),
+        linkRow,
       ]);
       wrap.append(card);
     });
@@ -309,12 +319,16 @@ async function submitKlaviyo() {
   if (!listId || !fromEmail) { showKvResult('List/segment ID and from email are required.', true); return; }
   // remember audience + sender for next time
   for (const id of Object.keys(KV_KEYS)) localStorage.setItem(KV_KEYS[id], $('#' + id).value.trim());
-  const btn = $('#kvSubmit'); btn.disabled = true; showKvResult('Creating draft in Klaviyo…', false);
+  const btn = $('#kvSubmit'); btn.disabled = true;
+  showKvResult('Slicing blocks, uploading images & creating draft in Klaviyo…', false);
+  // Per-block link overrides edited in the Slices tab (index → url).
+  const links = {};
+  for (const s of SLICES) if (!s.keepHtml && s.link) links[s.index] = s.link;
   try {
     const r = await fetch('/api/klaviyo-draft', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        campaign, listId, fromEmail,
+        campaign, listId, fromEmail, links,
         fromLabel: $('#kvFromLabel').value.trim(),
         replyToEmail: $('#kvReplyTo').value.trim(),
         subject: $('#kvSubject').value.trim(),
@@ -325,7 +339,7 @@ async function submitKlaviyo() {
     if (!r.ok) { showKvResult('Klaviyo error: ' + (data.error || r.status), true); return; }
     result.innerHTML = '';
     result.append(
-      el('p', { text: '✓ Draft created in Klaviyo.' }),
+      el('p', { text: `✓ Draft created from ${data.sliceCount || 0} block image${data.sliceCount === 1 ? '' : 's'} (each linkable).` }),
       el('a', { href: data.editUrl, target: '_blank', text: 'Open the draft in Klaviyo →' }),
     );
     result.classList.remove('hidden', 'err');

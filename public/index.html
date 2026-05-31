@@ -73,8 +73,12 @@
 <dialog id="klaviyoDialog" class="kv-dialog">
   <form method="dialog" class="kv-form">
     <h2>Push draft to Klaviyo</h2>
-    <p class="kv-note">Creates a <b>draft</b> campaign (never sends). The server needs
-      <code>KLAVIYO_API_KEY</code> set. Audience &amp; sender are remembered in this browser.</p>
+    <p class="kv-note">Creates a <b>draft</b> campaign (never sends), built from <b>per-block
+      image slices</b> — each block is its own image with its own link, not one giant PNG. The
+      footer stays live HTML so the unsubscribe link works. The server needs
+      <code>KLAVIYO_API_KEY</code> (scopes <code>campaigns:write</code>,
+      <code>templates:write</code>, <code>images:write</code>). Set per-block links in the
+      <b>Slices</b> tab first. Audience &amp; sender are remembered in this browser.</p>
     <label>Audience — list or segment ID
       <input id="kvListId" type="text" placeholder="e.g. XxXxXx" required>
     </label>
