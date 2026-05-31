@@ -425,7 +425,36 @@ function openKlaviyo() {
   for (const id of Object.keys(KV_KEYS)) { const v = localStorage.getItem(KV_KEYS[id]); if (v != null) $('#' + id).value = v; }
   if (!$('#kvSubject').value) $('#kvSubject').value = campaign.campaignName || '';
   const result = $('#kvResult'); result.classList.add('hidden'); result.textContent = '';
+  loadAudiences();
   $('#klaviyoDialog').showModal();
+}
+
+// Populate the audience picker from the account's lists + segments. Picking one fills the
+// ID field (which is what we send to Klaviyo); the field stays editable as a manual override.
+async function loadAudiences() {
+  const sel = $('#kvAudience');
+  const savedId = localStorage.getItem('kvListId') || $('#kvListId').value.trim();
+  sel.innerHTML = '<option value="">Loading audiences…</option>';
+  sel.onchange = () => { if (sel.value) $('#kvListId').value = sel.value; };
+  try {
+    const r = await fetch('/api/klaviyo-audiences');
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || r.status);
+    sel.innerHTML = '';
+    sel.append(el('option', { value: '', text: '— choose a list or segment —' }));
+    const group = (label, items) => {
+      if (!items || !items.length) return;
+      const og = el('optgroup', { label });
+      for (const a of items) og.append(el('option', { value: a.id, text: `${a.name} (${a.id})`, ...(a.id === savedId ? { selected: 'selected' } : {}) }));
+      sel.append(og);
+    };
+    group('Lists', data.lists);
+    group('Segments', data.segments);
+    if (savedId) sel.value = savedId; // reflect remembered choice if present
+  } catch (e) {
+    sel.innerHTML = '';
+    sel.append(el('option', { value: '', text: 'Could not load audiences — paste an ID below' }));
+  }
 }
 async function submitKlaviyo() {
   const listId = $('#kvListId').value.trim();
