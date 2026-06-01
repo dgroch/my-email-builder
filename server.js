@@ -9,7 +9,11 @@ const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
-const designs = require('./lib/designs');
+// Pick the designs backend: Notion (durable, survives redeploys) when configured,
+// else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
+const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
+  ? require('./lib/notionStore')
+  : require('./lib/designs');
 
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
@@ -158,11 +162,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ── persisted designs (save / reopen / clone / delete) ───────────────────────
-    if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: designs.list() });
+    // Store calls are awaited so either backend works (disk = sync, Notion = async).
+    if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: await designs.list() });
 
     if (req.method === 'POST' && p === '/api/designs') {
       const { name, campaign } = await readBody(req);
-      return json(res, 200, designs.create({ name, campaign }));
+      return json(res, 200, await designs.create({ name, campaign }));
     }
 
     // /api/designs/:id  and  /api/designs/:id/clone
@@ -172,13 +177,13 @@ const server = http.createServer(async (req, res) => {
 
       if (req.method === 'POST' && action === 'clone') {
         const { name } = await readBody(req);
-        const d = designs.clone(id, name);
+        const d = await designs.clone(id, name);
         return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' });
       }
       if (!action) {
-        if (req.method === 'GET') { const d = designs.get(id); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
-        if (req.method === 'PUT') { const { name, campaign } = await readBody(req); const d = designs.update(id, { name, campaign }); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
-        if (req.method === 'DELETE') return designs.remove(id) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Design not found.' });
+        if (req.method === 'GET') { const d = await designs.get(id); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'PUT') { const { name, campaign } = await readBody(req); const d = await designs.update(id, { name, campaign }); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'DELETE') return (await designs.remove(id)) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Design not found.' });
       }
     }
 
@@ -189,7 +194,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}\n`);
+  console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
+  console.log(`  designs store: ${designs.backend === 'notion' ? 'Notion database' : 'local disk (' + designs.DATA_DIR + ')'}\n`);
 });
 
 process.on('SIGINT', async () => { await render.closeBrowser(); process.exit(0); });
