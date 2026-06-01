@@ -4,19 +4,17 @@ services:
   - type: web
     name: my-email-builder
     runtime: docker
-    # A persistent disk (below) requires a paid instance type; the free plan has an
-    # ephemeral filesystem, so saved designs would be lost on each redeploy/restart.
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /
     autoDeploy: true
     envVars:
       - key: CHROMIUM_PATH
         value: /usr/bin/chromium
-      - key: DATA_DIR
-        value: /data/designs
-    # Persistent storage for saved designs (lib/designs.js writes JSON here).
-    disk:
-      name: designs
-      mountPath: /data
-      sizeGB: 1
+      # Saved designs are stored in a Notion database (durable across redeploys),
+      # so no persistent disk / paid plan is required. Set these in the Render
+      # dashboard (kept out of the blueprint since they're secrets):
+      #   NOTION_TOKEN        — internal integration secret (https://www.notion.so/my-integrations)
+      #   NOTION_DESIGNS_DB   — the "Email Designs" database id
+      # If NOTION_TOKEN is unset, the app falls back to local-disk storage at
+      # DATA_DIR (ephemeral unless you add a persistent disk + paid plan).

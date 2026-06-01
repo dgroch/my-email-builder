@@ -72,7 +72,8 @@ server.js                 zero-dependency HTTP server (UI + /api/{schema,assembl
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
-lib/designs.js            saves/loads/clones campaign designs as JSON files under DATA_DIR
+lib/designs.js            designs backend: local-disk JSON store (fallback)
+lib/notionStore.js        designs backend: Notion database store (used when NOTION_TOKEN is set)
 public/                   editor UI (index.html, app.js, style.css)
 design-system/            bundled copy of the template library, shells, fonts, assets, manifest
 ```
@@ -97,16 +98,30 @@ design-system/            bundled copy of the template library, shells, fonts, a
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
 
 ## Saving designs (persistence)
-**Save** writes the current design to the server as a JSON file; **My designs** lists them to
-reopen, **clone**, or delete. Designs are stored under `DATA_DIR` (default `./data`, set to a
-mounted disk in production). Clicking a block in the live preview scrolls to and highlights its
-card in the builder.
+**Save** stores the current design; **My designs** lists them to reopen, **clone**, or delete.
+Clicking a block in the live preview scrolls to and highlights its card in the builder. There are
+two interchangeable backends (same `/api/designs` API) — the server picks one at startup and logs
+which:
 
-On Render this needs a **persistent disk** so saved designs survive redeploys — the bundled
-`render.yaml` mounts a 1 GB disk at `/data` and points `DATA_DIR=/data/designs`. A persistent disk
-requires a **paid** instance type (the blueprint sets `plan: starter`); on the free plan the
-filesystem is ephemeral and saved designs are lost on each redeploy/restart. Export/Import JSON
-remains the portable, storage-independent backup.
+### Notion database (recommended — survives redeploys, no paid plan)
+Set both env vars and the app stores each design as a page in a Notion database:
+
+- `NOTION_TOKEN` — an **internal integration** secret (create at
+  <https://www.notion.so/my-integrations>).
+- `NOTION_DESIGNS_DB` — the **Email Designs** database id.
+
+Then **share the database with the integration**: open the database in Notion → `•••` →
+*Connections* → add your integration. Each design becomes a row (Name / Updated / Created visible
+as properties) with the full campaign JSON stored as chunked ```json code blocks in the page body
+(Notion caps a single text run at 2000 chars). Durable across redeploys, and you can browse the
+designs in Notion. Required integration capabilities: read + insert + update content.
+
+### Local disk (fallback)
+If `NOTION_TOKEN` is unset, designs are written as JSON files under `DATA_DIR` (default `./data`).
+On Render this is **ephemeral** unless you add a persistent disk on a paid plan, so designs would be
+lost on redeploy — which is why the Notion backend is preferred.
+
+Either way, Export/Import JSON remains the portable, storage-independent backup.
 
 ## Production handoff
 The exported HTML keeps `{{ASSETS_BASE}}` and the footer's Klaviyo merge tags. To ship:
