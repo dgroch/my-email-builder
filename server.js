@@ -9,6 +9,8 @@ const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
+const { validateCampaign } = require('./lib/validate');
+const examples = require('./lib/examples');
 // Pick the designs backend: Notion (durable, survives redeploys) when configured,
 // else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
 const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
@@ -18,6 +20,12 @@ const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
 const DS = render.DS;
+
+// The schema is derived from the (static at runtime) templates + manifest, so cache it.
+// Used by /api/schema and by the campaign validator. Restart the server to pick up
+// template edits.
+let _schema = null;
+function schema() { return _schema || (_schema = buildSchema(DS)); }
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -62,12 +70,22 @@ const server = http.createServer(async (req, res) => {
       return fp ? serveFile(res, fp) : send(res, 403, 'Forbidden');
     }
 
-    if (req.method === 'GET' && p === '/api/schema') return json(res, 200, buildSchema(DS));
+    if (req.method === 'GET' && p === '/api/schema') return json(res, 200, schema());
 
     if (req.method === 'POST' && p === '/api/assemble') {
       const { campaign, markBlocks } = await readBody(req);
       const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '/design-system/assets', markBlocks: !!markBlocks });
-      return json(res, 200, { html, unfilled });
+      // Actionable validation alongside the raw unfilled list (additive — old field kept).
+      const validation = validateCampaign(campaign || {}, schema());
+      return json(res, 200, { html, unfilled, validation });
+    }
+
+    // Structured validation report without rendering, so agents can self-correct a campaign
+    // (unknown/bare component names → group-prefixed suggestion; casing violations; unfilled
+    // tokens) before assembling or saving.
+    if (req.method === 'POST' && p === '/api/validate') {
+      const { campaign } = await readBody(req);
+      return json(res, 200, validateCampaign(campaign || {}, schema()));
     }
 
     if (req.method === 'POST' && p === '/api/render') {
@@ -161,13 +179,21 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // Approved exemplars: designs flagged isExample (plus committed seeds), each with its
+    // full campaign + metadata. Optional ?objective= filters by objective taxonomy id.
+    if (req.method === 'GET' && p === '/api/examples') {
+      const objective = u.searchParams.get('objective') || undefined;
+      return json(res, 200, { examples: await examples.listExamples(designs, { objective }) });
+    }
+
     // ── persisted designs (save / reopen / clone / delete) ───────────────────────
     // Store calls are awaited so either backend works (disk = sync, Notion = async).
     if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: await designs.list() });
 
     if (req.method === 'POST' && p === '/api/designs') {
-      const { name, campaign } = await readBody(req);
-      return json(res, 200, await designs.create({ name, campaign }));
+      // Pass the whole body so design metadata (isExample, objective, approvalStatus, …) is
+      // persisted alongside name + campaign.
+      return json(res, 200, await designs.create(await readBody(req)));
     }
 
     // /api/designs/:id  and  /api/designs/:id/clone
@@ -182,7 +208,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (!action) {
         if (req.method === 'GET') { const d = await designs.get(id); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
-        if (req.method === 'PUT') { const { name, campaign } = await readBody(req); const d = await designs.update(id, { name, campaign }); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'PUT') { const d = await designs.update(id, await readBody(req)); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
         if (req.method === 'DELETE') return (await designs.remove(id)) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Design not found.' });
       }
     }

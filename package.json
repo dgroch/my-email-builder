@@ -6,7 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "parse": "node lib/parseTemplates.js"
+    "parse": "node lib/parseTemplates.js",
+    "test": "node test/run.js"
   },
   "engines": { "node": ">=18" },
   "dependencies": {

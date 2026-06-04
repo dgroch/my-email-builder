@@ -81,21 +81,52 @@ design-system/            bundled copy of the template library, shells, fonts, a
 ## API
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), ordering & token rules |
-| POST | `/api/assemble` | `{campaign, markBlocks?}` | `{html, unfilled}` — assembled preview HTML (`markBlocks` adds `data-eb-block` anchors) |
+| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), ordering & token rules, per-component **intent** metadata, and the campaign **objectives** taxonomy |
+| POST | `/api/assemble` | `{campaign, markBlocks?}` | `{html, unfilled, validation}` — assembled preview HTML (`markBlocks` adds `data-eb-block` anchors); `validation` is the structured report (see `/api/validate`) |
+| POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
 | POST | `/api/export`   | `{campaign}` | `{html, unfilled, campaign}` (HTML keeps `{{ASSETS_BASE}}` + Klaviyo tags) |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
-| GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt}]}` (metadata only) |
-| POST | `/api/designs`        | `{name?, campaign}` | the saved design `{id, name, createdAt, updatedAt, campaign}` |
+| GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
+| GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt, isExample, objective, approvalStatus, componentsUsed, …}]}` (metadata only) |
+| POST | `/api/designs`        | `{name?, campaign, …metadata}` | the saved design (incl. metadata) |
 | GET  | `/api/designs/:id`    | — | the full saved design |
-| PUT  | `/api/designs/:id`    | `{name?, campaign?}` | the updated design |
-| POST | `/api/designs/:id/clone` | `{name?}` | a new design copied from `:id` |
+| PUT  | `/api/designs/:id`    | `{name?, campaign?, …metadata}` | the updated design |
+| POST | `/api/designs/:id/clone` | `{name?}` | a new design copied from `:id` (starts as a fresh draft, not an example) |
 | DELETE | `/api/designs/:id`  | — | `{ok:true}` |
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
+
+### Agent-facing metadata
+
+`/api/schema` carries two additive layers that help an agent reason about component choice
+from the contract itself (sourced from the shared table in `lib/componentStrategy.js`, the
+builder-side mirror of `references/component-strategy.md` in `dgroch/skills` — keep the two in
+sync):
+
+- **Per-component intent** — optional `bestFor` / `avoidFor` (objective ids), `visualRole`,
+  `requiresImage`, `imageRatio`, `tone`. Components without an entry simply omit these keys.
+- **`objectives`** — the canonical campaign-objective taxonomy (`farewell_sellthrough`,
+  `range_launch`, …) with a recommended block sequence, hero options, proof modules, CTA
+  style, urgency, and modules to avoid per objective.
+
+**Design metadata** (persisted on every saved design, parity across the disk + Notion
+backends): `isExample`, `objective`, `campaignType`, `audienceAwareness`, `primaryCTA`,
+`emotionalTone`, `approvalStatus` (`draft`|`approved`|`sent`), `componentsUsed` (derived),
+`sourceBriefLink`, `klaviyoLink`, `resultNotes`. Flag a design `isExample:true` to surface it
+through `/api/examples`. See *Saving designs* for how the Notion backend stores these.
+
+> **Note — `/api/agent-contract` was intentionally not built.** The execution contract is
+> `/api/schema` (now including intent + objectives) and the workflow rules live in the skill;
+> a second contract source would only add drift risk. See `docs/backend-tasks.md`.
+
+## Tests
+`npm test` (zero-dependency runner). It asserts the two standing guardrails — every
+`/api/schema` component `name` resolves to a real template file, and every `isExample` design
+assembles with zero `(missing template)` and zero unfilled tokens — plus the intent/objective
+table integrity and the validation behaviour.
 
 ## Saving designs (persistence)
 **Save** stores the current design; **My designs** lists them to reopen, **clone**, or delete.
@@ -113,8 +144,16 @@ Set both env vars and the app stores each design as a page in a Notion database:
 Then **share the database with the integration**: open the database in Notion → `•••` →
 *Connections* → add your integration. Each design becomes a row (Name / Updated / Created visible
 as properties) with the full campaign JSON stored as chunked ```json code blocks in the page body
-(Notion caps a single text run at 2000 chars). Durable across redeploys, and you can browse the
-designs in Notion. Required integration capabilities: read + insert + update content.
+(Notion caps a single text run at 2000 chars), followed by a second ```json block holding the
+design metadata. Durable across redeploys, and you can browse the designs in Notion. Required
+integration capabilities: read + insert + update content.
+
+**Optional native columns.** The metadata always round-trips via the page body, so nothing extra
+is required. But if you add matching columns to the database, the metadata is *also* mirrored into
+them so designs become filterable/searchable in Notion: `Is Example` (checkbox), `Objective`
+(select), `Approval Status` (select), `Campaign Type`, `Audience Awareness`, `Primary CTA`,
+`Emotional Tone`, `Components Used` (multi-select), `Source Brief` (url), `Klaviyo Link` (url),
+`Result Notes` (rich text). Columns that don't exist are simply skipped.
 
 ### Local disk (fallback)
 If `NOTION_TOKEN` is unset, designs are written as JSON files under `DATA_DIR` (default `./data`).
