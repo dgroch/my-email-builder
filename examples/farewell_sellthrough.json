@@ -1,0 +1,83 @@
+{
+  "id": "seed-farewell",
+  "name": "RH | 2026-06 Farewell Weekend + Glow Up Tease",
+  "isExample": true,
+  "objective": "farewell_sellthrough",
+  "campaignType": "Range farewell / final sell-through",
+  "audienceAwareness": "engaged past-purchasers",
+  "primaryCTA": "Shop the farewell",
+  "emotionalTone": "warm, nostalgic, gently urgent",
+  "approvalStatus": "approved",
+  "componentsUsed": [
+    "header",
+    "blocks/editorial-hero",
+    "sections/body-copy-plain",
+    "products/card-horizontal",
+    "blocks/story",
+    "sections/trust-bar",
+    "footer"
+  ],
+  "sourceBriefLink": "https://www.notion.so/375fdc24425f818587fde75630c999eb",
+  "klaviyoLink": "",
+  "resultNotes": "Repaired exemplar for the farewell_sellthrough objective. Source design (Notion id 375fdc24-425f-8185-87fd-e75630c999eb) was rebuilt from group-prefixed components after a hand-coded-HTML regression. Replace this seed with the live exported design once reconciled.",
+  "createdAt": "2026-06-04T00:00:00.000Z",
+  "updatedAt": "2026-06-04T00:00:00.000Z",
+  "campaign": {
+    "campaignName": "RH | 2026-06 Farewell Weekend + Glow Up Tease",
+    "bodyBg": "#2c2825",
+    "blocks": [
+      { "component": "header", "tokens": {} },
+      {
+        "component": "blocks/editorial-hero",
+        "tokens": {
+          "HERO_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-hero.jpg",
+          "SUPER_LABEL": "Fig & Bloom · Farewell",
+          "ACCENT_SCRIPT": "with love,",
+          "HEADLINE": "The last of the Rosehaven blooms",
+          "SUBHEADLINE": "Our Rosehaven range is retiring this weekend. One final gather before it’s gone for good — thank you for loving it as much as we did.",
+          "CTA_TEXT": "Shop the farewell",
+          "CTA_URL": "https://figandbloom.com.au/collections/rosehaven"
+        }
+      },
+      {
+        "component": "sections/body-copy-plain",
+        "tokens": {
+          "SUPER_LABEL": "A FOND FAREWELL",
+          "HEADLINE": "Three years of Rosehaven",
+          "BODY_P1": "When we first dreamed up Rosehaven, we wanted a bouquet that felt like a slow Sunday morning — soft, generous, a little wild. You made it one of our most-gifted arrangements ever.",
+          "BODY_P2": "This weekend is your last chance to send one. After Sunday, Rosehaven retires to make room for what’s blooming next."
+        }
+      },
+      {
+        "component": "products/card-horizontal",
+        "tokens": {
+          "PRODUCT_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-product.jpg",
+          "PRODUCT_LABEL": "Vase Arrangement · Final Weekend",
+          "PRODUCT_NAME": "Rosehaven",
+          "PRODUCT_OCCASION": "The send-off bouquet",
+          "PRODUCT_PRICE": "From $139",
+          "PRODUCT_URL": "https://figandbloom.com.au/products/rosehaven"
+        }
+      },
+      {
+        "component": "blocks/story",
+        "tokens": {
+          "PORTRAIT_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-portrait.jpg",
+          "SUPER_LABEL": "FROM THE FOUNDERS",
+          "HEADLINE": "Why we’re saying goodbye to Rosehaven",
+          "BODY_P1": "Retiring a range we love is never easy, but it’s how we keep every bouquet feeling fresh and seasonal for you.",
+          "BODY_P2": "Something new is already on the bench — a little glow-up we can’t wait to show you very soon.",
+          "SIGNATURE": "— dan & kellie",
+          "CTA_TEXT": "Read our note",
+          "CTA_URL": "https://figandbloom.com.au/blogs/journal/farewell-rosehaven",
+          "PANEL_BG": "#ffffff",
+          "PANEL_TEXT": "#444444",
+          "PANEL_SUB": "#aaaaaa",
+          "PANEL_BORDER": "#e8e2da"
+        }
+      },
+      { "component": "sections/trust-bar", "tokens": {} },
+      { "component": "footer", "tokens": {} }
+    ]
+  }
+}
