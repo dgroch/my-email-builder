@@ -95,6 +95,31 @@ ok(unfilledRep.issues.some((i) => i.type === 'unfilled_token' && i.token === 'HE
 const good = validateCampaign(seeds[0].campaign, schema);
 eq(good.ok, true, `seed example '${seeds[0].id}' validates clean`);
 
+// ── Inline markdown in token values ───────────────────────────────────────────────────
+const mdHtml = render.assemble({ blocks: [{ component: 'blocks/editorial-hero', tokens: {
+  HERO_IMAGE_URL: 'x.jpg', SUPER_LABEL: 'Notes', ACCENT_SCRIPT: 'with love,',
+  HEADLINE: 'The last of the **Rosehaven** blooms',
+  SUBHEADLINE: 'Shop *now* before [they go](https://figandbloom.com.au/x).',
+  CTA_TEXT: 'Shop', CTA_URL: 'https://x.com',
+} }] }, { assetsBase: '/a' }).html;
+ok(/<h1[^>]*>The last of the <strong>Rosehaven<\/strong> blooms<\/h1>/.test(mdHtml), 'bold renders in body text');
+ok(/<em>now<\/em>/.test(mdHtml), 'italic renders in body text');
+ok(/<a href="https:\/\/figandbloom\.com\.au\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
+// The same token in an alt="" attribute must stay plain text (no tags leak into attributes).
+ok(/alt="The last of the Rosehaven blooms"/.test(mdHtml), 'markdown is flattened inside attributes');
+// Schema advertises markdown support on text tokens only.
+const hl = eh.tokens.find((t) => t.name === 'HEADLINE');
+const img = eh.tokens.find((t) => t.name === 'HERO_IMAGE_URL');
+ok(hl && hl.markdown === true, 'text token advertises markdown:true');
+ok(img && img.markdown === undefined, 'non-text token does not advertise markdown');
+// Escaped markers and stray (spaced) asterisks survive without becoming emphasis.
+const plain = render.assemble({ blocks: [{ component: 'sections/body-copy-plain', tokens: {
+  SUPER_LABEL: 'X', HEADLINE: 'Two stars * and *', BODY_P1: 'Keep \\*everything\\* literal', BODY_P2: '',
+} }] }, { assetsBase: '/a' }).html;
+ok(plain.includes('Keep *everything* literal'), 'escaped asterisks become literal asterisks (no emphasis)');
+ok(plain.includes('Two stars * and *'), 'stray spaced asterisks are left untouched');
+ok(!/<em>everything<\/em>/.test(plain), 'escaped emphasis is not rendered');
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);
