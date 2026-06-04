@@ -106,6 +106,7 @@ function fieldFor(t, block) {
   const wrap = el('div', { class: 'field' });
   const lab = el('label', { text: t.name });
   if (t.case) lab.append(el('span', { class: 'case-chip ' + t.case, text: t.case === 'lower' ? 'lowercase' : 'Sentence case' }));
+  if (t.markdown) lab.append(el('span', { class: 'md-chip', title: 'Inline markdown: **bold**, *italic*, [text](url)', text: 'markdown' }));
   wrap.append(lab);
   if (t.desc) wrap.append(el('p', { class: 'desc', text: t.desc }));
 

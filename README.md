@@ -99,6 +99,16 @@ design-system/            bundled copy of the template library, shells, fonts, a
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
 
+### Inline formatting in token values
+
+Text tokens accept a tiny inline-markdown subset so you can emphasise words — e.g. make
+bouquet names bold — without touching templates: `**bold**`, `*italic*`, and
+`[text](https://link)`. Escape a literal marker with a backslash (`\*`). Formatting renders in
+visible text and in the rasterised PNG/Klaviyo output, but is automatically flattened to plain
+text where a token feeds an HTML attribute (e.g. image `alt`). The schema marks which tokens
+support it with `markdown: true` (text tokens only — not URLs, colours, or enum levers), and the
+builder shows a **markdown** chip on those fields. See `lib/markdown.js`.
+
 ### Agent-facing metadata
 
 `/api/schema` carries two additive layers that help an agent reason about component choice
