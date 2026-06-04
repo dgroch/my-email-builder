@@ -435,12 +435,19 @@ function openKlaviyo() {
 async function loadAudiences() {
   const sel = $('#kvAudience');
   const savedId = localStorage.getItem('kvListId') || $('#kvListId').value.trim();
+  // A dedicated note element under the picker so the *reason* for a failure is visible
+  // (missing key vs. missing scopes vs. bad key), instead of a silent generic message.
+  let note = $('#kvAudienceErr');
+  if (!note) { note = el('p', { id: 'kvAudienceErr', class: 'desc warn hidden' }); sel.insertAdjacentElement('afterend', note); }
+  const showNote = (text) => { note.textContent = text; note.classList.remove('hidden'); };
+  const hideNote = () => { note.classList.add('hidden'); };
   sel.innerHTML = '<option value="">Loading audiences…</option>';
   sel.onchange = () => { if (sel.value) $('#kvListId').value = sel.value; };
   try {
     const r = await fetch('/api/klaviyo-audiences');
     const data = await r.json();
-    if (!r.ok) throw new Error(data.error || r.status);
+    if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+    hideNote();
     sel.innerHTML = '';
     sel.append(el('option', { value: '', text: '— choose a list or segment —' }));
     const group = (label, items) => {
@@ -453,8 +460,16 @@ async function loadAudiences() {
     group('Segments', data.segments);
     if (savedId) sel.value = savedId; // reflect remembered choice if present
   } catch (e) {
+    const raw = String((e && e.message) || e);
+    console.error('Could not load Klaviyo audiences:', raw);
     sel.innerHTML = '';
-    sel.append(el('option', { value: '', text: 'Could not load audiences — paste an ID below' }));
+    sel.append(el('option', { value: '', text: 'Could not load audiences — paste an ID below', title: raw }));
+    // Translate the common server-side causes into a plain-English fix.
+    let why = raw;
+    if (/KLAVIYO_API_KEY is not set/i.test(raw)) why = 'The server has no KLAVIYO_API_KEY set. Add it as an environment variable (Render → Environment) and redeploy.';
+    else if (/\b(401|403)\b|scope|permission|not authorized|unauthorized/i.test(raw)) why = 'The KLAVIYO_API_KEY is rejected or missing scopes. It needs lists:read and segments:read (plus campaigns:write, templates:write, images:write to push). ' + raw;
+    else if (/revision/i.test(raw)) why = 'Klaviyo rejected the API revision. ' + raw;
+    showNote('⚠ ' + why);
   }
 }
 async function submitKlaviyo() {
