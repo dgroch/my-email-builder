@@ -11,6 +11,7 @@ const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
 const { validateCampaign } = require('./lib/validate');
 const examples = require('./lib/examples');
+const sampleData = require('./lib/sampleData');
 // Pick the designs backend: Notion (durable, survives redeploys) when configured,
 // else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
 const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
@@ -62,7 +63,7 @@ const server = http.createServer(async (req, res) => {
   const p = u.pathname;
   try {
     if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(res, path.join(ROOT, 'public', 'index.html'));
-    if (req.method === 'GET' && (p === '/app.js' || p === '/style.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
+    if (req.method === 'GET' && (p === '/app.js' || p === '/library.js' || p === '/style.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
 
     // serve bundled design-system assets (for live-preview of designed blocks' {{ASSETS_BASE}})
     if (req.method === 'GET' && p.startsWith('/design-system/')) {
@@ -71,6 +72,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && p === '/api/schema') return json(res, 200, schema());
+
+    // Interactive component library: every component with a complete set of on-brand sample
+    // tokens (so it renders "alive" with zero fields filled) plus its variant axes (palette
+    // presets + first enum lever). The browser renders each card via /api/assemble — kept out
+    // of this payload because the preview shell embeds fonts as large base64 blobs.
+    if (req.method === 'GET' && p === '/api/gallery') {
+      const s = schema();
+      const components = s.components.map((c) => ({
+        name: c.name, group: c.group, designed: !!c.designed, static: !!c.static, draft: !!c.draft,
+        sampleTokens: sampleData.sampleTokensFor(c),
+        variants: sampleData.variantsFor(c),
+      }));
+      return json(res, 200, { components });
+    }
 
     if (req.method === 'POST' && p === '/api/assemble') {
       const { campaign, markBlocks } = await readBody(req);

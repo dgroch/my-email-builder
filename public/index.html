@@ -9,6 +9,10 @@
 <body>
 <header class="topbar">
   <div class="brand">Fig<span>&amp;</span>Bloom <em>email builder</em></div>
+  <nav class="mode-toggle" role="tablist">
+    <button id="modeBuilder" class="seg active" role="tab">Builder</button>
+    <button id="modeLibrary" class="seg" role="tab">Library</button>
+  </nav>
   <div class="campaign-meta">
     <label>Campaign <input id="campaignName" type="text" placeholder="Email subject / name"></label>
     <label>Body bg <input id="bodyBg" type="text" value="#2c2825" class="hex"></label>
@@ -56,6 +60,52 @@
     </div>
   </section>
 </main>
+
+<section class="library hidden" id="library">
+  <div class="lib-toolbar">
+    <input id="libSearch" type="search" placeholder="Search components, descriptions, tokens…">
+    <select id="libGroup" title="Filter by group"><option value="">All groups</option></select>
+    <select id="libObjective" title="Filter by objective (bestFor)"><option value="">All objectives</option></select>
+    <label class="lib-check"><input id="libDesigned" type="checkbox"> Designed only</label>
+    <label class="lib-check"><input id="libDraft" type="checkbox"> Drafts only</label>
+    <span class="spacer"></span>
+    <span id="libCount" class="lib-count"></span>
+    <button id="btnCoverage" class="ghost">Coverage &amp; gaps</button>
+  </div>
+  <div id="libGrid" class="lib-grid"><p class="empty">Loading the component library…</p></div>
+</section>
+
+<template id="libCardTpl">
+  <div class="lib-card">
+    <div class="lib-card-head">
+      <span class="lib-name"></span>
+      <span class="lib-badges"></span>
+    </div>
+    <div class="lib-preview"><iframe class="lib-frame" title="component preview" loading="lazy" scrolling="no"></iframe></div>
+    <div class="lib-controls"></div>
+    <div class="lib-variants hidden"></div>
+    <p class="lib-desc"></p>
+    <div class="lib-intent"></div>
+    <div class="lib-card-actions">
+      <button class="mini lib-compare">Compare variants</button>
+      <button class="mini lib-copy">Copy JSON</button>
+    </div>
+  </div>
+</template>
+
+<dialog id="coverageDialog" class="kv-dialog cov-dialog">
+  <div class="kv-form">
+    <h2>Coverage &amp; gaps</h2>
+    <p class="kv-note">Where the component system is strong, and where it is thin — to drive new
+      or extended components. Derived live from <code>/api/schema</code> (objectives + per-component
+      intent). “bestFor” counts components that name the objective; the sequence is the objective’s
+      recommended skeleton.</p>
+    <div id="coverageBody" class="coverage-body"></div>
+    <div class="kv-actions">
+      <button type="button" id="coverageClose" class="ghost">Close</button>
+    </div>
+  </div>
+</dialog>
 
 <template id="blockCardTpl">
   <div class="block-card">
@@ -124,5 +174,6 @@
 </dialog>
 
 <script src="/app.js"></script>
+<script src="/library.js"></script>
 </body>
 </html>
