@@ -119,14 +119,17 @@ sync):
 - **Per-component intent** — optional `bestFor` / `avoidFor` (objective ids), `visualRole`,
   `requiresImage`, `imageRatio`, `tone`. Components without an entry simply omit these keys.
 - **`objectives`** — the canonical campaign-objective taxonomy (`farewell_sellthrough`,
-  `range_launch`, …) with a recommended block sequence, hero options, proof modules, CTA
-  style, urgency, and modules to avoid per objective.
+  `range_launch`, …, plus the recurring `editorial_digest` monthly newsletter) with a
+  recommended block sequence, hero options, proof modules, CTA style, urgency, modules to
+  avoid, and a set of restrained `subjectPatterns` (subject-line templates) per objective.
 
 **Design metadata** (persisted on every saved design, parity across the disk + Notion
 backends): `isExample`, `objective`, `campaignType`, `audienceAwareness`, `primaryCTA`,
-`emotionalTone`, `approvalStatus` (`draft`|`approved`|`sent`), `componentsUsed` (derived),
-`sourceBriefLink`, `klaviyoLink`, `resultNotes`. Flag a design `isExample:true` to surface it
-through `/api/examples`. See *Saving designs* for how the Notion backend stores these.
+`subjectLine`, `previewText`, `emotionalTone`, `approvalStatus` (`draft`|`approved`|`sent`),
+`componentsUsed` (derived), `sourceBriefLink`, `klaviyoLink`, `resultNotes`. Flag a design
+`isExample:true` to surface it through `/api/examples`. The persisted `subjectLine` /
+`previewText` are used as the fallback subject/preview when `/api/klaviyo-draft` is called
+without them. See *Saving designs* for how the Notion backend stores these.
 
 > **Note — `/api/agent-contract` was intentionally not built.** The execution contract is
 > `/api/schema` (now including intent + objectives) and the workflow rules live in the skill;

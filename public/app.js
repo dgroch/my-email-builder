@@ -488,7 +488,7 @@ async function submitKlaviyo() {
     const r = await fetch('/api/klaviyo-draft', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        campaign, listId, fromEmail, links,
+        campaign, listId, fromEmail, links, designId: currentDesignId,
         fromLabel: $('#kvFromLabel').value.trim(),
         replyToEmail: $('#kvReplyTo').value.trim(),
         subject: $('#kvSubject').value.trim(),

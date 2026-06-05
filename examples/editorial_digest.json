@@ -1,0 +1,100 @@
+{
+  "id": "seed-editorial-digest",
+  "name": "F&B | 2026-06 In Bloom — June Edit",
+  "isExample": true,
+  "objective": "editorial_digest",
+  "campaignType": "Recurring editorial digest / monthly newsletter",
+  "audienceAwareness": "engaged subscribers",
+  "primaryCTA": "Read this month’s edit",
+  "subjectLine": "This month in bloom",
+  "previewText": "Notes from the studio, our June bloom, and a little ritual to try.",
+  "emotionalTone": "warm, editorial, unhurried",
+  "approvalStatus": "approved",
+  "componentsUsed": [
+    "header",
+    "blocks/caption-bar-hero",
+    "blocks/story",
+    "sections/section-headline",
+    "products/card-horizontal",
+    "sections/upsell-noir",
+    "sections/trust-bar",
+    "footer"
+  ],
+  "sourceBriefLink": "",
+  "klaviyoLink": "",
+  "resultNotes": "Seed exemplar for the editorial_digest objective (recurring monthly newsletter). Locked skeleton: photo-led caption-bar opener → founder story → section headline → one product → noir closing beat. Soft, curiosity-led CTA; no offer/promo/cutoff modules.",
+  "createdAt": "2026-06-05T00:00:00.000Z",
+  "updatedAt": "2026-06-05T00:00:00.000Z",
+  "campaign": {
+    "campaignName": "F&B | 2026-06 In Bloom — June Edit",
+    "bodyBg": "#2c2825",
+    "blocks": [
+      { "component": "header", "tokens": {} },
+      {
+        "component": "blocks/caption-bar-hero",
+        "tokens": {
+          "HERO_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-hero.jpg",
+          "IMG_HEIGHT": "440",
+          "SUPER_LABEL": "IN BLOOM · JUNE",
+          "CAPTION": "this month, we slowed down",
+          "CTA_TEXT": "Read this month’s edit",
+          "CTA_URL": "https://figandbloom.com.au/blogs/journal",
+          "PANEL_BG": "#ffffff",
+          "PANEL_TEXT": "#000000",
+          "PANEL_SUB": "#aaaaaa",
+          "PANEL_BORDER": "#e8e2da"
+        }
+      },
+      {
+        "component": "blocks/story",
+        "tokens": {
+          "PORTRAIT_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-portrait.jpg",
+          "SUPER_LABEL": "NOTES FROM THE STUDIO",
+          "HEADLINE": "What June taught us about slowing down",
+          "BODY_P1": "Winter mornings have a way of asking for patience. This month we leaned into deeper tones, longer-lasting stems and the quiet ritual of arranging by the window.",
+          "BODY_P2": "Below: the bloom we couldn’t stop reaching for, and a small way to make yours last a little longer.",
+          "SIGNATURE": "— dan & kellie",
+          "CTA_TEXT": "Read the journal",
+          "CTA_URL": "https://figandbloom.com.au/blogs/journal",
+          "PANEL_BG": "#ffffff",
+          "PANEL_TEXT": "#444444",
+          "PANEL_SUB": "#aaaaaa",
+          "PANEL_BORDER": "#e8e2da",
+          "TYPE_SCALE": "regular",
+          "ROTATION": "subtle",
+          "ACCENT_ILLO": "on"
+        }
+      },
+      {
+        "component": "sections/section-headline",
+        "tokens": {
+          "SUPER_LABEL": "THIS MONTH’S BLOOM",
+          "HEADLINE": "The one we kept reaching for"
+        }
+      },
+      {
+        "component": "products/card-horizontal",
+        "tokens": {
+          "PRODUCT_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-product.jpg",
+          "PRODUCT_LABEL": "Vase Arrangement · June",
+          "PRODUCT_NAME": "Winterlight",
+          "PRODUCT_OCCASION": "Deep tones for the cooler months",
+          "PRODUCT_PRICE": "From $129",
+          "PRODUCT_URL": "https://figandbloom.com.au/products/winterlight"
+        }
+      },
+      {
+        "component": "sections/upsell-noir",
+        "tokens": {
+          "SUPER_LABEL": "BEFORE YOU GO",
+          "HEADLINE": "a small ritual",
+          "BODY": "Re-cut your stems on an angle and refresh the water every second day — a quiet two minutes that buys you nearly a week.",
+          "CTA_TEXT": "More care notes",
+          "CTA_URL": "https://figandbloom.com.au/blogs/journal/flower-care"
+        }
+      },
+      { "component": "sections/trust-bar", "tokens": {} },
+      { "component": "footer", "tokens": {} }
+    ]
+  }
+}

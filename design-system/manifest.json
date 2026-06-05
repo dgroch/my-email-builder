@@ -509,6 +509,11 @@
         "description": "Photo + serif (Lust) headline + Cervanttis script accent + square button on a white plate that overlaps the photo (the 'layering'). The most editorial hero. Use as the opening beat of an engagement/editorial send when a single strong photo carries the story.",
         "when_to_use": "Opening beat for editorial/engagement campaigns (not promo). One per email. Pair with a normal header component above it.",
         "assets_needed": "One full-bleed lifestyle photo (600×440 display). No illustration assets.",
+        "levers": {
+          "TYPE_SCALE": "regular | oversized (headline scale)",
+          "ROTATION": "flat | subtle | jaunty (plate tilt)",
+          "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
+        },
         "tokens": [
           "HERO_IMAGE_URL",
           "SUPER_LABEL",
@@ -516,7 +521,10 @@
           "HEADLINE",
           "SUBHEADLINE",
           "CTA_TEXT",
-          "CTA_URL"
+          "CTA_URL",
+          "TYPE_SCALE",
+          "ROTATION",
+          "ACCENT_ILLO"
         ]
       },
       "feature-list": {
@@ -546,6 +554,11 @@
         "description": "Three tilted, overlapping polaroids (angles -7°/+2°/+8°) on a Clay panel, each with a Cervanttis caption, above a Lust pull-quote + attribution. Warm, scrapbook/social-proof beat.",
         "when_to_use": "Social-proof or 'in their words' moment, or a multi-occasion montage. After products, before the closing beat. Max one per email.",
         "assets_needed": "Three square-crop photos (168–176px display). No illustration assets. The collage region is a fixed 340px so the absolutely-positioned polaroids are captured by the slicer.",
+        "levers": {
+          "DENSITY": "tight | regular | airy (collage spacing)",
+          "ROTATION": "flat | subtle | jaunty (polaroid tilt)",
+          "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
+        },
         "tokens": [
           "PHOTO_1_URL",
           "PHOTO_1_CAPTION",
@@ -555,7 +568,10 @@
           "PHOTO_3_CAPTION",
           "QUOTE_ACCENT",
           "PULL_QUOTE",
-          "QUOTE_ATTRIBUTION"
+          "QUOTE_ATTRIBUTION",
+          "DENSITY",
+          "ROTATION",
+          "ACCENT_ILLO"
         ]
       },
       "caption-bar-hero": {
@@ -592,6 +608,11 @@
           "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
           "layout": "portrait-left, text-right (locked to the corpus norm)"
         },
+        "levers": {
+          "TYPE_SCALE": "regular | oversized (headline scale)",
+          "ROTATION": "flat | subtle | jaunty (polaroid tilt)",
+          "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
+        },
         "tokens": [
           "PORTRAIT_IMAGE_URL",
           "SUPER_LABEL",
@@ -604,7 +625,10 @@
           "PANEL_BG",
           "PANEL_TEXT",
           "PANEL_SUB",
-          "PANEL_BORDER"
+          "PANEL_BORDER",
+          "TYPE_SCALE",
+          "ROTATION",
+          "ACCENT_ILLO"
         ]
       },
       "designed-product-card": {
@@ -616,6 +640,11 @@
         "parametrised": {
           "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
           "badge": "BADGE_TEXT lowercase Cervanttis, or \"\" to hide"
+        },
+        "levers": {
+          "TYPE_SCALE": "regular | oversized (name/price scale)",
+          "ROTATION": "flat | subtle | jaunty (badge tilt)",
+          "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
         },
         "tokens": [
           "PRODUCT_IMAGE_URL",
@@ -629,7 +658,10 @@
           "PANEL_BG",
           "PANEL_TEXT",
           "PANEL_SUB",
-          "PANEL_BORDER"
+          "PANEL_BORDER",
+          "TYPE_SCALE",
+          "ROTATION",
+          "ACCENT_ILLO"
         ]
       },
       "offer-panel": {
@@ -721,6 +753,68 @@
           "PANEL_SUB",
           "PANEL_BORDER"
         ]
+      },
+      "editorial-collage": {
+        "file": "templates/blocks/editorial-collage.html",
+        "classification": "slice",
+        "status": "draft",
+        "notes": "DRAFT — pending design review. Layered/collage art-direction draft (Task C2): 3 overlapping tilted frames + Cervanttis accent + Lust pull-quote. Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
+        "description": "Three overlapping tilted photo frames on a palette panel, with a NeuzeitGro super-label, a Cervanttis script accent, a Lust pull-quote and a square button. A more art-directed editorial/collage opener or affirm beat.",
+        "when_to_use": "DRAFT. Editorial / newsletter sends wanting a more layered, gallery-wall feel than polaroid-collage. Mid-email or opening beat. Max one collage block per email.",
+        "assets_needed": "Three crop photos (frames 1–2 at 196×232, frame 3 at 220×264 display). No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+        },
+        "levers": {
+          "ROTATION": "flat | subtle | jaunty (frame tilt)"
+        },
+        "tokens": [
+          "FRAME_1_URL",
+          "FRAME_2_URL",
+          "FRAME_3_URL",
+          "SUPER_LABEL",
+          "ACCENT_SCRIPT",
+          "PULL_QUOTE",
+          "CTA_TEXT",
+          "CTA_URL",
+          "ROTATION",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
+      },
+      "annotated-product": {
+        "file": "templates/blocks/annotated-product.html",
+        "classification": "slice",
+        "status": "draft",
+        "notes": "DRAFT — pending design review. Annotated art-direction draft (Task C2): product photo with hand-drawn-style Cervanttis callout chips (rotated, overlapping, shadowed). Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
+        "description": "Product spotlight with three rotated, overlapping hand-written Cervanttis callout chips pinned around the photo, plus a Lust name + price and a square button. A more playful, annotated alternative to designed-product-card.",
+        "when_to_use": "DRAFT. A single hero product where 2–3 reasons-to-believe read best as hand-written callouts on the photo. Mid-email. Max one annotated-product per email.",
+        "assets_needed": "One product photo (4:5 crop, 300×375 display). Chips are CSS-drawn — no icon assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+        },
+        "levers": {
+          "ROTATION": "flat | subtle | jaunty (chip tilt)"
+        },
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_OCCASION",
+          "PRODUCT_PRICE",
+          "CHIP_1_TEXT",
+          "CHIP_2_TEXT",
+          "CHIP_3_TEXT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "ROTATION",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ]
       }
     },
     "block_palette_presets": {
@@ -738,10 +832,21 @@
         "CLOSE": ["upsell-noir", "offer-panel", "promo-code", "designed-product-card"]
       },
       "rotation": "Across a campaign series, rotate the OPEN block and its palette so no two consecutive sends repeat the same opener+palette pair. Track the last send's (open_block, palette) and pick a different combination. Editorial/newsletter sends (the corpus's largest bucket, 25.5%) should lean on caption-bar-hero + story; promo sends on editorial-hero + designed-product-card. Care-guide / how-to sends affirm with howto-steps; us-vs-them / before-after sends affirm with comparison-vs.",
+      "levers": {
+        "_about": "Layout levers on the designed blocks (editorial-hero, story, polaroid-collage, designed-product-card, and the draft editorial-collage / annotated-product) add a third axis of variation beyond (open_block, palette): composition. Values are locked enums only — no free hex/px — so variation never escapes the system.",
+        "available": {
+          "TYPE_SCALE": "regular | oversized — headline / name scale",
+          "ROTATION": "flat | subtle | jaunty — tilt of plates, polaroids, badges, frames, chips",
+          "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage)",
+          "ACCENT_ILLO": "on | off — faint brand-illustration accent"
+        },
+        "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE, ROTATION) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
+      },
       "no_repeat": [
         "Do not use the same designed block twice in one email (each is 'max one per email').",
         "Do not stack two designed blocks back-to-back without a divider.",
         "Do not repeat the same palette preset on the OPEN block in consecutive sends of a series.",
+        "Do not repeat the same (ROTATION, TYPE_SCALE) lever pair on the OPEN block in consecutive sends of a series.",
         "Accent colour (non-mono) only on occasion/promo sends, only as a panel/border — never type."
       ]
     },

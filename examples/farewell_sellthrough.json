@@ -36,7 +36,10 @@
           "HEADLINE": "The last of the Rosehaven blooms",
           "SUBHEADLINE": "Our Rosehaven range is retiring this weekend. One final gather before it’s gone for good — thank you for loving it as much as we did.",
           "CTA_TEXT": "Shop the farewell",
-          "CTA_URL": "https://figandbloom.com.au/collections/rosehaven"
+          "CTA_URL": "https://figandbloom.com.au/collections/rosehaven",
+          "TYPE_SCALE": "oversized",
+          "ROTATION": "subtle",
+          "ACCENT_ILLO": "off"
         }
       },
       {
@@ -73,7 +76,10 @@
           "PANEL_BG": "#ffffff",
           "PANEL_TEXT": "#444444",
           "PANEL_SUB": "#aaaaaa",
-          "PANEL_BORDER": "#e8e2da"
+          "PANEL_BORDER": "#e8e2da",
+          "TYPE_SCALE": "regular",
+          "ROTATION": "subtle",
+          "ACCENT_ILLO": "off"
         }
       },
       { "component": "sections/trust-bar", "tokens": {} },
