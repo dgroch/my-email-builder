@@ -14,6 +14,7 @@ const { OBJECTIVES, OBJECTIVE_GUIDANCE, COMPONENT_INTENT } = require('../lib/com
 const { validateCampaign } = require('../lib/validate');
 const { loadSeedExamples } = require('../lib/examples');
 const render = require('../lib/render');
+const sampleData = require('../lib/sampleData');
 
 let passed = 0;
 const failures = [];
@@ -119,6 +120,28 @@ const plain = render.assemble({ blocks: [{ component: 'sections/body-copy-plain'
 ok(plain.includes('Keep *everything* literal'), 'escaped asterisks become literal asterisks (no emphasis)');
 ok(plain.includes('Two stars * and *'), 'stray spaced asterisks are left untouched');
 ok(!/<em>everything<\/em>/.test(plain), 'escaped emphasis is not rendered');
+
+// ── Component library: sample data covers every component (the gallery invariant) ─────
+// For the interactive library, every component must produce a complete, on-brand sample that
+// assembles with zero unfilled tokens and validates clean — so the gallery never shows an
+// empty field or a casing violation, and new components are forced to keep sample data in step.
+for (const c of schema.components) {
+  const camp = sampleData.sampleCampaignFor(c);
+  const rep = validateCampaign(camp, schema);
+  eq(rep.ok, true, `sample for '${c.name}' validates clean (${rep.errorCount} errors: ${(rep.issues[0] || {}).message || ''})`);
+  const { unfilled } = render.assemble(camp, { assetsBase: '/design-system/assets' });
+  const leftover = unfilled.filter((u) => u.token !== '(missing template)');
+  eq(leftover.length, 0, `sample for '${c.name}' leaves no unfilled tokens (${leftover.map((u) => u.token).join(',')})`);
+}
+// Variant axes are well-formed: palette presets come from the component, the lever is an enum.
+const storyV = sampleData.variantsFor(schema.components.find((c) => c.name === 'blocks/story'));
+ok(storyV.palettes.includes('noir'), 'story variant palettes include noir');
+ok(storyV.lever && storyV.lever.name === 'TYPE_SCALE', 'story variant lever is the TYPE_SCALE enum');
+
+// ── draft flag is surfaced on the schema (coverage lens + library badges rely on it) ──
+const draftNames = schema.components.filter((c) => c.draft).map((c) => c.name).sort();
+eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage', 'exactly the two DRAFT blocks are flagged draft');
+ok(schema.components.find((c) => c.name === 'header').draft === false, 'non-draft component is not flagged draft');
 
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {

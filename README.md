@@ -55,6 +55,13 @@ git push -u origin main
   enums and `lowercase` / `Sentence case` chips are all parsed from the template headers +
   `design-system/manifest.json`. Add a new template and it appears automatically.
 - **Live preview** — assembles the real shell (fonts embedded) and shows it in an iframe.
+- **Component library** (the **Library** tab) — every component rendered *alive* with on-brand
+  sample data (no fields to fill), with live **palette + lever** switching, a **variant-compare**
+  strip (all palette presets / lever options side-by-side), search/filter (group, objective,
+  designed-only, drafts-only), per-component intent, **Copy JSON**, and a **Coverage & gaps**
+  lens that maps objectives → components and surfaces DRAFT blocks, missing intent and orphans
+  to drive new/extended components. Sample data is the single source of truth in
+  `lib/sampleData.js` (the test suite asserts every component renders a clean, fully-filled sample).
 - **Render PNG** — rasterises designed blocks exactly like the production `slice.js`.
 - **Slices** — rasterises **one PNG per block** and bundles them as a `.zip`, so you can drop
   each block into its own Klaviyo image block (each with its own link/alt) instead of pasting
@@ -81,7 +88,8 @@ design-system/            bundled copy of the template library, shells, fonts, a
 ## API
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), ordering & token rules, per-component **intent** metadata, and the campaign **objectives** taxonomy |
+| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
+| GET  | `/api/gallery`  | — | `{components:[{name, group, designed, static, draft, sampleTokens, variants}]}` — every component with a complete set of on-brand **sample tokens** + its variant axes (palette presets + first enum lever). Powers the interactive **component library** |
 | POST | `/api/assemble` | `{campaign, markBlocks?}` | `{html, unfilled, validation}` — assembled preview HTML (`markBlocks` adds `data-eb-block` anchors); `validation` is the structured report (see `/api/validate`) |
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
