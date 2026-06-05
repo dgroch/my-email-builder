@@ -9,6 +9,9 @@ TOKENS:
   {{PRODUCT_PRICE}}     — Lust price (e.g. "$89")
   {{CTA_TEXT}}          — button label
   {{CTA_URL}}           — button href
+  {{TYPE_SCALE}}        — TYPE_SCALE lever: "regular" or "oversized" name/price scale. Locked to these two.
+  {{ROTATION}}          — ROTATION lever: "flat" / "subtle" / "jaunty" badge tilt. Locked to these three.
+  {{ACCENT_ILLO}}       — ACCENT_ILLO lever: "on" or "off" — a faint brand-illustration accent. Locked enum.
   PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
   {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
 RULES:
@@ -17,6 +20,8 @@ RULES:
   - BADGE_TEXT is Cervanttis → lowercase; PRODUCT_NAME is Lust → sentence case.
   - This is the RICH product spotlight — for plain grids keep using products/card-* components.
   - Square black button only. On the NOIR preset, swap the button to white-on-black.
+  - LEVERS are art-direction only: locked enums, no free hex/px. They change scale, tilt and the
+    accent illustration toggle — never colour, font or the core layout.
 PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   white :  PANEL_BG=#ffffff  PANEL_TEXT=#666666  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
   clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
@@ -26,21 +31,35 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   #ffffff on the noir preset.
 -->
 <tr><td style="padding:0;background:{{PANEL_BG}};border-top:1px solid {{PANEL_BORDER}};">
-<table width="600" cellpadding="0" cellspacing="0" border="0">
+<style>
+  .dpc.ts-regular h2.dpc-name { font-size:30px; }
+  .dpc.ts-regular p.dpc-price { font-size:22px; }
+  .dpc.ts-oversized h2.dpc-name { font-size:38px; }
+  .dpc.ts-oversized p.dpc-price { font-size:27px; }
+  .dpc .dpc-badge { transform:rotate(-6deg); }
+  .dpc.rot-flat .dpc-badge { transform:rotate(0deg); }
+  .dpc.rot-subtle .dpc-badge { transform:rotate(-6deg); }
+  .dpc.rot-jaunty .dpc-badge { transform:rotate(-12deg); }
+  .dpc .dpc-illo { display:none; }
+  .dpc.illo-on .dpc-illo { display:block; }
+</style>
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="dpc ts-{{TYPE_SCALE}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}}">
   <tr>
     <!-- Product image column with tilted badge ribbon -->
     <td width="320" valign="middle" align="center" style="width:320px;padding:46px 0 46px 40px;vertical-align:middle;">
       <div style="position:relative;display:inline-block;">
         <img src="{{PRODUCT_IMAGE_URL}}" width="280" height="350" alt="{{PRODUCT_NAME}}" style="display:block;width:280px;height:350px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};">
-        <div style="position:absolute;top:18px;left:-10px;background:#000000;color:#ffffff;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;line-height:1.0;padding:7px 18px;transform:rotate(-6deg);box-shadow:0 6px 16px rgba(0,0,0,0.22);">{{BADGE_TEXT}}</div>
+        <div class="dpc-badge" style="position:absolute;top:18px;left:-10px;background:#000000;color:#ffffff;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;line-height:1.0;padding:7px 18px;box-shadow:0 6px 16px rgba(0,0,0,0.22);">{{BADGE_TEXT}}</div>
       </div>
     </td>
     <!-- Detail column -->
-    <td valign="middle" style="padding:46px 40px 46px 30px;vertical-align:middle;">
+    <td valign="middle" style="padding:46px 40px 46px 30px;vertical-align:middle;position:relative;">
+      <!-- ACCENT_ILLO: faint brand illustration in the corner (background-image — never a broken <img>) -->
+      <div class="dpc-illo" style="position:absolute;right:28px;bottom:20px;width:92px;height:92px;background:url('{{ASSETS_BASE}}/HandFlower_Black.png') no-repeat center/contain;opacity:0.08;"></div>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{PRODUCT_LABEL}}</p>
-      <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:30px;color:#000000;line-height:1.1;margin:0 0 8px 0;">{{PRODUCT_NAME}}</h2>
+      <h2 class="dpc-name" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:30px;color:#000000;line-height:1.1;margin:0 0 8px 0;">{{PRODUCT_NAME}}</h2>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.65;margin:0 0 18px 0;">{{PRODUCT_OCCASION}}</p>
-      <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;letter-spacing:.04em;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
+      <p class="dpc-price" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;letter-spacing:.04em;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
       <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
     </td>
   </tr>

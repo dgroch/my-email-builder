@@ -9,38 +9,68 @@ TOKENS:
   {{QUOTE_ACCENT}}       — Cervanttis accent line — MUST be lowercase (e.g. "in their words")
   {{PULL_QUOTE}}         — Lust pull-quote — SENTENCE CASE (~12 words)
   {{QUOTE_ATTRIBUTION}}  — NeuzeitGro Bold attribution (e.g. "— Sarah, Brisbane")
+  {{DENSITY}}            — DENSITY lever: "tight" / "regular" / "airy" collage spacing. Locked to these three.
+  {{ROTATION}}           — ROTATION lever: "flat" / "subtle" / "jaunty" polaroid tilt. Locked to these three.
+  {{ACCENT_ILLO}}        — ACCENT_ILLO lever: "on" or "off" — a faint brand-illustration accent. Locked enum.
 RULES:
   - DESIGNED BLOCK: slice to PNG. Overlapping, rotated polaroids (transform + position:absolute)
     do not survive as live email HTML — this block must be rasterised.
   - All captions and QUOTE_ACCENT are Cervanttis → lowercase; PULL_QUOTE is Lust → sentence case.
-  - Clay (#D8CCBE) background, polaroid angles (-7° / +2° / +8°) and overlap — locked.
-  - The collage region has a fixed 340px height so the rotated, absolutely-positioned
-    polaroids are captured by the slicer (position:absolute does not expand the row).
+  - Clay (#D8CCBE) background, polaroid angles (-7° / +2° / +8°) and overlap — locked defaults.
+  - The collage region has a fixed height so the rotated, absolutely-positioned polaroids are
+    captured by the slicer (position:absolute does not expand the row).
+  - LEVERS are art-direction only: locked enums, no free hex/px. They change spacing, tilt and the
+    accent illustration toggle — never colour, font or the core layout.
 -->
 <tr><td style="padding:0;background:#D8CCBE;">
-<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE">
+<style>
+  .pc .pc-left { transform:rotate(-7deg); }
+  .pc .pc-center { transform:rotate(2deg); }
+  .pc .pc-right { transform:rotate(8deg); }
+  .pc.rot-flat .pc-left { transform:rotate(-2deg); }
+  .pc.rot-flat .pc-center { transform:rotate(0deg); }
+  .pc.rot-flat .pc-right { transform:rotate(2deg); }
+  .pc.rot-subtle .pc-left { transform:rotate(-5deg); }
+  .pc.rot-subtle .pc-center { transform:rotate(1deg); }
+  .pc.rot-subtle .pc-right { transform:rotate(5deg); }
+  .pc.rot-jaunty .pc-left { transform:rotate(-11deg); }
+  .pc.rot-jaunty .pc-center { transform:rotate(3deg); }
+  .pc.rot-jaunty .pc-right { transform:rotate(11deg); }
+  .pc .pc-region { height:340px; }
+  .pc.dens-tight .pc-region { height:312px; }
+  .pc.dens-regular .pc-region { height:340px; }
+  .pc.dens-airy .pc-region { height:372px; }
+  .pc .pc-quote { padding:4px 72px 50px; }
+  .pc.dens-tight .pc-quote { padding:0 72px 38px; }
+  .pc.dens-airy .pc-quote { padding:12px 72px 62px; }
+  .pc .pc-illo { display:none; }
+  .pc.illo-on .pc-illo { display:block; }
+</style>
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE" class="pc dens-{{DENSITY}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}}">
   <tr>
     <td style="padding:0;background:#D8CCBE;">
       <!-- Collage region — fixed height so absolute polaroids are captured -->
-      <div style="position:relative;width:600px;height:340px;">
+      <div class="pc-region" style="position:relative;width:600px;">
+        <!-- ACCENT_ILLO: faint brand illustration behind the collage (background-image — never a broken <img>) -->
+        <div class="pc-illo" style="position:absolute;left:0;top:0;width:600px;height:100%;background:url('{{ASSETS_BASE}}/BodyFlower_Black_wide.png') no-repeat center/contain;opacity:0.06;"></div>
         <!-- left polaroid -->
-        <div style="position:absolute;left:50px;top:56px;transform:rotate(-7deg);background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+        <div class="pc-left" style="position:absolute;left:50px;top:56px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
           <img src="{{PHOTO_1_URL}}" width="168" height="168" alt="" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_1_CAPTION}}</p>
         </div>
         <!-- right polaroid -->
-        <div style="position:absolute;left:386px;top:62px;transform:rotate(8deg);background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+        <div class="pc-right" style="position:absolute;left:386px;top:62px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
           <img src="{{PHOTO_3_URL}}" width="168" height="168" alt="" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_3_CAPTION}}</p>
         </div>
         <!-- centre polaroid (front) -->
-        <div style="position:absolute;left:206px;top:32px;transform:rotate(2deg);background:#ffffff;border:1px solid #e8e2da;padding:11px 11px 11px;box-shadow:0 14px 34px rgba(0,0,0,0.22);z-index:2;">
+        <div class="pc-center" style="position:absolute;left:206px;top:32px;background:#ffffff;border:1px solid #e8e2da;padding:11px 11px 11px;box-shadow:0 14px 34px rgba(0,0,0,0.22);z-index:2;">
           <img src="{{PHOTO_2_URL}}" width="176" height="176" alt="" style="display:block;width:176px;height:176px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_2_CAPTION}}</p>
         </div>
       </div>
       <!-- Pull-quote -->
-      <div style="padding:4px 72px 50px;text-align:center;">
+      <div class="pc-quote" style="text-align:center;">
         <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:rgba(0,0,0,0.55);line-height:1.0;margin:0 0 12px 0;">{{QUOTE_ACCENT}}</p>
         <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.4;max-width:430px;margin:0 auto 16px auto;">{{PULL_QUOTE}}</p>
         <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(0,0,0,0.55);margin:0;">{{QUOTE_ATTRIBUTION}}</p>

@@ -141,9 +141,22 @@ const server = http.createServer(async (req, res) => {
     // becomes its own image with its own link (never one giant PNG). The footer stays live
     // HTML so its {% unsubscribe %} tag works. `links` is an optional {index: url} override.
     if (req.method === 'POST' && p === '/api/klaviyo-draft') {
-      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links } = await readBody(req);
+      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links, designId } = await readBody(req);
       const apiKey = process.env.KLAVIYO_API_KEY;
       if (!apiKey) return json(res, 400, { error: 'KLAVIYO_API_KEY is not set on the server. Add it as an environment variable and restart.' });
+      // Fall back to the lines persisted on the saved design (designMeta subjectLine/previewText)
+      // when the request body doesn't carry them — the subject/preview live outside the campaign
+      // body, so a saved design is their source of truth.
+      let subjectLine = subject, preview = previewText;
+      if ((!subjectLine || !preview) && designId) {
+        try {
+          const d = await designs.get(designId);
+          if (d) {
+            if (!subjectLine) subjectLine = d.subjectLine || '';
+            if (!preview) preview = d.previewText || '';
+          }
+        } catch (_) { /* design lookup is best-effort — fall through with whatever we have */ }
+      }
       const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
       const assetsBase = `${proto}://${req.headers.host}/design-system/assets`;
       const linkOverride = links || {};
@@ -170,7 +183,7 @@ const server = http.createServer(async (req, res) => {
 
         // 3. Create the draft (template → campaign → assign template).
         const result = await klaviyo.createDraftCampaign({
-          apiKey, listId, fromEmail, fromLabel, replyToEmail, subject, previewText,
+          apiKey, listId, fromEmail, fromLabel, replyToEmail, subject: subjectLine, previewText: preview,
           name: meta.campaignName, html: fullHtml,
         });
         return json(res, 200, { ...result, sliceCount: slices.length });
