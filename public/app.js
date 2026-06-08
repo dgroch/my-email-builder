@@ -325,7 +325,7 @@ function setLiveContextChips(ctx, loading) {
   const root = $('#createLiveContext');
   if (!root) return;
   const chips = root.querySelectorAll('.clc-chip');
-  const labels = { products: 'Products', audiences: 'Audiences', blogPosts: 'Blog posts' };
+  const labels = { products: 'Products', images: 'Lifestyle images', audiences: 'Audiences', blogPosts: 'Blog posts' };
   for (const chip of chips) {
     const src = chip.dataset.source;
     chip.classList.remove('ok', 'unavailable', 'loading');
@@ -340,6 +340,7 @@ function setLiveContextChips(ctx, loading) {
       const ok = (ctx.contextStatus || {})[src] === 'ok';
       chip.classList.add(ok ? 'ok' : 'unavailable');
       const n = src === 'products' ? (ctx.products || []).length
+        : src === 'images' ? (ctx.images || []).length
         : src === 'audiences' ? (ctx.audiences || []).length
         : (ctx.blogPosts || []).length;
       count.textContent = ok ? (n + ' live') : 'unavailable';
@@ -347,14 +348,16 @@ function setLiveContextChips(ctx, loading) {
   }
   const detail = root.querySelector('.clc-detail');
   if (loading) {
-    detail.textContent = 'Fetching from Shopify, Klaviyo and Notion…';
+    detail.textContent = 'Fetching from Shopify, the asset library, Klaviyo and Notion…';
   } else if (!ctx) {
     detail.textContent = 'Live context unreachable. The generator will run without it.';
   } else {
     const parts = [];
     if (ctx.asOf) parts.push('as of ' + ctx.asOf);
-    const liveCount = ['products', 'audiences', 'blogPosts'].filter((s) => (ctx.contextStatus || {})[s] === 'ok').length;
-    parts.push(liveCount + ' of 3 sources live');
+    const liveSources = ['products', 'images', 'audiences', 'blogPosts'];
+    const liveCount = liveSources.filter((s) => (ctx.contextStatus || {})[s] === 'ok').length;
+    parts.push(liveCount + ' of 4 sources live');
+    if (ctx.errors && ctx.errors.images) parts.push('· Asset library: ' + ctx.errors.images);
     if (ctx.errors && ctx.errors.blogPosts) parts.push('· Notion blog index: ' + ctx.errors.blogPosts);
     if (ctx.errors && ctx.errors.audiences) parts.push('· Klaviyo: ' + ctx.errors.audiences);
     if (ctx.errors && ctx.errors.products) parts.push('· Shopify: ' + ctx.errors.products);
@@ -401,11 +404,20 @@ async function submitCreate() {
   if (!brief) { setCreateStatus('Tell me what the campaign is for — at least one sentence.', 'err'); $('#createBrief').focus(); return; }
   const btn = $('#createSubmit');
   btn.disabled = true;
-  setCreateStatus('Generating campaign from brief… this can take 20–60s on a cold start.', 'pending');
+  setCreateStatus('Refreshing live context (semantic image search uses the brief as the query) and generating… this can take 30–90s on a cold start.', 'pending');
+  // Refresh the live context with the brief as the asset-library search query
+  // so the LLM gets semantically-ranked lifestyle imagery, not the empty-brief
+  // pre-fetch. Cache is bypassed for this so the user always gets fresh results.
+  let ctx = _cachedLiveContext;
+  try {
+    const r2 = await fetch('/api/live-context?q=' + encodeURIComponent(brief) + '&fresh=1');
+    if (r2.ok) ctx = await r2.json();
+  } catch (_) { /* fall through with cached context */ }
+  if (ctx) setLiveContextChips(ctx, false);
   try {
     const r = await fetch('/api/campaigns/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brief, audience, save, liveContext: _cachedLiveContext || undefined }),
+      body: JSON.stringify({ brief, audience, save, liveContext: ctx || undefined }),
     });
     const data = await r.json();
     if (!r.ok) {
@@ -440,8 +452,9 @@ async function submitCreate() {
     let liveMsg = '';
     if (data.liveContext) {
       const lc = data.liveContext;
-      const liveCount = (lc.contextStatus && ['products', 'audiences', 'blogPosts'].filter((s) => lc.contextStatus[s] === 'ok').length) || 0;
-      liveMsg = ' · live context ' + liveCount + '/3 (' + lc.productCount + ' products, ' + lc.audienceCount + ' audiences, ' + lc.blogPostCount + ' blog posts)';
+      const liveSources = ['products', 'images', 'audiences', 'blogPosts'];
+      const liveCount = (lc.contextStatus && liveSources.filter((s) => lc.contextStatus[s] === 'ok').length) || 0;
+      liveMsg = ' · live context ' + liveCount + '/4 (' + lc.productCount + ' products, ' + lc.imageCount + ' images, ' + lc.audienceCount + ' audiences, ' + lc.blogPostCount + ' blog posts)';
     } else {
       liveMsg = ' · no live context';
     }

@@ -183,6 +183,25 @@ footer
 
 Don't stack two designed blocks back-to-back without a divider. Don't include more than one of each product-spotlight treatment per email.
 
+### 9b. Designed-block images — pull from the live lifestyle search
+
+When a block is one of the designed set (every `blocks/*` component is rasterised to PNG before being uploaded to Klaviyo), its image-bearing tokens need real R2 URLs. The live context block includes a `LIFESTYLE IMAGES` section — semantically ranked for the brief, with R2 URLs that you can drop directly into image tokens.
+
+| Block | Image tokens to fill (pick the URLs whose description matches the moment) |
+|---|---|
+| `blocks/caption-bar-hero` | `HERO_IMAGE_URL` |
+| `blocks/editorial-hero` | `HERO_IMAGE_URL` |
+| `blocks/feature-list` | `POLAROID_IMAGE_URL` |
+| `blocks/polaroid-collage` | `PHOTO_1_URL`, `PHOTO_2_URL`, `PHOTO_3_URL` |
+| `blocks/story` | `PORTRAIT_IMAGE_URL` |
+| `blocks/designed-product-card` | `PRODUCT_IMAGE_URL` |
+| `blocks/howto-steps` | `STEP_1_IMAGE_URL`, `STEP_2_IMAGE_URL`, `STEP_3_IMAGE_URL` |
+| `blocks/editorial-collage` | `PHOTO_1_URL`, `PHOTO_2_URL`, `PHOTO_3_URL` |
+| `blocks/annotated-product` | `PRODUCT_IMAGE_URL` |
+| `blocks/comparison-vs` | `BEFORE_IMAGE_URL`, `AFTER_IMAGE_URL` |
+
+Pick the image whose `description` best matches the campaign's emotional beat. For a sympathy send, prefer a "quiet, white, restrained" image. For a celebration, prefer a "vibrant, joyful recipient" image. Read the descriptions — they're written so you can evaluate fit at a glance. If a needed image isn't in the live context, flag in `notes`; do NOT invent a URL.
+
 ---
 
 ## 10. Output schema (this is the contract)

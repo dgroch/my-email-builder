@@ -106,14 +106,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Live context for the campaign generator — gathers the current Shopify
-    // catalogue, Klaviyo audiences, and Notion blog index (any of which may
-    // be unavailable without losing the others). The button calls this when
-    // it opens, then passes the result to /api/campaigns/generate. The agent
-    // in conversation builds its own richer version.
+    // catalogue, Klaviyo audiences, Notion blog index, and semantic image
+    // search results from the asset library (any of which may be unavailable
+    // without losing the others). The button calls this when it opens, then
+    // passes the result to /api/campaigns/generate. The agent in conversation
+    // builds its own richer version.
+    //
+    // The image search needs a `brief` query — when the button opens the modal
+    // the brief is empty, so image search returns no results (the user can
+    // re-fetch with the brief via /api/campaigns/generate's server-side gather,
+    // or pass liveContext.images[] from a client-side fetch after typing).
     if (req.method === 'GET' && p === '/api/live-context') {
       const forceFresh = u.searchParams.get('fresh') === '1';
+      const brief = u.searchParams.get('q') || '';
       try {
-        const ctx = await liveContext.gather({ forceFresh });
+        const ctx = await liveContext.gather({ forceFresh, brief });
         return json(res, 200, ctx);
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
@@ -125,11 +132,12 @@ const server = http.createServer(async (req, res) => {
     // The response is *not* auto-saved; the UI shows it in the builder for review.
     if (req.method === 'POST' && p === '/api/campaigns/generate') {
       const { brief, audience, save, liveContext: suppliedContext } = await readBody(req);
-      // If the caller didn't supply live context, gather the cheap version
-      // server-side so the button works with a single POST.
+      // If the caller didn't supply live context, gather it server-side
+      // (using the brief as the asset-library search query) so the button
+      // works with a single POST.
       let ctx = suppliedContext;
       if (!ctx) {
-        try { ctx = await liveContext.gather(); } catch (_) { ctx = null; }
+        try { ctx = await liveContext.gather({ brief }); } catch (_) { ctx = null; }
       }
       try {
         const result = await campaignGenerator.generateValidated({
@@ -167,6 +175,7 @@ const server = http.createServer(async (req, res) => {
             productCount: (ctx.products || []).length,
             audienceCount: (ctx.audiences || []).length,
             blogPostCount: (ctx.blogPosts || []).length,
+            imageCount: (ctx.images || []).length,
           } : null,
         });
       } catch (e) {
