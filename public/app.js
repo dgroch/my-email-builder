@@ -318,6 +318,76 @@ function hydrate() {
   renderBlocks(); livePreview();
 }
 
+// ── create campaign from a brief (fig-bloom-email-generator skill) ─────────────
+function openCreate() {
+  $('#createStatus').hidden = true;
+  $('#createStatus').textContent = '';
+  $('#createBrief').value = '';
+  $('#createAudience').value = 'RH | All Email Subscribers';
+  $('#createSave').checked = true;
+  $('#createSubmit').disabled = false;
+  $('#createDialog').showModal();
+  setTimeout(() => $('#createBrief').focus(), 50);
+}
+
+function setCreateStatus(msg, cls) {
+  const s = $('#createStatus');
+  s.textContent = msg;
+  s.className = 'create-status ' + (cls || '');
+  s.hidden = !msg;
+}
+
+async function submitCreate() {
+  const brief = ($('#createBrief').value || '').trim();
+  const audience = ($('#createAudience').value || '').trim() || 'RH | All Email Subscribers';
+  const save = $('#createSave').checked;
+  if (!brief) { setCreateStatus('Tell me what the campaign is for — at least one sentence.', 'err'); $('#createBrief').focus(); return; }
+  const btn = $('#createSubmit');
+  btn.disabled = true;
+  setCreateStatus('Generating campaign from brief… this can take 20–60s on a cold start.', 'pending');
+  try {
+    const r = await fetch('/api/campaigns/generate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ brief, audience, save }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      setCreateStatus('Generation failed: ' + (data.error || r.status) + (data.code ? ' [' + data.code + ']' : ''), 'err');
+      btn.disabled = false;
+      return;
+    }
+    if (data.needsClarification) {
+      setCreateStatus('Need one clarification: ' + data.needsClarification, 'pending');
+      btn.disabled = false;
+      return;
+    }
+    const camp = data.campaign;
+    if (!camp || !Array.isArray(camp.blocks)) {
+      setCreateStatus('Generation returned an unexpected shape. Check the server logs.', 'err');
+      btn.disabled = false;
+      return;
+    }
+    // Load the campaign into the builder.
+    campaign = JSON.parse(JSON.stringify(camp));
+    uid = Math.max(1, ...campaign.blocks.map(b => (b && b.id) || 0)) + 1;
+    if (data.design && data.design.id) currentDesignId = data.design.id;
+    else currentDesignId = null;
+    $('#campaignName').value = campaign.campaignName || (data.design && data.design.name) || '';
+    $('#bodyBg').value = campaign.bodyBg || '#2c2825';
+    hydrate();
+    // Close the modal — campaign is now in the builder.
+    $('#createDialog').close();
+    const v = data.validation || {};
+    const ok = v.ok ? '✓' : '⚠';
+    const issues = (v.issues && v.issues.length) ? ' (' + v.issues.length + ' validation note' + (v.issues.length === 1 ? '' : 's') + ')' : '';
+    setStatus('campaign generated ' + ok + issues, v.ok ? 'ok' : 'warn');
+  } catch (e) {
+    setCreateStatus('Request failed: ' + (e && e.message || e), 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── toolbar ─────────────────────────────────────────────────────────────────────
 function bindToolbar() {
   $('#btnAdd').onclick = () => { const v = $('#addSelect').value; if (v) addBlock(v); };
@@ -336,6 +406,9 @@ function bindToolbar() {
   $('#kvSubmit').onclick = submitKlaviyo;
   $('#btnSave').onclick = saveDesign;
   $('#btnDesigns').onclick = openDesigns;
+  $('#btnCreate').onclick = openCreate;
+  $('#createSubmit').onclick = submitCreate;
+  $('#createCancel').onclick = () => $('#createDialog').close();
   $('#designsClose').onclick = () => $('#designsDialog').close();
   document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
 }

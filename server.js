@@ -12,6 +12,7 @@ const klaviyo = require('./lib/klaviyo');
 const { validateCampaign } = require('./lib/validate');
 const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
+const campaignGenerator = require('./lib/campaignGenerator');
 // Pick the designs backend: Notion (durable, survives redeploys) when configured,
 // else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
 const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
@@ -101,6 +102,48 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && p === '/api/validate') {
       const { campaign } = await readBody(req);
       return json(res, 200, validateCampaign(campaign || {}, schema()));
+    }
+
+    // Generate a campaign JSON from a free-form brief (uses the
+    // fig-bloom-email-generator skill — pre-loaded system prompt + user template).
+    // The response is *not* auto-saved; the UI shows it in the builder for review.
+    if (req.method === 'POST' && p === '/api/campaigns/generate') {
+      const { brief, audience, save } = await readBody(req);
+      try {
+        const result = await campaignGenerator.generateValidated({
+          brief,
+          audience,
+          validateFn: async (campaign) => validateCampaign(campaign || {}, schema()),
+        });
+        if (result.needsClarification) {
+          return json(res, 200, { needsClarification: result.needsClarification });
+        }
+        // Optionally save the generated campaign as a new design so the user lands
+        // on it directly. Default: don't auto-save — the UI shows the JSON first.
+        let design = null;
+        if (save && result.campaign) {
+          const name = (result.campaign.campaignName && String(result.campaign.campaignName).trim())
+            || (brief && String(brief).slice(0, 60).trim())
+            || 'Generated campaign';
+          const payload = {
+            name,
+            campaign: result.campaign,
+            subjectLine: result.campaign.subjectLine || '',
+            previewText: result.campaign.previewText || '',
+          };
+          if (result.campaign.objective) payload.objective = result.campaign.objective;
+          design = await designs.create(payload);
+        }
+        return json(res, 200, {
+          campaign: result.campaign,
+          validation: result.validation || null,
+          design: design || null,
+        });
+      } catch (e) {
+        const code = (e && e.code) || 'GENERATE_FAILED';
+        const status = code === 'EMPTY_BRIEF' ? 400 : 502;
+        return json(res, status, { error: String((e && e.message) || e), code, raw: e.raw || null });
+      }
     }
 
     if (req.method === 'POST' && p === '/api/render') {

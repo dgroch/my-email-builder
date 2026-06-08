@@ -169,3 +169,36 @@ body.mode-library .campaign-meta,body.mode-library .actions{display:none;}
 .cov-table .cov-num{text-align:center;white-space:nowrap;}
 .cov-table tr.cov-thin{background:#fbf2ea;}
 .cov-chips{display:flex;flex-wrap:wrap;gap:4px;}
+
+/* create-campaign dialog */
+.create-dialog .kv-form{max-width:680px;width:min(680px,92vw);}
+.create-dialog .kv-note{font-size:12px;color:var(--sub);margin:-2px 0 14px;line-height:1.55;}
+.create-form .kv-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.create-form .kv-label{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);}
+.create-form textarea{
+  font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:6px;
+  background:#fbfaf7;
+  color:var(--ink);
+  resize:vertical;
+  min-height:140px;
+  width:100%;
+  box-sizing:border-box;
+}
+.create-form textarea:focus{outline:2px solid #b89a75;outline-offset:0;border-color:transparent;background:#fff;}
+.create-form input[type=text]{
+  font:13px ui-sans-serif,system-ui,sans-serif;
+  padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:#fbfaf7;color:var(--ink);
+  width:100%;box-sizing:border-box;
+}
+.create-form .kv-check-row{flex-direction:row;align-items:center;gap:8px;font-size:12px;color:var(--ink);}
+.create-form .kv-check-row input[type=checkbox]{margin:0;}
+.create-status{
+  margin:8px 0 0;padding:8px 10px;border-radius:5px;font-size:12px;line-height:1.5;
+  border:1px solid var(--line);background:#fbfaf7;color:var(--ink);
+}
+.create-status.pending{background:#fdf6e3;border-color:#e7d8a4;color:#5a4a1c;}
+.create-status.err{background:#fbe9e3;border-color:#e7b0a4;color:#7a3322;}
+.create-status.ok{background:#e7f3ec;border-color:#a4d8b8;color:#1e5a3a;}

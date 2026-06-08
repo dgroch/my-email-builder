@@ -18,6 +18,7 @@
     <label>Body bg <input id="bodyBg" type="text" value="#2c2825" class="hex"></label>
   </div>
   <div class="actions">
+    <button id="btnCreate" class="primary" title="Generate a campaign from a free-form brief using the brand-aware campaign generator">Create campaign</button>
     <button id="btnSample" class="ghost" title="Load the “card is the hard part” sample">Sample</button>
     <button id="btnDesigns" class="ghost" title="Open a saved design">My designs</button>
     <button id="btnSave" class="ghost" title="Save this design to the server">Save</button>
@@ -121,6 +122,30 @@
     <div class="block-fields"></div>
   </div>
 </template>
+
+<dialog id="createDialog" class="kv-dialog create-dialog">
+  <form method="dialog" class="kv-form create-form">
+    <h2>Create campaign from a brief</h2>
+    <p class="kv-note">Tell me what the campaign is for — the audience, the occasion, the products, the deadline. I'll generate a complete, validated campaign JSON you can review and edit here.</p>
+    <label class="kv-row">
+      <span class="kv-label">Brief</span>
+      <textarea id="createBrief" rows="8" placeholder="e.g. Farewell weekend for seven designs (Lucerne, Lisbon, Savoie, Genoa, Umbria, Paris, Pink Rose Bouquet) — Friday 5 &amp; Saturday 6 June only. Warm, fond tone, not a clearance. Soft tease of a glow up coming next week. No discount framing. The 20% more stems upgrade is live — frame as more, not off."></textarea>
+    </label>
+    <label class="kv-row">
+      <span class="kv-label">Audience <em>(optional)</em></span>
+      <input id="createAudience" type="text" placeholder="RH | All Email Subscribers (default)" value="RH | All Email Subscribers">
+    </label>
+    <label class="kv-row kv-check-row">
+      <input id="createSave" type="checkbox" checked>
+      <span>Save the generated campaign as a new design so it opens in the builder</span>
+    </label>
+    <div id="createStatus" class="create-status" hidden></div>
+    <div class="kv-actions">
+      <button type="submit" value="cancel" class="ghost" id="createCancel">Close</button>
+      <button type="button" id="createSubmit" class="primary">Generate</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog id="klaviyoDialog" class="kv-dialog">
   <form method="dialog" class="kv-form">

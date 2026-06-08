@@ -18,3 +18,13 @@ services:
       #   NOTION_DESIGNS_DB   — the "Email Designs" database id
       # If NOTION_TOKEN is unset, the app falls back to local-disk storage at
       # DATA_DIR (ephemeral unless you add a persistent disk + paid plan).
+      #
+      # Campaign generator ("Create campaign" button → POST /api/campaigns/generate).
+      # The system prompt + user template are bundled under lib/prompts/. The
+      # host calls the LLM (default Anthropic Claude Sonnet 4). Set in Render:
+      #   ANTHROPIC_API_KEY              — required; or use CAMPAIGN_LLM_API_KEY
+      #   CAMPAIGN_LLM_MODEL             — optional, default 'claude-sonnet-4-20250514'
+      #   CAMPAIGN_LLM_BASE_URL          — optional, default https://api.anthropic.com
+      #   CAMPAIGN_LLM_MAX_TOKENS        — optional, default 4096
+      #   CAMPAIGN_LLM_TEMPERATURE       — optional, default 0.7
+      #   CAMPAIGN_LLM_PROVIDER          — optional, default 'anthropic'
