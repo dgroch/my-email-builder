@@ -15,6 +15,9 @@ AUDIENCE (the Klaviyo list or segment this email will be sent to — may be "def
 BRIEF (free-form, from the user — could be one sentence or a paragraph):
 {{BRIEF}}
 
+LIVE CONTEXT (current state — products live in the Shopify store today, Klaviyo audiences with their real IDs, published blog posts with their canonical URLs, today's date). Use the LIVE CONTEXT wherever possible. If a product, blog post, or audience named in the brief is not in the live context, do NOT invent it — flag it in the JSON's `notes` field:
+{{LIVE_CONTEXT}}
+
 ---
 
 Return a single JSON object that exactly matches the Fig & Bloom campaign schema. No commentary, no markdown fences, no surrounding prose.
@@ -116,3 +119,64 @@ The LLM's response is then parsed as JSON, validated via `POST /api/validate`, a
 | `{{AUDIENCE}}` | The Klaviyo list/segment name (user-supplied, or "default — RH \| All Email Subscribers" if unspecified). |
 
 The host may also inject additional context not in this template — e.g. the current month's active product set, or a recent newsletter's design for tone reference. These are prepended to the system prompt, not the user template.
+
+---
+
+## LIVE CONTEXT — shape and rules
+
+The host calls the LLM with a `liveContext` object alongside the brief. The shape is:
+
+```json
+{
+  "asOf": "2026-06-05T08:30:00+10:00",
+  "products": [
+    {
+      "title": "Lucerne",
+      "handle": "lucerne",
+      "fromPrice": "A$105",
+      "priceText": "From $105",
+      "imageUrl": "https://figandbloom.com/cdn/shop/files/...",
+      "url": "https://figandbloom.com/products/lucerne",
+      "productType": "Bouquet",
+      "tags": ["contemporary", "white", "sympathy", "thank-you"]
+    }
+  ],
+  "audiences": [
+    { "id": "Tww9G6", "name": "RH | All Email Subscribers", "type": "list" },
+    { "id": "RS7rrj", "name": "RH | Purchasers Past 18 Months", "type": "list" }
+  ],
+  "blogPosts": [
+    {
+      "title": "What to write on a flower card",
+      "url": "https://figandbloom.com/blogs/news/what-to-write-on-flower-card",
+      "publishedAt": "2026-05-12"
+    }
+  ],
+  "contextStatus": {
+    "products": "ok",
+    "audiences": "ok",
+    "blogPosts": "ok"
+  }
+}
+```
+
+### Where the live context comes from
+
+| Source | What | How the email builder gets it | How the agent gets it |
+|---|---|---|---|
+| **Shopify products** | Active bouquets, arrangements, vases, candles, cards — title, handle, from-price, image, tags | Public `figandbloom.com.au/products.json` (no auth) | Same, or a richer Admin API pull |
+| **Klaviyo audiences** | Lists + segments with real IDs | `GET /api/klaviyo-audiences` (server uses KLAVIYO_API_KEY) | Same |
+| **Notion blog index** | Published blog posts with canonical Shopify URLs | New `GET /api/blog-index` (server uses NOTION_TOKEN, optional) | Agent reads the Notion marketing space directly |
+| **Current date** | `asOf` timestamp | Server clock (Australia/Sydney) | Same |
+
+### When a source is missing
+
+The live context always includes `contextStatus`. The email builder's button shows the user a `2/3 sources live · Notion blog index not configured — set NOTION_TOKEN` indicator. The LLM gets the partial context; missing fields render as a clear `// (unavailable)` block in the rendered user message. **The LLM never invents a product, blog URL, or audience ID that isn't in the live context** — it flags the gap in the JSON's `notes` field instead.
+
+### Caching
+
+The email builder caches the live context for **15 minutes** (module-level in `lib/liveContext.js`). Each button click doesn't re-fetch. A `?fresh=1` query on `/api/live-context` bypasses the cache.
+
+### For the agent in conversation (path C, future)
+
+The agent is the source of truth for live context in conversational generation. The agent builds a richer `liveContext` (semantic asset search, performance data from past campaigns, anything from Notion it can see) and POSTs to `/api/campaigns/generate` with `save: true`. Same code path; richer inputs. The button is a fast path; the agent is the quality path.

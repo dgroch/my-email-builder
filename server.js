@@ -13,6 +13,7 @@ const { validateCampaign } = require('./lib/validate');
 const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
 const campaignGenerator = require('./lib/campaignGenerator');
+const liveContext = require('./lib/liveContext');
 // Pick the designs backend: Notion (durable, survives redeploys) when configured,
 // else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
 const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
@@ -104,15 +105,37 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, validateCampaign(campaign || {}, schema()));
     }
 
+    // Live context for the campaign generator — gathers the current Shopify
+    // catalogue, Klaviyo audiences, and Notion blog index (any of which may
+    // be unavailable without losing the others). The button calls this when
+    // it opens, then passes the result to /api/campaigns/generate. The agent
+    // in conversation builds its own richer version.
+    if (req.method === 'GET' && p === '/api/live-context') {
+      const forceFresh = u.searchParams.get('fresh') === '1';
+      try {
+        const ctx = await liveContext.gather({ forceFresh });
+        return json(res, 200, ctx);
+      } catch (e) {
+        return json(res, 502, { error: String((e && e.message) || e) });
+      }
+    }
+
     // Generate a campaign JSON from a free-form brief (uses the
     // fig-bloom-email-generator skill — pre-loaded system prompt + user template).
     // The response is *not* auto-saved; the UI shows it in the builder for review.
     if (req.method === 'POST' && p === '/api/campaigns/generate') {
-      const { brief, audience, save } = await readBody(req);
+      const { brief, audience, save, liveContext: suppliedContext } = await readBody(req);
+      // If the caller didn't supply live context, gather the cheap version
+      // server-side so the button works with a single POST.
+      let ctx = suppliedContext;
+      if (!ctx) {
+        try { ctx = await liveContext.gather(); } catch (_) { ctx = null; }
+      }
       try {
         const result = await campaignGenerator.generateValidated({
           brief,
           audience,
+          liveContext: ctx,
           validateFn: async (campaign) => validateCampaign(campaign || {}, schema()),
         });
         if (result.needsClarification) {
@@ -138,6 +161,13 @@ const server = http.createServer(async (req, res) => {
           campaign: result.campaign,
           validation: result.validation || null,
           design: design || null,
+          liveContext: ctx ? {
+            asOf: ctx.asOf,
+            contextStatus: ctx.contextStatus,
+            productCount: (ctx.products || []).length,
+            audienceCount: (ctx.audiences || []).length,
+            blogPostCount: (ctx.blogPosts || []).length,
+          } : null,
         });
       } catch (e) {
         const code = (e && e.code) || 'GENERATE_FAILED';

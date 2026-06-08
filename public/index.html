@@ -139,6 +139,15 @@
       <input id="createSave" type="checkbox" checked>
       <span>Save the generated campaign as a new design so it opens in the builder</span>
     </label>
+    <div id="createLiveContext" class="create-live-context" aria-live="polite">
+      <div class="clc-header">Live context</div>
+      <div class="clc-chips">
+        <span class="clc-chip" data-source="products"><span class="dot"></span><span class="label">Products</span><span class="count"></span></span>
+        <span class="clc-chip" data-source="audiences"><span class="dot"></span><span class="label">Audiences</span><span class="count"></span></span>
+        <span class="clc-chip" data-source="blogPosts"><span class="dot"></span><span class="label">Blog posts</span><span class="count"></span></span>
+      </div>
+      <div class="clc-detail"></div>
+    </div>
     <div id="createStatus" class="create-status" hidden></div>
     <div class="kv-actions">
       <button type="submit" value="cancel" class="ghost" id="createCancel">Close</button>

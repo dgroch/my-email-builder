@@ -202,3 +202,37 @@ body.mode-library .campaign-meta,body.mode-library .actions{display:none;}
 .create-status.pending{background:#fdf6e3;border-color:#e7d8a4;color:#5a4a1c;}
 .create-status.err{background:#fbe9e3;border-color:#e7b0a4;color:#7a3322;}
 .create-status.ok{background:#e7f3ec;border-color:#a4d8b8;color:#1e5a3a;}
+
+/* live-context panel inside the create dialog */
+.create-live-context{
+  margin:14px 0 0;padding:10px 12px;border:1px solid var(--line);
+  border-radius:6px;background:#fbfaf7;
+}
+.clc-header{
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);
+  margin-bottom:8px;
+}
+.clc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.clc-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;padding:4px 8px;border-radius:999px;
+  background:#efece7;color:var(--sub);
+  border:1px solid transparent;
+}
+.clc-chip .dot{
+  width:7px;height:7px;border-radius:50%;background:#bbb;flex:none;
+}
+.clc-chip.ok{background:#e7f3ec;color:#1e5a3a;}
+.clc-chip.ok .dot{background:#3fa46a;}
+.clc-chip.unavailable{background:#fbe9e3;color:#7a3322;}
+.clc-chip.unavailable .dot{background:#cc6655;}
+.clc-chip.loading .dot{background:#b89a75;animation:clcPulse 1.2s ease-in-out infinite;}
+.clc-chip .count{font-variant-numeric:tabular-nums;color:var(--sub);}
+.clc-chip.ok .count{color:#1e5a3a;}
+.clc-chip.unavailable .count{color:#7a3322;}
+@keyframes clcPulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+.clc-detail{
+  font-size:11px;color:var(--sub);line-height:1.5;
+  margin-top:4px;min-height:1em;
+}
+.clc-detail a{color:var(--ink);}

@@ -319,6 +319,57 @@ function hydrate() {
 }
 
 // ── create campaign from a brief (fig-bloom-email-generator skill) ─────────────
+let _cachedLiveContext = null;
+
+function setLiveContextChips(ctx, loading) {
+  const root = $('#createLiveContext');
+  if (!root) return;
+  const chips = root.querySelectorAll('.clc-chip');
+  const labels = { products: 'Products', audiences: 'Audiences', blogPosts: 'Blog posts' };
+  for (const chip of chips) {
+    const src = chip.dataset.source;
+    chip.classList.remove('ok', 'unavailable', 'loading');
+    const count = chip.querySelector('.count');
+    if (loading) {
+      chip.classList.add('loading');
+      count.textContent = '…';
+    } else if (!ctx) {
+      chip.classList.add('unavailable');
+      count.textContent = '—';
+    } else {
+      const ok = (ctx.contextStatus || {})[src] === 'ok';
+      chip.classList.add(ok ? 'ok' : 'unavailable');
+      const n = src === 'products' ? (ctx.products || []).length
+        : src === 'audiences' ? (ctx.audiences || []).length
+        : (ctx.blogPosts || []).length;
+      count.textContent = ok ? (n + ' live') : 'unavailable';
+    }
+  }
+  const detail = root.querySelector('.clc-detail');
+  if (loading) {
+    detail.textContent = 'Fetching from Shopify, Klaviyo and Notion…';
+  } else if (!ctx) {
+    detail.textContent = 'Live context unreachable. The generator will run without it.';
+  } else {
+    const parts = [];
+    if (ctx.asOf) parts.push('as of ' + ctx.asOf);
+    const liveCount = ['products', 'audiences', 'blogPosts'].filter((s) => (ctx.contextStatus || {})[s] === 'ok').length;
+    parts.push(liveCount + ' of 3 sources live');
+    if (ctx.errors && ctx.errors.blogPosts) parts.push('· Notion blog index: ' + ctx.errors.blogPosts);
+    if (ctx.errors && ctx.errors.audiences) parts.push('· Klaviyo: ' + ctx.errors.audiences);
+    if (ctx.errors && ctx.errors.products) parts.push('· Shopify: ' + ctx.errors.products);
+    detail.textContent = parts.join('  ');
+  }
+}
+
+async function fetchLiveContext(forceFresh) {
+  const url = '/api/live-context' + (forceFresh ? '?fresh=1' : '');
+  const r = await fetch(url);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+  return data;
+}
+
 function openCreate() {
   $('#createStatus').hidden = true;
   $('#createStatus').textContent = '';
@@ -328,6 +379,12 @@ function openCreate() {
   $('#createSubmit').disabled = false;
   $('#createDialog').showModal();
   setTimeout(() => $('#createBrief').focus(), 50);
+  // Fire-and-forget live context fetch. The user can start typing the brief
+  // while the chips update; the cached value is sent on submit.
+  setLiveContextChips(null, true);
+  fetchLiveContext(false)
+    .then((ctx) => { _cachedLiveContext = ctx; setLiveContextChips(ctx, false); })
+    .catch((e) => { _cachedLiveContext = null; setLiveContextChips(null, false); });
 }
 
 function setCreateStatus(msg, cls) {
@@ -348,7 +405,7 @@ async function submitCreate() {
   try {
     const r = await fetch('/api/campaigns/generate', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ brief, audience, save }),
+      body: JSON.stringify({ brief, audience, save, liveContext: _cachedLiveContext || undefined }),
     });
     const data = await r.json();
     if (!r.ok) {
@@ -380,7 +437,15 @@ async function submitCreate() {
     const v = data.validation || {};
     const ok = v.ok ? '✓' : '⚠';
     const issues = (v.issues && v.issues.length) ? ' (' + v.issues.length + ' validation note' + (v.issues.length === 1 ? '' : 's') + ')' : '';
-    setStatus('campaign generated ' + ok + issues, v.ok ? 'ok' : 'warn');
+    let liveMsg = '';
+    if (data.liveContext) {
+      const lc = data.liveContext;
+      const liveCount = (lc.contextStatus && ['products', 'audiences', 'blogPosts'].filter((s) => lc.contextStatus[s] === 'ok').length) || 0;
+      liveMsg = ' · live context ' + liveCount + '/3 (' + lc.productCount + ' products, ' + lc.audienceCount + ' audiences, ' + lc.blogPostCount + ' blog posts)';
+    } else {
+      liveMsg = ' · no live context';
+    }
+    setStatus('campaign generated ' + ok + issues + liveMsg, v.ok ? 'ok' : 'warn');
   } catch (e) {
     setCreateStatus('Request failed: ' + (e && e.message || e), 'err');
   } finally {

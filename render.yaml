@@ -28,3 +28,11 @@ services:
       #   CAMPAIGN_LLM_MAX_TOKENS        — optional, default 4096
       #   CAMPAIGN_LLM_TEMPERATURE       — optional, default 0.7
       #   CAMPAIGN_LLM_PROVIDER          — optional, default 'anthropic'
+      #
+      # Live context (passed into the LLM call so generated campaigns reference
+      # real products / audiences / blog URLs instead of stale snapshots).
+      #   SHOPIFY_STORE_DOMAIN           — optional, default 'figandbloom.com.au' (no auth needed for the public feed)
+      #   KLAVIYO_API_KEY                — already set above; used for live audiences
+      #   NOTION_TOKEN                   — already set above; used for the blog index
+      #   NOTION_BLOG_INDEX_PAGE         — page id (with no dashes) that holds the blog index
+      # Live context is cached for 15 minutes. Add ?fresh=1 to /api/live-context to bypass.
