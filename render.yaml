@@ -34,8 +34,9 @@ services:
       # stale snapshots).
       #   SHOPIFY_STORE_DOMAIN           — optional, default 'figandbloom.com.au' (no auth needed for the public feed)
       #   KLAVIYO_API_KEY                — already set above; used for live audiences
-      #   NOTION_TOKEN                   — already set above; used for the blog index
-      #   NOTION_BLOG_INDEX_PAGE         — page id (with no dashes) that holds the blog index
+      #   NOTION_TOKEN                   — already set above; (still used for the saved-designs Notion DB; no longer needed for blog)
+      #   SHOPIFY_BLOG_FEED_URL          — optional, default 'https://figandbloom.com/blogs/news.atom' (Shopify-published Atom feed, no auth, top 20 most recent posts)
+      #   SHOPIFY_BLOG_MAX               — optional, default 20 (cap on number of posts returned)
       #   ASSET_LIBRARY_URL              — optional, default 'https://asset-library-u70t.onrender.com' (semantic image search; no auth, just a Referer header)
       #   ASSET_LIBRARY_REFERER          — optional, default 'https://my-email-builder.onrender.com/' (the Referer header the asset library expects)
       # Live context is cached for 15 minutes. Add ?fresh=1 to /api/live-context to bypass.
