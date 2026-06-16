@@ -229,6 +229,8 @@ async function renderSlices() {
     const wrap = $('#slices'); wrap.innerHTML = '';
     SLICES.forEach((s) => {
       const name = sliceName(s);
+      const isGif = s.kind === 'gif';
+      const src = isGif ? s.src : 'data:image/png;base64,' + s.pngBase64;
       // Per-block link: editable for image blocks; the unsubscribe footer stays live HTML.
       let linkRow;
       if (s.keepHtml) {
@@ -238,15 +240,17 @@ async function renderSlices() {
           oninput: e => { s.link = e.target.value; } });
         linkRow = el('label', { class: 'slice-link' }, [el('span', { text: 'Link URL' }), input]);
       }
-      const card = el('div', { class: 'slice' }, [
-        el('div', { class: 'slice-head' }, [
-          el('span', { class: 'slice-name', text: name }),
-          el('a', { class: 'slice-dl', text: 'download', download: name, href: 'data:image/png;base64,' + s.pngBase64 }),
-        ]),
-        el('img', { class: 'slice-img', src: 'data:image/png;base64,' + s.pngBase64, alt: s.component }),
-        linkRow,
-      ]);
-      wrap.append(card);
+      // GIFs pass through live (kept as <img>); download/open the hosted file in a new tab.
+      const dlProps = isGif
+        ? { class: 'slice-dl', text: 'open GIF', href: src, target: '_blank' }
+        : { class: 'slice-dl', text: 'download', download: name, href: src };
+      const kids = [
+        el('div', { class: 'slice-head' }, [el('span', { class: 'slice-name', text: name }), el('a', dlProps)]),
+        el('img', { class: 'slice-img', src, alt: s.component }),
+      ];
+      if (isGif) kids.push(el('div', { class: 'slice-link note', text: 'Animated GIF — passed through live (kept as <img>, not flattened to PNG).' }));
+      kids.push(linkRow);
+      wrap.append(el('div', { class: 'slice' }, kids));
     });
     $('#btnDownloadSlices').disabled = !SLICES.length;
     if (brokenImages && brokenImages.length) setStatus(`${SLICES.length} slices · ${brokenImages.length} broken image(s)`, 'warn');
@@ -255,11 +259,14 @@ async function renderSlices() {
 }
 function sliceName(s) {
   const n = String(s.index + 1).padStart(2, '0');
-  return `${n}-${s.component.replace(/[\/]+/g, '-')}.png`;
+  const suffix = s.segCount > 1 ? '-' + (s.seg + 1) : '';
+  const ext = s.kind === 'gif' ? '.gif' : '.png';
+  return `${n}-${s.component.replace(/[\/]+/g, '-')}${suffix}${ext}`;
 }
 async function downloadSlices() {
   if (!SLICES.length) return;
-  const files = SLICES.map(s => ({ name: sliceName(s), bytes: b64ToBytes(s.pngBase64) }));
+  // GIF segments are hosted live (no local pixels) — zip only the rasterised PNG slices.
+  const files = SLICES.filter(s => s.pngBase64).map(s => ({ name: sliceName(s), bytes: b64ToBytes(s.pngBase64) }));
   const blob = zipStore(files);
   download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '-slices.zip', blob, 'application/zip');
 }

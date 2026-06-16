@@ -212,12 +212,14 @@ const server = http.createServer(async (req, res) => {
         brokenImages,
         slices: slices.map(s => {
           const b = byIndex[s.index] || {};
-          return {
-            index: s.index, component: s.component, width: s.width, height: s.height,
-            pngBase64: s.buffer.toString('base64'),
+          const base = {
+            index: s.index, seg: s.seg, segCount: s.segCount, component: s.component,
+            kind: s.kind, width: s.width, height: s.height,
             link: render.deriveLink(b.tokens),
             keepHtml: render.isUnsubscribeBlock(s.component, b.html),
           };
+          // GIF segments pass through live (carry the hosted src); PNG segments carry pixels.
+          return s.kind === 'gif' ? { ...base, src: s.src } : { ...base, pngBase64: s.buffer.toString('base64') };
         }),
       });
     }
@@ -261,20 +263,30 @@ const server = http.createServer(async (req, res) => {
         // 1. Rasterise each block from the production-shelled, block-marked HTML.
         const { html: markedHtml } = render.assemble(campaign || {}, { assetsBase, production: true, markBlocks: true });
         const { slices } = await render.renderSlices(markedHtml);
-        const sliceByIndex = {};
-        for (const s of slices) sliceByIndex[s.index] = s;
 
-        // 2. Per block, either keep live HTML (footer/unsubscribe) or upload its PNG and
-        //    emit a linked image row. Each non-footer block = its own image with its own URL.
+        // 2. Per block, either keep live HTML (footer/unsubscribe) or emit its image rows.
+        //    Each block yields one or more ordered segments: a PNG slice is uploaded and linked;
+        //    an animated GIF is referenced live at its already-hosted URL so it keeps animating
+        //    (rasterising would freeze it to one frame). Each block keeps its own click-through.
         const meta = render.assembleBlocks(campaign || {}, { assetsBase });
+        const segmentsByIndex = {};
+        for (const s of slices) (segmentsByIndex[s.index] = segmentsByIndex[s.index] || []).push(s);
         const rows = [];
         for (const b of meta.blocks) {
           if (render.isUnsubscribeBlock(b.component, b.html)) { rows.push(b.html); continue; }
-          const slice = sliceByIndex[b.index];
-          if (!slice) { rows.push(b.html); continue; } // fallback: live HTML if no slice
-          const imageUrl = await klaviyo.uploadImage(apiKey, slice.buffer, `${String(b.index + 1).padStart(2, '0')}-${b.component.replace(/[\/]+/g, '-')}`);
+          const segs = segmentsByIndex[b.index];
+          if (!segs || !segs.length) { rows.push(b.html); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
-          rows.push(klaviyo.imageRow(imageUrl, { href, alt: b.tokens.HEADLINE || b.component }));
+          const alt = b.tokens.HEADLINE || b.component;
+          for (const s of segs) {
+            if (s.kind === 'gif') {
+              rows.push(klaviyo.imageRow(s.src, { href, alt }));
+              continue;
+            }
+            const suffix = s.segCount > 1 ? `-${s.seg + 1}` : '';
+            const imageUrl = await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${b.component.replace(/[\/]+/g, '-')}${suffix}`);
+            rows.push(klaviyo.imageRow(imageUrl, { href, alt }));
+          }
         }
         const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase });
 

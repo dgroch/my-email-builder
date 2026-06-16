@@ -121,6 +121,15 @@ ok(plain.includes('Keep *everything* literal'), 'escaped asterisks become litera
 ok(plain.includes('Two stars * and *'), 'stray spaced asterisks are left untouched');
 ok(!/<em>everything<\/em>/.test(plain), 'escaped emphasis is not rendered');
 
+// ── GIF passthrough detection (animated heroes must not be flattened on publish) ──────
+// Hosted .gif → live passthrough; everything else → rasterise as before.
+ok(render.isGifUrl('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/IMG-1703.gif?v=1781564985'), 'hosted .gif with query is a passthrough GIF');
+ok(render.isGifUrl('//cdn.shopify.com/x.GIF'), 'protocol-relative .GIF (any case) is a passthrough GIF');
+ok(!render.isGifUrl('https://cdn.shopify.com/s/files/Genoa.jpg?v=1'), 'a .jpg is not a passthrough GIF');
+ok(!render.isGifUrl('file:///assets/HandFlower_Black.gif'), 'a file:// .gif is not emailable, so not passed through');
+ok(!render.isGifUrl(''), 'empty URL is not a passthrough GIF');
+ok(!render.isGifUrl('https://example.com/gif-explainer'), 'a path that merely contains "gif" is not a passthrough GIF');
+
 // ── Component library: sample data covers every component (the gallery invariant) ─────
 // For the interactive library, every component must produce a complete, on-brand sample that
 // assembles with zero unfilled tokens and validates clean — so the gallery never shows an
