@@ -1,0 +1,82 @@
+<!-- COMPONENT: blocks/journal-tile | LIVE HTML — "FROM THE JOURNAL" ROW (2–3 LINKED ARTICLE TILES)
+TOKENS:
+  {{SECTION_LABEL}}     — NeuzeitGro Bold caps micro-label (e.g. "FROM THE JOURNAL")
+  {{SECTION_HEADLINE}}  — Lust display — SENTENCE CASE (e.g. "More from Kellie")
+  {{TILE_1_IMAGE_URL}}  — tile 1 photo (4:5 crop, ~200×250px display)
+  {{TILE_1_EYEBROW}}    — NeuzeitGro caps micro-label (e.g. "KELLIE")
+  {{TILE_1_TITLE}}      — Lust display — SENTENCE CASE (post title, ~6 words)
+  {{TILE_1_TEASER}}     — NeuzeitGro Light teaser (~12 words)
+  {{TILE_1_LINK_URL}}   — tile 1 post URL
+  {{TILE_2_IMAGE_URL}}  — tile 2 photo (4:5 crop)
+  {{TILE_2_EYEBROW}}    — NeuzeitGro caps micro-label
+  {{TILE_2_TITLE}}      — Lust display — SENTENCE CASE
+  {{TILE_2_TEASER}}     — NeuzeitGro Light teaser
+  {{TILE_2_LINK_URL}}   — tile 2 post URL
+  {{TILE_3_IMAGE_URL}}  — tile 3 photo (4:5 crop) — OPTIONAL: set "" to render a 2-up row
+  {{TILE_3_EYEBROW}}    — OPTIONAL ("")
+  {{TILE_3_TITLE}}      — OPTIONAL ("")
+  {{TILE_3_TEASER}}     — OPTIONAL ("")
+  {{TILE_3_LINK_URL}}   — OPTIONAL ("")
+RULES:
+  - LIVE HTML (not a designed/sliced block): each tile is its own <a href> so all 2–3 links work
+    in the Klaviyo push. Listed in manifest assembly.html_only_components.
+  - Web-safe fonts only (emails can't load brand fonts on live HTML): title → Georgia serif,
+    eyebrow/teaser → 'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif. (Preview shows brand
+    fonts via {{ASSETS_BASE}} @font-face; inbox falls back — accepted.)
+  - TITLE is sentence case. EYEBROW renders uppercase via CSS.
+  - White tile cards on the {{BODY_BG}} (#2c2825) body; hairline #e8e2da borders; square corners.
+  - Tile 3 is wrapped in {{#TILE_3_IMAGE_URL}} … {{/TILE_3_IMAGE_URL}} — the assembler's
+    conditional-section pass drops it when the URL is empty (2-up). When present, tiles size to 1/3.
+  - Stacks to single column on mobile (.jt-cell rule in the shell's @media (max-width:600px) block).
+  - No price, no PANEL_* palette tokens — keep it lean.
+-->
+<tr><td style="padding:0;background:{{BODY_BG}};">
+  <table width="600" cellpadding="0" cellspacing="0" border="0" align="center" class="jt">
+    <tr><td style="padding:40px 24px 14px;text-align:center;">
+      <p style="font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#aaa49c;margin:0 0 10px;">{{SECTION_LABEL}}</p>
+      <p style="font-family:Georgia,'Times New Roman',serif;font-weight:normal;font-size:26px;color:#f4efe9;line-height:1.25;margin:0;">{{SECTION_HEADLINE}}</p>
+    </td></tr>
+    <tr><td style="padding:8px 16px 44px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+        <!-- TILE 1 -->
+        <td class="jt-cell" valign="top" style="padding:8px;">
+          <a href="{{TILE_1_LINK_URL}}" style="text-decoration:none;display:block;background:#ffffff;border:1px solid #e8e2da;">
+            <img src="{{TILE_1_IMAGE_URL}}" width="100%" alt="" style="display:block;width:100%;height:auto;border:0;">
+            <span style="display:block;padding:14px 16px 18px;">
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#9a948c;margin:0 0 7px;">{{TILE_1_EYEBROW}}</span>
+              <span style="display:block;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#2c2825;line-height:1.3;margin:0 0 7px;">{{TILE_1_TITLE}}</span>
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-size:12px;color:#6b655e;line-height:1.5;margin:0 0 10px;">{{TILE_1_TEASER}}</span>
+              <span style="font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#2c2825;">Read the piece &rarr;</span>
+            </span>
+          </a>
+        </td>
+        <!-- TILE 2 -->
+        <td class="jt-cell" valign="top" style="padding:8px;">
+          <a href="{{TILE_2_LINK_URL}}" style="text-decoration:none;display:block;background:#ffffff;border:1px solid #e8e2da;">
+            <img src="{{TILE_2_IMAGE_URL}}" width="100%" alt="" style="display:block;width:100%;height:auto;border:0;">
+            <span style="display:block;padding:14px 16px 18px;">
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#9a948c;margin:0 0 7px;">{{TILE_2_EYEBROW}}</span>
+              <span style="display:block;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#2c2825;line-height:1.3;margin:0 0 7px;">{{TILE_2_TITLE}}</span>
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-size:12px;color:#6b655e;line-height:1.5;margin:0 0 10px;">{{TILE_2_TEASER}}</span>
+              <span style="font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#2c2825;">Read the piece &rarr;</span>
+            </span>
+          </a>
+        </td>
+        <!-- TILE 3 — optional: dropped by the conditional-section pass when TILE_3_IMAGE_URL is "" -->
+        {{#TILE_3_IMAGE_URL}}
+        <td class="jt-cell" valign="top" style="padding:8px;">
+          <a href="{{TILE_3_LINK_URL}}" style="text-decoration:none;display:block;background:#ffffff;border:1px solid #e8e2da;">
+            <img src="{{TILE_3_IMAGE_URL}}" width="100%" alt="" style="display:block;width:100%;height:auto;border:0;">
+            <span style="display:block;padding:14px 16px 18px;">
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#9a948c;margin:0 0 7px;">{{TILE_3_EYEBROW}}</span>
+              <span style="display:block;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#2c2825;line-height:1.3;margin:0 0 7px;">{{TILE_3_TITLE}}</span>
+              <span style="display:block;font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-size:12px;color:#6b655e;line-height:1.5;margin:0 0 10px;">{{TILE_3_TEASER}}</span>
+              <span style="font-family:'Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#2c2825;">Read the piece &rarr;</span>
+            </span>
+          </a>
+        </td>
+        {{/TILE_3_IMAGE_URL}}
+      </tr></table>
+    </td></tr>
+  </table>
+</td></tr>

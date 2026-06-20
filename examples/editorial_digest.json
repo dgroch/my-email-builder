@@ -16,6 +16,7 @@
     "blocks/story",
     "sections/section-headline",
     "products/card-horizontal",
+    "blocks/journal-tile",
     "sections/upsell-noir",
     "sections/trust-bar",
     "footer"
@@ -81,6 +82,28 @@
           "PRODUCT_OCCASION": "Deep tones for the cooler months",
           "PRODUCT_PRICE": "From $129",
           "PRODUCT_URL": "https://figandbloom.com.au/products/winterlight"
+        }
+      },
+      {
+        "component": "blocks/journal-tile",
+        "tokens": {
+          "SECTION_LABEL": "FROM THE JOURNAL",
+          "SECTION_HEADLINE": "More from Kellie",
+          "TILE_1_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-product.jpg",
+          "TILE_1_EYEBROW": "KELLIE",
+          "TILE_1_TITLE": "Against the dozen red roses",
+          "TILE_1_TEASER": "The thing florists aren’t supposed to say.",
+          "TILE_1_LINK_URL": "https://figandbloom.com/blogs/news/against-the-dozen-red-roses",
+          "TILE_2_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-product.jpg",
+          "TILE_2_EYEBROW": "KELLIE",
+          "TILE_2_TITLE": "Why every bouquet is named after a place",
+          "TILE_2_TEASER": "The design process, from a room to a bouquet.",
+          "TILE_2_LINK_URL": "https://figandbloom.com/blogs/news/our-design-process-zanzibar-bouquet",
+          "TILE_3_IMAGE_URL": "{{ASSETS_BASE}}/placeholder-product.jpg",
+          "TILE_3_EYEBROW": "KELLIE",
+          "TILE_3_TITLE": "Why I’m particular about pink",
+          "TILE_3_TEASER": "A fashion eye, brought to one difficult colour.",
+          "TILE_3_LINK_URL": "https://figandbloom.com/blogs/news/why-is-pink-so-popular"
         }
       },
       {
