@@ -197,9 +197,9 @@ if (jt) {
   ok(!/\{\{[#/]?[A-Z0-9_]+\}\}/.test(out2), '2-up render leaves no residual {{tokens}} or section markers');
   ok(out2.includes(`href="${tk.TILE_1_LINK_URL}"`) && out2.includes(`href="${tk.TILE_2_LINK_URL}"`), '2-up render keeps tiles 1 and 2');
   ok(!out2.includes(`href="${tk.TILE_3_LINK_URL}"`), '2-up render drops the third tile entirely');
-  // The third <td> (and its link) is gone — exactly two rendered tiles remain.
+  // The third tile (and its link) is gone — exactly two stacked tiles remain.
   eq((out2.match(/Read the piece/g) || []).length, 2, '2-up render shows exactly two tiles');
-  eq((out2.match(/class="jt-cell"/g) || []).length, 2, '2-up render keeps exactly two tile cells');
+  eq((out2.match(/class="jt-img"/g) || []).length, 2, '2-up render keeps exactly two tile cards');
 }
 
 // ── report ────────────────────────────────────────────────────────────────────────────
