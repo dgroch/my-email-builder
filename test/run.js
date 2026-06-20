@@ -152,6 +152,56 @@ const draftNames = schema.components.filter((c) => c.draft).map((c) => c.name).s
 eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage', 'exactly the two DRAFT blocks are flagged draft');
 ok(schema.components.find((c) => c.name === 'header').draft === false, 'non-draft component is not flagged draft');
 
+// ── blocks/journal-tile: live-HTML "From the Journal" row (2–3 linked article tiles) ──
+const jt = schema.components.find((c) => c.name === 'blocks/journal-tile');
+ok(jt, 'blocks/journal-tile appears in the schema');
+if (jt) {
+  // Expected token set, with the right derived types/cases.
+  const jtTokens = new Set(jt.tokens.map((t) => t.name));
+  const expectedJt = [
+    'SECTION_LABEL', 'SECTION_HEADLINE',
+    'TILE_1_IMAGE_URL', 'TILE_1_EYEBROW', 'TILE_1_TITLE', 'TILE_1_TEASER', 'TILE_1_LINK_URL',
+    'TILE_2_IMAGE_URL', 'TILE_2_EYEBROW', 'TILE_2_TITLE', 'TILE_2_TEASER', 'TILE_2_LINK_URL',
+    'TILE_3_IMAGE_URL', 'TILE_3_EYEBROW', 'TILE_3_TITLE', 'TILE_3_TEASER', 'TILE_3_LINK_URL',
+  ];
+  for (const t of expectedJt) ok(jtTokens.has(t), `journal-tile exposes token '${t}'`);
+  eq(jtTokens.size, expectedJt.length, 'journal-tile exposes exactly the expected token set');
+  const imgTok = jt.tokens.find((t) => t.name === 'TILE_1_IMAGE_URL');
+  const linkTok = jt.tokens.find((t) => t.name === 'TILE_1_LINK_URL');
+  const titleTok = jt.tokens.find((t) => t.name === 'TILE_1_TITLE');
+  eq(imgTok && imgTok.type, 'image', '_IMAGE_URL token is typed image');
+  eq(linkTok && linkTok.type, 'url', '_LINK_URL token is typed url');
+  eq(titleTok && titleTok.case, 'sentence', 'TITLE token enforces sentence case');
+  // Live-HTML block: not designed, not draft, surfaced with its intent metadata.
+  eq(jt.designed, false, 'journal-tile is not a designed (sliced) block');
+  eq(jt.draft, false, 'journal-tile is not flagged draft');
+  ok(Array.isArray(jt.bestFor) && jt.bestFor.includes('editorial_digest'), 'journal-tile carries bestFor intent');
+
+  // Assemble a full 3-tile campaign → validates clean, no residual tokens, 3 distinct hrefs.
+  const jt3 = sampleData.sampleCampaignFor(jt);
+  const jt3Rep = validateCampaign(jt3, schema);
+  eq(jt3Rep.ok, true, '3-tile journal campaign validates clean');
+  const out3 = render.assemble(jt3, { assetsBase: '/a' }).html;
+  ok(!/\{\{[#/]?[A-Z0-9_]+\}\}/.test(out3), '3-tile render leaves no residual {{tokens}} or section markers');
+  const tk = jt3.blocks[0].tokens;
+  const hrefs3 = [tk.TILE_1_LINK_URL, tk.TILE_2_LINK_URL, tk.TILE_3_LINK_URL];
+  for (const h of hrefs3) ok(out3.includes(`href="${h}"`), `3-tile render contains tile href ${h}`);
+  eq(new Set(hrefs3).size, 3, '3-tile render has three distinct tile links');
+
+  // Assemble with TILE_3_IMAGE_URL:"" → validates, renders a 2-up row, no broken third cell.
+  const jt2 = sampleData.sampleCampaignFor(jt);
+  jt2.blocks[0].tokens.TILE_3_IMAGE_URL = '';
+  const jt2Rep = validateCampaign(jt2, schema);
+  eq(jt2Rep.ok, true, '2-up journal campaign (blank TILE_3_IMAGE_URL) validates clean');
+  const out2 = render.assemble(jt2, { assetsBase: '/a' }).html;
+  ok(!/\{\{[#/]?[A-Z0-9_]+\}\}/.test(out2), '2-up render leaves no residual {{tokens}} or section markers');
+  ok(out2.includes(`href="${tk.TILE_1_LINK_URL}"`) && out2.includes(`href="${tk.TILE_2_LINK_URL}"`), '2-up render keeps tiles 1 and 2');
+  ok(!out2.includes(`href="${tk.TILE_3_LINK_URL}"`), '2-up render drops the third tile entirely');
+  // The third <td> (and its link) is gone — exactly two rendered tiles remain.
+  eq((out2.match(/Read the piece/g) || []).length, 2, '2-up render shows exactly two tiles');
+  eq((out2.match(/class="jt-cell"/g) || []).length, 2, '2-up render keeps exactly two tile cells');
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);
