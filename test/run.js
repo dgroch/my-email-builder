@@ -202,6 +202,19 @@ if (jt) {
   eq((out2.match(/class="jt-img"/g) || []).length, 2, '2-up render keeps exactly two tile cards');
 }
 
+// ── Klaviyo push: html_only_components stay live HTML (not sliced) ─────────────────────
+// Slicing flattens a block to one PNG with a single click-through, which would collapse
+// blocks/journal-tile's 2–3 per-tile links to one. The push must keep html_only blocks live.
+const htmlOnly = (schema.assembly && schema.assembly.html_only_components) || [];
+ok(htmlOnly.includes('journal-tile'), "manifest assembly.html_only_components lists 'journal-tile'");
+ok(render.isHtmlOnlyComponent('blocks/journal-tile', htmlOnly), 'journal-tile is treated as html-only (kept live, never sliced)');
+ok(render.isHtmlOnlyComponent('sections/body-copy-plain', htmlOnly), 'body-copy-plain is html-only');
+ok(render.isHtmlOnlyComponent('sections/opt-out', htmlOnly), 'opt-out is html-only (its live unsubscribe link must survive)');
+ok(render.isHtmlOnlyComponent('footer', htmlOnly), 'footer is html-only');
+ok(!render.isHtmlOnlyComponent('blocks/editorial-hero', htmlOnly), 'a designed/sliced block is not html-only');
+ok(!render.isHtmlOnlyComponent('products/card-horizontal', htmlOnly), 'a product card is not html-only');
+ok(!render.isHtmlOnlyComponent('', htmlOnly) && !render.isHtmlOnlyComponent('blocks/journal-tile', null), 'isHtmlOnlyComponent is null/empty safe');
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);

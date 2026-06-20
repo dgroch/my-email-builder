@@ -269,11 +269,15 @@ const server = http.createServer(async (req, res) => {
         //    an animated GIF is referenced live at its already-hosted URL so it keeps animating
         //    (rasterising would freeze it to one frame). Each block keeps its own click-through.
         const meta = render.assembleBlocks(campaign || {}, { assetsBase });
+        // Blocks declared html_only in the manifest stay LIVE HTML (never sliced), so a
+        // multi-link block keeps all its anchors — e.g. blocks/journal-tile's 2–3 per-tile
+        // post links. Slicing would flatten the block to one PNG with a single click-through.
+        const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
         const segmentsByIndex = {};
         for (const s of slices) (segmentsByIndex[s.index] = segmentsByIndex[s.index] || []).push(s);
         const rows = [];
         for (const b of meta.blocks) {
-          if (render.isUnsubscribeBlock(b.component, b.html)) { rows.push(b.html); continue; }
+          if (render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly)) { rows.push(b.html); continue; }
           const segs = segmentsByIndex[b.index];
           if (!segs || !segs.length) { rows.push(b.html); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
