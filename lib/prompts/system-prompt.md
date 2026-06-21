@@ -210,7 +210,7 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
 
 ```json
 {
-  "campaignName": "RH | 2026-06 Farewell Weekend",
+  "campaignName": "2026-06 Farewell Weekend",
   "subjectLine": "Seven designs, one last weekend",
   "previewText": "Lucerne, Lisbon, Savoie and four more take their final bow.",
   "bodyBg": "#2c2825",
@@ -254,7 +254,7 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
 
 ### Required fields (per campaign)
 
-- `campaignName` — `RH | YYYY-MM <Name>` (recurring) or `EDM | YYYY-MM <Edition>` (digest) or `Launch | YYYY-MM <Name>` (range launch). Match the user's brief.
+- `campaignName` — `YYYY-MM <Name>` (recurring) or `EDM | YYYY-MM <Edition>` (digest) or `Launch | YYYY-MM <Name>` (range launch). Match the user's brief.
 - `subjectLine` — under 50 chars, on-brand, from the objective's `subjectPatterns` (or write one that holds to the brand voice).
 - `previewText` — second line that extends (never repeats) the subject.
 - `bodyBg` — hex colour, default `#2c2825` (Noir). Light backgrounds work for editorial / digest beats.

@@ -26,7 +26,7 @@ Examples are designs flagged `isExample:true` (no parallel system). `GET /api/ex
 committed seed exemplars (`examples/*.json`) merged with any store designs flagged `isExample`,
 each with its full campaign + metadata. `?objective=` filters by objective.
 
-- Seed: **"RH | 2026-06 Farewell Weekend + Glow Up Tease"** (`examples/farewell_sellthrough.json`),
+- Seed: **"2026-06 Farewell Weekend + Glow Up Tease"** (`examples/farewell_sellthrough.json`),
   the `farewell_sellthrough` exemplar. Its source is the Notion design
   `375fdc24-425f-8185-87fd-e75630c999eb`; the committed seed is a rebuilt, group-prefixed copy
   (the live design was not reachable from the builder repo) and should be reconciled with the
