@@ -215,6 +215,33 @@ ok(!render.isHtmlOnlyComponent('blocks/editorial-hero', htmlOnly), 'a designed/s
 ok(!render.isHtmlOnlyComponent('products/card-horizontal', htmlOnly), 'a product card is not html-only');
 ok(!render.isHtmlOnlyComponent('', htmlOnly) && !render.isHtmlOnlyComponent('blocks/journal-tile', null), 'isHtmlOnlyComponent is null/empty safe');
 
+// ── Empty CTA_TEXT drops the button (whole-component link survives via deriveLink) ────
+// Authors can blank CTA_TEXT to hide the button. The block still validates (empty string is a
+// provided value), the <a> button is omitted, and on publish the whole sliced block keeps a
+// click-through to CTA_URL (deriveLink), so a buttonless component is still linkable.
+for (const name of ['blocks/editorial-hero', 'blocks/image-text', 'heroes/hero-d-clay', 'sections/upsell-noir']) {
+  const comp = schema.components.find((c) => c.name === name);
+  ok(comp, `${name} present for empty-CTA test`);
+  if (!comp) continue;
+  // Button shown when CTA_TEXT is filled.
+  const withCta = sampleData.sampleCampaignFor(comp);
+  const onHtml = render.assemble(withCta, { assetsBase: '/a' }).html;
+  ok(/<a href=/.test(onHtml), `${name}: button renders when CTA_TEXT is filled`);
+  // Button hidden when CTA_TEXT is blank — and no residual tokens / markers leak.
+  const blankCta = sampleData.sampleCampaignFor(comp);
+  blankCta.blocks[0].tokens.CTA_TEXT = '';
+  const offRep = validateCampaign(blankCta, schema);
+  eq(offRep.ok, true, `${name}: blank CTA_TEXT still validates clean`);
+  const offHtml = render.assemble(blankCta, { assetsBase: '/a' }).html;
+  ok(!/href="\{\{CTA_URL\}\}"/.test(offHtml), `${name}: no half-filled button when CTA_TEXT blank`);
+  ok(!/\{\{[#/]?CTA_(TEXT|URL)\}\}/.test(offHtml), `${name}: no residual CTA tokens/markers when blank`);
+  const { unfilled } = render.assemble(blankCta, { assetsBase: '/design-system/assets' });
+  eq(unfilled.filter((u) => u.token !== '(missing template)').length, 0, `${name}: blank CTA leaves no unfilled tokens`);
+}
+// On publish the whole block still links to CTA_URL even with no button.
+eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figandbloom.com.au/x',
+  'deriveLink keeps the component-level click-through from CTA_URL');
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);
