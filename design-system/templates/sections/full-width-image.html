@@ -1,0 +1,17 @@
+<!-- COMPONENT: sections/full-width-image | FULL-WIDTH IMAGE (LIVE HTML, OPTIONAL LINK)
+TOKENS:
+  {{IMAGE_URL}}  — full-width image URL (600px wide; any height — the image's natural ratio is kept). Klaviyo/R2 hosted.
+  {{ALT_TEXT}}   — alt text describing the image (required for accessibility).
+  {{LINK_URL}}   — optional href wrapping the image. Leave "" for no link.
+RULES:
+  - LIVE HTML (html_only) — NOT sliced — so the image keeps its own click-through link and an
+    animated GIF keeps animating. Listed in assembly.html_only_components.
+  - Full 600px content width, edge to edge. Any aspect ratio: the image's natural height is kept.
+  - No text, no button — a single full-width image. For a fixed 4:5 photo hero use
+    heroes/hero-image-only; for a short 180px lifestyle pause use dividers/divider-image.
+-->
+<tr><td style="padding:0;line-height:0;font-size:0;">
+{{#LINK_URL}}<a href="{{LINK_URL}}" style="display:block;line-height:0;text-decoration:none;" target="_blank">{{/LINK_URL}}
+<img src="{{IMAGE_URL}}" alt="{{ALT_TEXT}}" width="600" border="0" style="display:block;width:100%;max-width:600px;height:auto;">
+{{#LINK_URL}}</a>{{/LINK_URL}}
+</td></tr>
