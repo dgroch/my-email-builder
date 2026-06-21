@@ -19,7 +19,8 @@
       "body-copy-plain",
       "divider-line",
       "divider-whitespace",
-      "journal-tile"
+      "journal-tile",
+      "full-width-image"
     ],
     "slice_components": [
       "header",
@@ -317,6 +318,16 @@
           "HEADLINE"
         ]
       },
+      "full-width-image": {
+        "file": "templates/sections/full-width-image.html",
+        "description": "A single full-width (600px) image, edge to edge, with an optional click-through link. LIVE HTML — not sliced — so it keeps its own link and an animated GIF keeps animating (listed in assembly.html_only_components). Any aspect ratio: the image's natural height is kept. For a fixed 4:5 photo hero use heroes/hero-image-only; for a short 180px lifestyle pause use dividers/divider-image.",
+        "classification": "html-safe",
+        "tokens": [
+          "IMAGE_URL",
+          "ALT_TEXT",
+          "LINK_URL"
+        ]
+      },
       "opt-out": {
         "file": "templates/sections/opt-out.html",
         "tokens": [
@@ -529,6 +540,33 @@
           "TILE_3_TITLE",
           "TILE_3_TEASER",
           "TILE_3_LINK_URL"
+        ]
+      },
+      "image-text": {
+        "file": "templates/blocks/image-text.html",
+        "classification": "slice",
+        "description": "A 2/3-width image paired with a text column (super-label, Lust headline, supporting paragraph) and a square button. The IMAGE_SIDE lever flips the image left or right. The everyday image-and-copy beat for spotlighting a product, range or story moment with a single clear CTA.",
+        "when_to_use": "When one image plus a short headline, paragraph and one CTA tell the beat — product/range spotlight, value prop, occasion. Mid-email. Alternate IMAGE_SIDE='left' / 'right' across consecutive image-text blocks for rhythm.",
+        "assets_needed": "One 4:5 photo (400×500 display, 800×1000 source min). No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "layout": "IMG_SIDE = left (image left, text right) or right (image right, text left)"
+        },
+        "levers": {
+          "IMG_SIDE": "left | right (which side the image sits)"
+        },
+        "tokens": [
+          "IMAGE_URL",
+          "IMG_SIDE",
+          "SUPER_LABEL",
+          "HEADLINE",
+          "BODY",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
         ]
       },
       "editorial-hero": {
@@ -866,7 +904,8 @@
           "TYPE_SCALE": "regular | oversized — headline / name scale",
           "ROTATION": "flat | subtle | jaunty — tilt of plates, polaroids, badges, frames, chips",
           "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage)",
-          "ACCENT_ILLO": "on | off — faint brand-illustration accent"
+          "ACCENT_ILLO": "on | off — faint brand-illustration accent",
+          "IMG_SIDE": "left | right — which side the image sits (blocks/image-text)"
         },
         "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE, ROTATION) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
       },

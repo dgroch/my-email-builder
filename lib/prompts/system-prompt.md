@@ -190,6 +190,7 @@ When a block is one of the designed set (every `blocks/*` component is rasterise
 | Block | Image tokens to fill (pick the URLs whose description matches the moment) |
 |---|---|
 | `blocks/caption-bar-hero` | `HERO_IMAGE_URL` |
+| `blocks/image-text` | `IMAGE_URL` |
 | `blocks/editorial-hero` | `HERO_IMAGE_URL` |
 | `blocks/feature-list` | `POLAROID_IMAGE_URL` |
 | `blocks/polaroid-collage` | `PHOTO_1_URL`, `PHOTO_2_URL`, `PHOTO_3_URL` |
