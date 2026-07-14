@@ -231,10 +231,13 @@ async function renderSlices() {
       const name = sliceName(s);
       const isGif = s.kind === 'gif';
       const src = isGif ? s.src : 'data:image/png;base64,' + s.pngBase64;
-      // Per-block link: editable for image blocks; the unsubscribe footer stays live HTML.
+      // Per-block link: editable for image blocks; the unsubscribe footer stays live HTML;
+      // region slices (multi-link blocks like journal-tile) carry a fixed per-region link.
       let linkRow;
       if (s.keepHtml) {
         linkRow = el('div', { class: 'slice-link note', text: 'Stays as live HTML (keeps the unsubscribe link) — not an image.' });
+      } else if (s.region) {
+        linkRow = el('div', { class: 'slice-link note', text: s.link ? `Links to ${s.link}` : 'No link (header slice).' });
       } else {
         const input = el('input', { type: 'url', class: 'slice-link-input', value: s.link || '', placeholder: 'https://… (this block’s click-through URL)',
           oninput: e => { s.link = e.target.value; } });
@@ -259,7 +262,8 @@ async function renderSlices() {
 }
 function sliceName(s) {
   const n = String(s.index + 1).padStart(2, '0');
-  const suffix = s.segCount > 1 ? '-' + (s.seg + 1) : '';
+  // Region slices name by region (…-header, …-1); others keep their -N ordinal.
+  const suffix = s.region ? '-' + String(s.name).replace(/^tile-/, '') : (s.segCount > 1 ? '-' + (s.seg + 1) : '');
   const ext = s.kind === 'gif' ? '.gif' : '.png';
   return `${n}-${s.component.replace(/[\/]+/g, '-')}${suffix}${ext}`;
 }
@@ -639,9 +643,10 @@ async function submitKlaviyo() {
   for (const id of Object.keys(KV_KEYS)) localStorage.setItem(KV_KEYS[id], $('#' + id).value.trim());
   const btn = $('#kvSubmit'); btn.disabled = true;
   showKvResult('Slicing blocks, uploading images & creating draft in Klaviyo…', false);
-  // Per-block link overrides edited in the Slices tab (index → url).
+  // Per-block link overrides edited in the Slices tab (index → url). Region slices carry their
+  // own fixed per-region links (data-eb-href) and aren't overridable, so skip them here.
   const links = {};
-  for (const s of SLICES) if (!s.keepHtml && s.link) links[s.index] = s.link;
+  for (const s of SLICES) if (!s.keepHtml && !s.region && s.link) links[s.index] = s.link;
   try {
     const r = await fetch('/api/klaviyo-draft', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },

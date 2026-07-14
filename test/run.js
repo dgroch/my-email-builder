@@ -172,8 +172,8 @@ if (jt) {
   eq(imgTok && imgTok.type, 'image', '_IMAGE_URL token is typed image');
   eq(linkTok && linkTok.type, 'url', '_LINK_URL token is typed url');
   eq(titleTok && titleTok.case, 'sentence', 'TITLE token enforces sentence case');
-  // Live-HTML block: not designed, not draft, surfaced with its intent metadata.
-  eq(jt.designed, false, 'journal-tile is not a designed (sliced) block');
+  // Sliced multi-region block now (was live HTML): designed, not draft, with its intent metadata.
+  eq(jt.designed, true, 'journal-tile is a designed/sliced block (multi-region)');
   eq(jt.draft, false, 'journal-tile is not flagged draft');
   ok(Array.isArray(jt.bestFor) && jt.bestFor.includes('editorial_digest'), 'journal-tile carries bestFor intent');
 
@@ -200,14 +200,38 @@ if (jt) {
   // The third tile (and its link) is gone — exactly two stacked tiles remain.
   eq((out2.match(/Read the piece/g) || []).length, 2, '2-up render shows exactly two tiles');
   eq((out2.match(/class="jt-img"/g) || []).length, 2, '2-up render keeps exactly two tile cards');
+
+  // ── multi-region slicing markup: header + one region per tile, each with its own href/alt ──
+  // Strip the leading doc comment first — it *documents* data-eb-* attrs as literal text, which
+  // would otherwise inflate the counts. Only the real element markup should carry them.
+  const strip = (h) => h.replace(/<!--[\s\S]*?-->/g, '');
+  const out3m = strip(out3);
+  const regionNames = [...out3m.matchAll(/data-eb-slice="([^"]+)"/g)].map((m) => m[1]);
+  eq(regionNames.join(','), 'header,tile-1,tile-2,tile-3', '3-up marks header + 3 tile regions in DOM order');
+  // Header region carries the section headline as alt and NO link; each tile carries its own href.
+  ok(out3m.includes(`data-eb-slice="header" data-eb-alt="${tk.SECTION_HEADLINE}"`), 'header region alt = SECTION_HEADLINE');
+  ok(!/data-eb-slice="header"[^>]*data-eb-href/.test(out3m), 'header region has no data-eb-href (unlinked)');
+  const regionHrefs = [...out3m.matchAll(/data-eb-href="([^"]+)"/g)].map((m) => m[1]);
+  eq(regionHrefs.join('|'), [tk.TILE_1_LINK_URL, tk.TILE_2_LINK_URL, tk.TILE_3_LINK_URL].join('|'), '3-up region hrefs are the three distinct tile links in order');
+  eq(new Set(regionHrefs).size, 3, '3-up has three distinct region links');
+  ok(out3m.includes(`data-eb-href="${tk.TILE_1_LINK_URL}" data-eb-alt="${tk.TILE_1_TITLE}"`), 'tile-1 region alt = TILE_1_TITLE');
+  // Brand fonts are used now (Lust titles / NeuzeitGro body); the Georgia/Gill Sans stacks are gone.
+  ok(/font-family:'Lust'/.test(out3m), 'journal-tile titles use Lust');
+  ok(/font-family:'NeuzeitGro'/.test(out3m), 'journal-tile eyebrow/teaser use NeuzeitGro');
+  ok(!/font-family:Georgia,/.test(out3m), 'journal-tile no longer uses the Georgia web-safe title stack');
+  // 2-up drops the tile-3 region → exactly header + 2 tile regions.
+  const region2 = [...strip(out2).matchAll(/data-eb-slice="([^"]+)"/g)].map((m) => m[1]);
+  eq(region2.join(','), 'header,tile-1,tile-2', '2-up marks header + 2 tile regions (tile-3 region dropped)');
 }
 
 // ── Klaviyo push: html_only_components stay live HTML (not sliced) ─────────────────────
-// Slicing flattens a block to one PNG with a single click-through, which would collapse
-// blocks/journal-tile's 2–3 per-tile links to one. The push must keep html_only blocks live.
+// Slicing flattens a block to one PNG with a single click-through — so blocks that must keep
+// live anchors (opt-out's unsubscribe link, footer) stay html-only. blocks/journal-tile is NO
+// LONGER html-only: it now rasterises as a multi-region slice (header + one linked slice per
+// tile), which preserves its 2–3 per-tile links while restoring brand typography.
 const htmlOnly = (schema.assembly && schema.assembly.html_only_components) || [];
-ok(htmlOnly.includes('journal-tile'), "manifest assembly.html_only_components lists 'journal-tile'");
-ok(render.isHtmlOnlyComponent('blocks/journal-tile', htmlOnly), 'journal-tile is treated as html-only (kept live, never sliced)');
+ok(!htmlOnly.includes('journal-tile'), "manifest assembly.html_only_components no longer lists 'journal-tile'");
+ok(!render.isHtmlOnlyComponent('blocks/journal-tile', htmlOnly), 'journal-tile is no longer html-only (it is sliced into per-region slices)');
 ok(render.isHtmlOnlyComponent('sections/body-copy-plain', htmlOnly), 'body-copy-plain is html-only');
 ok(render.isHtmlOnlyComponent('sections/opt-out', htmlOnly), 'opt-out is html-only (its live unsubscribe link must survive)');
 ok(render.isHtmlOnlyComponent('footer', htmlOnly), 'footer is html-only');
