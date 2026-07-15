@@ -212,12 +212,16 @@ const server = http.createServer(async (req, res) => {
         brokenImages,
         slices: slices.map(s => {
           const b = byIndex[s.index] || {};
+          // Region slices (data-eb-slice) carry their own fixed link/alt — the per-block
+          // deriveLink override doesn't apply, so surface the region's own href as the link.
+          const isRegion = s.name != null;
           const base = {
             index: s.index, seg: s.seg, segCount: s.segCount, component: s.component,
             kind: s.kind, width: s.width, height: s.height,
-            link: render.deriveLink(b.tokens),
+            link: isRegion ? (s.href || '') : render.deriveLink(b.tokens),
             keepHtml: render.isUnsubscribeBlock(s.component, b.html),
           };
+          if (isRegion) { base.region = true; base.name = s.name; base.alt = s.alt || ''; }
           // GIF segments pass through live (carry the hosted src); PNG segments carry pixels.
           return s.kind === 'gif' ? { ...base, src: s.src } : { ...base, pngBase64: s.buffer.toString('base64') };
         }),
@@ -282,14 +286,23 @@ const server = http.createServer(async (req, res) => {
           if (!segs || !segs.length) { rows.push(b.html); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
           const alt = b.tokens.HEADLINE || b.component;
+          const compBase = b.component.replace(/[\/]+/g, '-');
           for (const s of segs) {
+            // A region slice (data-eb-slice) carries its OWN href + alt — so a multi-link block
+            // like blocks/journal-tile emits a header slice plus one linked slice per tile, each
+            // to its own post URL. The whole slice row is the link (the padding is clickable too).
+            const isRegion = s.name != null;
+            const rowHref = isRegion ? (s.href || '') : href;
+            const rowAlt = isRegion ? (s.alt || '') : alt;
             if (s.kind === 'gif') {
-              rows.push(klaviyo.imageRow(s.src, { href, alt }));
+              rows.push(klaviyo.imageRow(s.src, { href: rowHref, alt: rowAlt }));
               continue;
             }
-            const suffix = s.segCount > 1 ? `-${s.seg + 1}` : '';
-            const imageUrl = await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${b.component.replace(/[\/]+/g, '-')}${suffix}`);
-            rows.push(klaviyo.imageRow(imageUrl, { href, alt }));
+            // Region slices upload as <component>-<region> (journal-tile-header, journal-tile-1 …);
+            // other multi-segment slices keep their -N ordinal suffix.
+            const suffix = isRegion ? `-${s.name.replace(/^tile-/, '')}` : (s.segCount > 1 ? `-${s.seg + 1}` : '');
+            const imageUrl = await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${compBase}${suffix}`);
+            rows.push(klaviyo.imageRow(imageUrl, { href: rowHref, alt: rowAlt }));
           }
         }
         const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase });

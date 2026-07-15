@@ -200,6 +200,14 @@ Each slice also shows an editable **Link URL** (pre-filled from the block's toke
 same per-block links used by **Push to Klaviyo** below, so set them here once. The unsubscribe
 footer is flagged as live HTML rather than an image.
 
+**Multi-region blocks:** a block can declare sub-slice regions (a descendant with
+`data-eb-slice="…"`, optionally `data-eb-href` / `data-eb-alt`) and then emits *one linked slice
+per region* instead of a single image — the regions tile the block's full height so they stack back
+seamlessly. `blocks/journal-tile` uses this: it now ships as a header slice plus one slice per
+article tile — **linked image rows, not live HTML** — so each tile keeps its own post link while
+the whole module renders in brand fonts. Those regions carry fixed per-region links (shown
+read-only in the Slices tab), so they aren't part of the editable per-block link overrides.
+
 ## Push draft to Klaviyo
 The **Push to Klaviyo** button creates a **draft** campaign in your Klaviyo account — it never
 sends. The draft is built from **per-block image slices, not one giant PNG**, so each block is its

@@ -19,7 +19,6 @@
       "body-copy-plain",
       "divider-line",
       "divider-whitespace",
-      "journal-tile",
       "full-width-image"
     ],
     "slice_components": [
@@ -515,11 +514,11 @@
       }
     },
     "blocks": {
-      "_about": "Designed blocks are graphic-designed, fully-composed image blocks (600px wide, variable height) that are ALWAYS sliced to PNG. Because they are rasterised, they may use rich CSS — transform:rotate, position:absolute layering, box-shadow, negative-margin overlap — that does not survive as live email HTML. They drop into the single 600px column exactly like any other sliced component. Tokens are filled, then the block is rendered via the puppeteer slicer (Step 5). Fonts, illustrations and palette are locked, identical to the rest of the v4 system: Cervanttis (lowercase script), Lust (sentence-case display), NeuzeitGro (sans), Noir/Clay(#D8CCBE)/White, square black buttons.",
+      "_about": "Designed blocks are graphic-designed, fully-composed image blocks (600px wide, variable height) that are ALWAYS sliced to PNG. Because they are rasterised, they may use rich CSS — transform:rotate, position:absolute layering, box-shadow, negative-margin overlap — that does not survive as live email HTML. They drop into the single 600px column exactly like any other sliced component. Tokens are filled, then the block is rendered via the puppeteer slicer (Step 5). Fonts, illustrations and palette are locked, identical to the rest of the v4 system: Cervanttis (lowercase script), Lust (sentence-case display), NeuzeitGro (sans), Noir/Clay(#D8CCBE)/White, square black buttons. MULTI-REGION SLICING: a block whose HTML marks descendants with data-eb-slice=\"<name>\" (optionally data-eb-href=\"<url token>\" and data-eb-alt=\"<text token>\") is NOT flattened to one image — the slicer emits one PNG slice per region, in DOM order, and each slice can carry its own link and alt. The regions tile the block's full height with no gaps, so they stack back seamlessly. This is how blocks/journal-tile keeps 2–3 distinct per-tile links (each tile slice wrapped in its own <a href>) while still rasterising to brand-font images.",
       "journal-tile": {
         "file": "templates/blocks/journal-tile.html",
-        "classification": "html-safe",
-        "description": "\"From the Journal\" row of 2–3 linked article tiles (image, eyebrow, title, teaser, link per tile). LIVE HTML — not sliced — so each tile keeps its own click-through URL in the Klaviyo push. Editorial only: no price field, no PANEL_* palette. Web-safe fonts in email (Georgia title, Gill Sans eyebrow/teaser); preview shows brand fonts via @font-face. Listed in assembly.html_only_components.",
+        "classification": "slice",
+        "description": "\"From the Journal\" row of 2–3 linked article tiles (image, eyebrow, title, teaser, link per tile). SLICED as a multi-region block: rasterises to brand-font PNGs like every designed block, but emits one slice per region — a header slice plus one slice per tile — so all 2–3 distinct per-tile links survive (each tile slice is wrapped in its own <a href>). Uses the generic data-eb-slice / data-eb-href mechanism (see blocks._about). Brand fonts (Lust titles, NeuzeitGro eyebrow/teaser). Editorial only: no price field, no PANEL_* palette.",
         "when_to_use": "A secondary 'more reading' module for editorial / digest / lifecycle sends. After products, before the closing upsell. Set TILE_3_* to \"\" for a 2-up row; fill it for 3-up.",
         "assets_needed": "Two or three 4:5 article photos (~200×250 display). No illustration assets.",
         "tokens": [
