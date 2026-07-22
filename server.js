@@ -244,39 +244,59 @@ const server = http.createServer(async (req, res) => {
     // becomes its own image with its own link (never one giant PNG). The footer stays live
     // HTML so its {% unsubscribe %} tag works. `links` is an optional {index: url} override.
     if (req.method === 'POST' && p === '/api/klaviyo-draft') {
-      const { campaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links, designId } = await readBody(req);
+      const { campaign: bodyCampaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links, designId } = await readBody(req);
       const apiKey = process.env.KLAVIYO_API_KEY;
       if (!apiKey) return json(res, 400, { error: 'KLAVIYO_API_KEY is not set on the server. Add it as an environment variable and restart.' });
-      // Fall back to the lines persisted on the saved design (designMeta subjectLine/previewText)
-      // when the request body doesn't carry them — the subject/preview live outside the campaign
-      // body, so a saved design is their source of truth.
-      let subjectLine = subject, preview = previewText;
-      if ((!subjectLine || !preview) && designId) {
+      // Resolve the campaign body (blocks) and the subject/preview lines from the saved design
+      // when the request doesn't carry them. The UI posts the live `campaign`; API clients
+      // typically post only `designId` and expect the server to load the design's blocks
+      // (which live under design.campaign, not design.blocks). The subject/preview also live
+      // outside the campaign body (designMeta subjectLine/previewText), so a saved design is
+      // their source of truth too. Load the design once and use it for both.
+      let campaign = bodyCampaign, subjectLine = subject, preview = previewText;
+      const needCampaign = !campaign || !Array.isArray(campaign.blocks) || !campaign.blocks.length;
+      if (designId && (needCampaign || !subjectLine || !preview)) {
         try {
           const d = await designs.get(designId);
           if (d) {
+            if (needCampaign && d.campaign) campaign = d.campaign;
             if (!subjectLine) subjectLine = d.subjectLine || '';
             if (!preview) preview = d.previewText || '';
           }
         } catch (_) { /* design lookup is best-effort — fall through with whatever we have */ }
+      }
+      // Guard against building a valid-but-blank draft from an empty campaign: with no blocks
+      // there is nothing to slice or inject, which is exactly the silent empty-shell failure.
+      if (!campaign || !Array.isArray(campaign.blocks) || !campaign.blocks.length) {
+        return json(res, 400, { error: 'No campaign blocks to slice. Pass a `campaign` with blocks, or a `designId` whose saved design has blocks.' });
       }
       const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
       const assetsBase = `${proto}://${req.headers.host}/design-system/assets`;
       const linkOverride = links || {};
       try {
         // 1. Rasterise each block from the production-shelled, block-marked HTML.
-        const { html: markedHtml } = render.assemble(campaign || {}, { assetsBase, production: true, markBlocks: true });
+        const { html: markedHtml } = render.assemble(campaign, { assetsBase, production: true, markBlocks: true });
         const { slices } = await render.renderSlices(markedHtml);
 
         // 2. Per block, either keep live HTML (footer/unsubscribe) or emit its image rows.
         //    Each block yields one or more ordered segments: a PNG slice is uploaded and linked;
         //    an animated GIF is referenced live at its already-hosted URL so it keeps animating
         //    (rasterising would freeze it to one frame). Each block keeps its own click-through.
-        const meta = render.assembleBlocks(campaign || {}, { assetsBase });
+        const meta = render.assembleBlocks(campaign, { assetsBase });
         // Blocks declared html_only in the manifest stay LIVE HTML (never sliced), so a
         // multi-link block keeps all its anchors — e.g. blocks/journal-tile's 2–3 per-tile
         // post links. Slicing would flatten the block to one PNG with a single click-through.
         const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
+        // Fail loud if the slice stage silently produced nothing for blocks that should have
+        // rasterised (e.g. a headless-browser OOM/launch failure on the render instance).
+        // Without this, the handler would build an empty template and return 200 — the worst
+        // failure mode, since a blank draft can be sent. Blocks that are intentionally live
+        // HTML (footer/unsubscribe and html_only components) don't count toward this.
+        const sliceableBlocks = meta.blocks.filter(b =>
+          !render.isUnsubscribeBlock(b.component, b.html) && !render.isHtmlOnlyComponent(b.component, htmlOnly)).length;
+        if (sliceableBlocks > 0 && slices.length === 0) {
+          return json(res, 502, { error: `Slicer produced 0 slices for ${sliceableBlocks} sliceable block(s) — the block rasterise stage failed (check the headless-browser/CHROMIUM_PATH on this instance). Refusing to create an empty Klaviyo draft.` });
+        }
         const segmentsByIndex = {};
         for (const s of slices) (segmentsByIndex[s.index] = segmentsByIndex[s.index] || []).push(s);
         const rows = [];
