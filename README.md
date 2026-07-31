@@ -58,7 +58,8 @@ git push -u origin main
 - **Component library** (the **Library** tab) — every component rendered *alive* with on-brand
   sample data (no fields to fill), with live **palette + lever** switching, a **variant-compare**
   strip (all palette presets / lever options side-by-side), search/filter (group, objective,
-  designed-only, drafts-only), per-component intent, **Copy JSON**, and a **Coverage & gaps**
+  designed-only, drafts-only), per-component intent, **Add to campaign** (drops the block into
+  the builder's campaign with your chosen palette/levers), **Copy JSON**, and a **Coverage & gaps**
   lens that maps objectives → components and surfaces DRAFT blocks, missing intent and orphans
   to drive new/extended components. Sample data is the single source of truth in
   `lib/sampleData.js` (the test suite asserts every component renders a clean, fully-filled sample).

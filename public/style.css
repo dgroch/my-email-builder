@@ -21,6 +21,8 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 .builder{overflow-y:auto;padding:18px;border-right:1px solid var(--line);}
 .add-row{display:flex;gap:8px;margin-bottom:16px;position:sticky;top:0;background:var(--bg);padding-bottom:8px;z-index:2;}
 .add-row select{flex:1;font:inherit;font-size:13px;padding:9px;border:1px solid var(--line);border-radius:6px;background:#fff;}
+.add-more{display:block;width:100%;border:1px dashed #bdb4a8;border-radius:10px;background:transparent;color:var(--sub);padding:11px;margin:2px 0 14px;}
+.add-more:hover{color:var(--ink);border-color:var(--ink);background:#fff;}
 .empty{color:var(--sub);font-size:13px;text-align:center;padding:40px 0;}
 .block-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden;}
 .block-card.flash{animation:cardflash 1.1s ease-out;}
@@ -148,6 +150,8 @@ body.mode-library .campaign-meta,body.mode-library .actions{display:none;}
 .intent-facts{font-size:10px;color:var(--sub);margin:2px 0 0;}
 
 .lib-card-actions{display:flex;gap:6px;padding:12px;margin-top:auto;}
+.lib-add{background:#000;color:#fff;border-color:#000;}
+.lib-add:hover{border-color:#000;opacity:.85;}
 
 /* variant compare */
 .lib-variants{padding:6px 12px 12px;display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);margin-top:10px;}
