@@ -222,6 +222,8 @@ const server = http.createServer(async (req, res) => {
             keepHtml: render.isUnsubscribeBlock(s.component, b.html),
           };
           if (isRegion) { base.region = true; base.name = s.name; base.alt = s.alt || ''; }
+          // Column segments recompose side-by-side on push (not stacked) — surface that.
+          if (s.layout) { base.layout = s.layout; base.bg = s.bg || ''; }
           // GIF segments pass through live (carry the hosted src); PNG segments carry pixels.
           return s.kind === 'gif' ? { ...base, src: s.src } : { ...base, pngBase64: s.buffer.toString('base64') };
         }),
@@ -307,6 +309,22 @@ const server = http.createServer(async (req, res) => {
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
           const alt = b.tokens.HEADLINE || b.component;
           const compBase = b.component.replace(/[\/]+/g, '-');
+          // A column-split block (one partial-width GIF with content beside it, e.g.
+          // blocks/image-text with an animated image) recomposes into ONE row of side-by-side
+          // cells: PNG column(s) uploaded as usual, the GIF column referenced live so it keeps
+          // animating. Stacking these segments would put the text above/below the GIF and
+          // change the designed layout — this is what used to silently DROP the side content.
+          if (segs[0].layout === 'cols') {
+            const totalW = segs.reduce((n, s) => n + s.width, 0) || 1;
+            const cells = [];
+            for (const s of segs) {
+              const url = s.kind === 'gif' ? s.src
+                : await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${compBase}-${s.seg + 1}`);
+              cells.push({ url, widthPx: s.width, pct: +(100 * s.width / totalW).toFixed(2), bg: s.bg });
+            }
+            rows.push(klaviyo.columnRow(cells, { href, alt }));
+            continue;
+          }
           for (const s of segs) {
             // A region slice (data-eb-slice) carries its OWN href + alt — so a multi-link block
             // like blocks/journal-tile emits a header slice plus one linked slice per tile, each

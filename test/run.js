@@ -266,6 +266,25 @@ for (const name of ['blocks/editorial-hero', 'blocks/image-text', 'heroes/hero-d
 eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figandbloom.com.au/x',
   'deriveLink keeps the component-level click-through from CTA_URL');
 
+// ── Column recomposition (a live GIF beside rasterised text, e.g. blocks/image-text) ──
+// A layout:'cols' block must come back as ONE row of side-by-side cells — stacking (or the
+// old behaviour, dropping the text column entirely) loses the designed 2/3+1/3 layout.
+{
+  const klaviyo = require('../lib/klaviyo');
+  const row = klaviyo.columnRow([
+    { url: 'https://cdn.example/text-col.png', widthPx: 200, pct: 33.33, bg: '#000000' },
+    { url: 'https://cdn.example/anim.gif', widthPx: 400, pct: 66.67, bg: '#000000' },
+  ], { href: 'https://figandbloom.com.au/collections/bouquets', alt: 'Something new' });
+  ok(/text-col\.png/.test(row) && /anim\.gif/.test(row), 'columnRow keeps both the PNG text column and the live GIF');
+  ok(row.indexOf('text-col.png') < row.indexOf('anim.gif'), 'columnRow preserves left-to-right column order');
+  ok((row.match(/<td width="33\.33%"/).length && /<td width="66\.67%"/.test(row)), 'columnRow cells carry proportional percentage widths (mobile scales, not stacks)');
+  ok((row.match(/<a href=/g) || []).length === 2, 'both columns carry the block click-through');
+  ok((row.match(/bgcolor="#000000"/g) || []).length === 2, 'block background rides along to absorb column height differences');
+  ok(/^<tr><td[^>]*><table width="100%"/.test(row) && (row.match(/<tr>/g) || []).length === 2, 'columnRow is a single outer row wrapping one inner row');
+  const single = klaviyo.columnRow([{ url: 'https://cdn.example/x.gif', widthPx: 600, pct: 100, bg: '' }], {});
+  ok(!/bgcolor/.test(single) && !/<a /.test(single), 'columnRow omits bgcolor and link when absent');
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);

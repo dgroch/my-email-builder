@@ -264,6 +264,7 @@ async function renderSlices() {
         el('img', { class: 'slice-img', src, alt: s.component }),
       ];
       if (isGif) kids.push(el('div', { class: 'slice-link note', text: 'Animated GIF — passed through live (kept as <img>, not flattened to PNG).' }));
+      if (s.layout === 'cols') kids.push(el('div', { class: 'slice-link note', text: 'Side-by-side column — recomposed beside its neighbour in one row on push (not stacked).' }));
       kids.push(linkRow);
       wrap.append(el('div', { class: 'slice' }, kids));
     });
