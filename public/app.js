@@ -46,11 +46,16 @@ function defaultsFor(comp) {
   for (const t of comp.tokens) if (t.type === 'enum' && t.enumOptions && t.enumOptions[0]) tokens[t.name] = t.enumOptions[0];
   return tokens;
 }
-function addBlock(name) {
-  const comp = byName[name]; if (!comp) return;
+function addBlock(name, opts = {}) {
+  const comp = byName[name]; if (!comp) return null;
   const block = { id: uid++, component: name, tokens: defaultsFor(comp) };
-  if (comp.palettePresets && comp.palettePresets.length) block.palette = comp.palettePresets[0].name;
+  if (comp.palettePresets && comp.palettePresets.length) {
+    const preset = (opts.palette && comp.palettePresets.find(p => p.name === opts.palette)) || comp.palettePresets[0];
+    block.palette = preset.name; Object.assign(block.tokens, preset.values);
+  }
+  if (opts.levers) for (const [k, v] of Object.entries(opts.levers)) if (k in block.tokens) block.tokens[k] = v;
   campaign.blocks.push(block); renderBlocks(); livePreview();
+  return block;
 }
 function move(i, d) { const j = i + d; if (j < 0 || j >= campaign.blocks.length) return; [campaign.blocks[i], campaign.blocks[j]] = [campaign.blocks[j], campaign.blocks[i]]; renderBlocks(); livePreview(); }
 function remove(i) { campaign.blocks.splice(i, 1); renderBlocks(); livePreview(); }
@@ -64,7 +69,7 @@ function fixSentence(v) { let s = v; if (s === s.toUpperCase()) s = s.toLowerCas
 // ── render block cards & fields ───────────────────────────────────────────────
 function renderBlocks() {
   const wrap = $('#blocks'); wrap.innerHTML = '';
-  if (!campaign.blocks.length) { wrap.append(el('p', { class: 'empty', html: 'No blocks yet. Add one above, or click <b>Sample</b>.' })); return; }
+  if (!campaign.blocks.length) { wrap.append(el('p', { class: 'empty', html: 'No blocks yet. Add one above, pick one from the <b>Library</b> tab (“Add to campaign”), or click <b>Sample</b>.' })); return; }
   campaign.blocks.forEach((block, i) => {
     const comp = byName[block.component]; if (!comp) return;
     const card = $('#blockCardTpl').content.firstElementChild.cloneNode(true);
@@ -81,6 +86,13 @@ function renderBlocks() {
     else buildFields(fields, comp, block);
     wrap.append(card);
   });
+  // Add entry point where the eye lands after the last card (the sticky top row is easy to miss).
+  wrap.append(el('button', { class: 'add-more', text: '+ Add a block', onclick: () => {
+    const sel = $('#addSelect');
+    sel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    sel.focus();
+    try { sel.showPicker(); } catch (_) { /* older browsers: focused select, user opens it */ }
+  } }));
 }
 
 function buildFields(container, comp, block) {

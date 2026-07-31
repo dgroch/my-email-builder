@@ -126,9 +126,21 @@
     card.querySelector('.lib-desc').textContent = c.desc || '';
     buildIntent(card);
 
+    card.querySelector('.lib-add').onclick = () => addToCampaign(c, card);
     card.querySelector('.lib-compare').onclick = () => toggleCompare(card);
     card.querySelector('.lib-copy').onclick = (e) => copyJson(c, card, e.target);
     return card;
+  }
+
+  // ── add to campaign (Library → Builder) ────────────────────────────────────────
+  // Appends the component to the campaign with the card's current palette + levers
+  // (content tokens start empty, same as the Builder's own add — the unfilled-token
+  // counter then guides the writing), switches to the Builder and focuses the card.
+  function addToCampaign(c, card) {
+    const block = addBlock(c.name, { palette: card._state.palette, levers: card._state.levers });
+    if (!block) { setStatus('could not add ' + c.name, 'warn'); return; }
+    setMode('builder');
+    requestAnimationFrame(() => focusBlockCard(campaign.blocks.length - 1));
   }
 
   // current tokens for a card = sample tokens, with chosen palette + levers layered on
