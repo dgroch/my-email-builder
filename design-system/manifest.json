@@ -376,6 +376,8 @@
       "trust-bar": {
         "file": "templates/sections/trust-bar.html",
         "static": true,
+        "status": "draft — blocked on new artwork",
+        "blocked_reason": "The flattened CDN PNG reads 'Fresh Daily Flowers · Perfect for Every Occasion · Australia-Wide Service · Same Day Delivery · Order Before 1pm'. 'Perfect for Every Occasion' is banned language, and the same-day cut-off is a delivery claim requiring sign-off. Both are baked into the image, so no token can disable them. The alt text has been corrected; the pixels have not. Omit the trust bar from campaigns until replacement artwork ('Fresh Daily Flowers · Australia-Wide Service') is uploaded to the CDN. NOTE: both seed exemplars still include this component — decide whether to strip it from them and from ordering_rules.required while the artwork is pending.",
         "tokens": []
       },
       "three-column-steps-beige": {
@@ -636,8 +638,14 @@
           "QUOTE_ATTRIBUTION",
           "DENSITY",
           "ROTATION",
-          "ACCENT_ILLO"
-        ]
+          "ACCENT_ILLO",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "40px",
+          "PADDING_BOTTOM": "50px"
+        }
       },
       "caption-bar-hero": {
         "file": "templates/blocks/caption-bar-hero.html",
@@ -794,12 +802,13 @@
       "comparison-vs": {
         "file": "templates/blocks/comparison-vs.html",
         "classification": "slice",
-        "description": "Side-by-side 'vs' comparison: super-label, Lust headline, two square photos with caps labels + captions, and a circular Cervanttis 'vs' badge straddling the columns. The left/'others'/'before' photo is desaturated; the right/'us'/'after' photo is full colour with a black border. The corpus's us-vs-them / what-we-bought-vs-got / before-after beat (niche, ~1-2%).",
+        "description": "Side-by-side 'vs' comparison: super-label, Lust headline, two square photos with caps labels + captions, and a circular Cervanttis 'vs' badge straddling the columns. The right/'us'/'after' photo carries a black border; the left photo is desaturated only when LEFT_TREATMENT='grayscale' (default 'none', so a neutral A-vs-B comparison keeps both photos in full colour). The corpus's us-vs-them / what-we-bought-vs-got / before-after beat (niche, ~1-2%).",
         "when_to_use": "A direct before/after or us-vs-them contrast. Mid-email. One per email.",
         "assets_needed": "Two square photos (210×210 display). No illustration assets.",
         "parametrised": {
           "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
-          "layout": "symmetric two-column (left = before/others, right = after/us)"
+          "layout": "symmetric two-column (left = before/others, right = after/us)",
+          "left_treatment": "none | grayscale (LEFT_TREATMENT — desaturate the left photo; use grayscale only for an us-vs-them framing)"
         },
         "tokens": [
           "SUPER_LABEL",
@@ -813,11 +822,15 @@
           "RIGHT_CAPTION",
           "CTA_TEXT",
           "CTA_URL",
+          "LEFT_TREATMENT",
           "PANEL_BG",
           "PANEL_TEXT",
           "PANEL_SUB",
           "PANEL_BORDER"
-        ]
+        ],
+        "token_defaults": {
+          "LEFT_TREATMENT": "none"
+        }
       },
       "editorial-collage": {
         "file": "templates/blocks/editorial-collage.html",
@@ -904,7 +917,8 @@
           "ROTATION": "flat | subtle | jaunty — tilt of plates, polaroids, badges, frames, chips",
           "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage)",
           "ACCENT_ILLO": "on | off — faint brand-illustration accent",
-          "IMG_SIDE": "left | right — which side the image sits (blocks/image-text)"
+          "IMG_SIDE": "left | right — which side the image sits (blocks/image-text)",
+          "LEFT_TREATMENT": "none | grayscale — desaturate the left photo (blocks/comparison-vs)"
         },
         "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE, ROTATION) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
       },

@@ -39,7 +39,7 @@ fetch('/api/schema').then(r => r.json()).then(s => {
 // ── campaign model helpers ──────────────────────────────────────────────────────
 function defaultsFor(comp) {
   const tokens = {};
-  for (const t of comp.tokens) tokens[t.name] = '';
+  for (const t of comp.tokens) tokens[t.name] = t.default !== undefined ? t.default : '';
   // palette: seed from first preset
   if (comp.palettePresets && comp.palettePresets.length) Object.assign(tokens, comp.palettePresets[0].values);
   // enum: seed first option

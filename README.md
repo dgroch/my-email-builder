@@ -91,11 +91,11 @@ design-system/            bundled copy of the template library, shells, fonts, a
 |---|---|---|---|
 | GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
 | GET  | `/api/gallery`  | — | `{components:[{name, group, designed, static, draft, sampleTokens, variants}]}` — every component with a complete set of on-brand **sample tokens** + its variant axes (palette presets + first enum lever). Powers the interactive **component library** |
-| POST | `/api/assemble` | `{campaign, markBlocks?}` | `{html, unfilled, validation}` — assembled preview HTML (`markBlocks` adds `data-eb-block` anchors); `validation` is the structured report (see `/api/validate`) |
-| POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens) |
+| POST | `/api/assemble` | `{campaign, markBlocks?, production?}` | `{html, unfilled, validation}` — assembled preview HTML with **absolute** asset URLs (`markBlocks` adds `data-eb-block` anchors; `production` keeps the real Klaviyo merge tags instead of the readable preview substitutions); `validation` is the structured report (see `/api/validate`) |
+| POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign}` | `{html, unfilled, campaign}` (HTML keeps `{{ASSETS_BASE}}` + Klaviyo tags) |
+| POST | `/api/export`   | `{campaign}` | `{html, unfilled, validation, campaign}` — **production** HTML: keeps `{{ASSETS_BASE}}` and the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}` |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
@@ -107,6 +107,32 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | DELETE | `/api/designs/:id`  | — | `{ok:true}` |
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
+
+### Token defaults
+
+A component may declare `token_defaults` in `design-system/manifest.json` (e.g.
+`sections/three-column-steps-*` → `PADDING_TOP`/`PADDING_BOTTOM` at `48px`,
+`blocks/polaroid-collage` → `40px`/`50px`, `blocks/comparison-vs` → `LEFT_TREATMENT: "none"`).
+A token with a default is **optional**: omit it, or leave it blank, and assembly fills the
+default in rather than emitting a literal `{{TOKEN}}` — which would otherwise land inside a CSS
+declaration and silently break the rule. `/api/schema` surfaces it as `default` on the token,
+`/api/validate` doesn't report it as unfilled, and the builder seeds the field with it. This is
+what makes it safe to add a new lever to an existing component without breaking saved campaigns.
+
+### Compliance gates in `/api/validate`
+
+Two assertions fail a campaign outright, so nothing depends on a human noticing:
+
+- **Unsubscribe** — the campaign's assembled *production* HTML must carry `{% unsubscribe %}`
+  (the `footer` component) or `{{ unsubscribe_url }}` (`sections/opt-out`). Klaviyo does **not**
+  inject an unsubscribe link into a `CODE`-editor template, so a campaign without one is
+  non-compliant on send. Issue type `missing_unsubscribe`. Pass `{ requireUnsubscribe: false }`
+  to `validateCampaign()` when validating a single component in isolation (the library samples).
+- **Locked enums** — every enum token (`ACCENT_ILLO`, `ROTATION`, `DENSITY`, `TYPE_SCALE`,
+  `IMG_SIDE`, `IMG_HEIGHT`, `LEFT_TREATMENT`) rejects any value outside its options, including a
+  blank or wrong-cased one. The levers drive CSS class names (`illo-{{ACCENT_ILLO}}`), so an
+  off-list value used to match no rule and read as "off" — a silent no-op. Issue type
+  `invalid_enum`, carrying `options` and a suggested value.
 
 ### Inline formatting in token values
 
