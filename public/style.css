@@ -63,6 +63,14 @@ main{display:grid;grid-template-columns:minmax(380px,1fr) minmax(420px,1fr);gap:
 #liveFrame{width:640px;border:none;background:#fff;min-height:100%;}
 .png-wrap{padding:16px;}
 .png-wrap img{width:600px;display:block;box-shadow:0 4px 24px #0006;}
+/* A rasterised view built from an older campaign: dimmed and captioned, so a stale picture is
+   never mistaken for "my edit had no effect". Opening the tab re-renders it. */
+.stale{position:relative;}
+.stale>*{opacity:.35;filter:grayscale(.6);}
+.stale::after{content:'Outdated — click Render PNG to rebuild from your latest edits';
+  position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:2;
+  background:var(--warn,#b8860b);color:#fff;font-size:12px;font-weight:600;
+  padding:6px 12px;border-radius:4px;white-space:nowrap;box-shadow:0 2px 8px #0006;}
 .hidden{display:none!important;}
 
 /* slices panel */
