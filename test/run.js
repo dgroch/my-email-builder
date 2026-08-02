@@ -406,9 +406,41 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   }
 }
 
+// ── The collage's padding tokens move the BLOCK's outer edges, not the pull-quote band ──
+// Padding the quote's interior only moves the quote down inside an unchanged block. An author
+// reaching for PADDING_TOP wants the clay above the polaroids and below the attribution — the
+// component's own frame. Pin the element it lands on so it can't drift back inward.
+{
+  const pc = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const camp = sampleData.sampleCampaignFor(pc);
+  camp.blocks[0].tokens.PADDING_TOP = '100px';
+  camp.blocks[0].tokens.PADDING_BOTTOM = '30px';
+  const html = render.assemble(camp, { assetsBase: '/a' }).html;
+
+  // Anchored to the cell that wraps the collage — the block has an outer wrapper cell too,
+  // and matching that one would pass while the tokens went nowhere.
+  const frameCell = /<td style="padding:([^;]+);background:#D8CCBE;">\s*<!-- Collage region/;
+  eq((html.match(frameCell) || [])[1], '100px 0 30px',
+    'the padding tokens land on the block cell, framing the whole component');
+  const quote = (html.match(/<div class="pc-quote" style="[^"]*"/) || [])[0] || '';
+  ok(/padding:40px 72px 0;/.test(quote), 'the quote band keeps its fixed collage-to-quote rhythm');
+  ok(!/100px|30px/.test(quote), 'no padding token is applied to the quote band');
+
+  // Both edges move independently — a regression that wired only one would still pass a
+  // whole-block height check, so assert each edge separately.
+  const framed = (pt, pb) => {
+    const c = sampleData.sampleCampaignFor(pc);
+    c.blocks[0].tokens.PADDING_TOP = pt; c.blocks[0].tokens.PADDING_BOTTOM = pb;
+    return (render.assemble(c, { assetsBase: '/a' }).html.match(frameCell) || [])[1];
+  };
+  eq(framed('0', '0'), '0 0 0', 'zero padding collapses the frame');
+  eq(framed('120px', '0'), '120px 0 0', 'the top edge moves on its own');
+  eq(framed('0', '120px'), '0 0 120px', 'the bottom edge moves on its own');
+}
+
 // ── Dimension tokens: a unitless value must be rejected, not silently rendered as 0 ────
 // PADDING_TOP interpolates straight into a CSS shorthand. A bare "100" produces
-// `padding:100 72px 100`, which is invalid, so the browser drops the whole declaration and the
+// `padding:100 0 50px`, which is invalid, so the browser drops the whole declaration and the
 // padding renders as 0. Nothing errors and the block just looks unchanged — the exact symptom
 // that makes an author think the lever does nothing.
 {

@@ -12,8 +12,8 @@ TOKENS:
   {{DENSITY}}            — DENSITY lever: "tight" / "regular" / "airy" collage spacing. Locked to these three.
   {{ROTATION}}           — ROTATION lever: "flat" / "subtle" / "jaunty" polaroid tilt. Locked to these three.
   {{ACCENT_ILLO}}        — ACCENT_ILLO lever: "on" or "off" — a faint brand-illustration accent. Locked enum.
-  {{PADDING_TOP}}        — Pull-quote top padding in px (e.g. "40px"). Default: 40px.
-  {{PADDING_BOTTOM}}     — Pull-quote bottom padding in px (e.g. "50px"). Default: 50px.
+  {{PADDING_TOP}}        — Block top padding in px, above the collage (e.g. "40px"). Default: 40px.
+  {{PADDING_BOTTOM}}     — Block bottom padding in px, below the attribution (e.g. "50px"). Default: 50px.
 RULES:
   - DESIGNED BLOCK: slice to PNG. Overlapping, rotated polaroids (transform + position:absolute)
     do not survive as live email HTML — this block must be rasterised.
@@ -23,8 +23,12 @@ RULES:
     captured by the slicer (position:absolute does not expand the row).
   - LEVERS are art-direction only: locked enums, no free hex/px. They change spacing, tilt and the
     accent illustration toggle — never colour, font or the core layout.
-  - DENSITY governs the COLLAGE region height only; the pull-quote band's vertical padding is set
-    by PADDING_TOP / PADDING_BOTTOM so an author's explicit value is never silently overridden.
+  - DENSITY governs the COLLAGE region height only, so an author's explicit padding is never
+    silently overridden.
+  - PADDING_TOP / PADDING_BOTTOM are the BLOCK's outer frame: the clay above the polaroids and
+    below the attribution. The gap between the collage and the pull-quote is fixed design rhythm,
+    not a lever — these tokens move the component's outer edges, which is what an author is
+    reaching for when they want the block to breathe.
 -->
 <tr><td style="padding:0;background:#D8CCBE;">
 <style>
@@ -49,7 +53,7 @@ RULES:
 </style>
 <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE" class="pc dens-{{DENSITY}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}}">
   <tr>
-    <td style="padding:0;background:#D8CCBE;">
+    <td style="padding:{{PADDING_TOP}} 0 {{PADDING_BOTTOM}};background:#D8CCBE;">
       <!-- Collage region — fixed height so absolute polaroids are captured -->
       <div class="pc-region" style="position:relative;width:600px;">
         <!-- ACCENT_ILLO: faint brand illustration behind the collage (background-image — never a broken <img>) -->
@@ -71,7 +75,9 @@ RULES:
         </div>
       </div>
       <!-- Pull-quote -->
-      <div class="pc-quote" style="text-align:center;padding:{{PADDING_TOP}} 72px {{PADDING_BOTTOM}};">
+      <!-- Fixed 40px separates the quote from the collage — design rhythm, not a lever. The
+           block's own bottom edge is PADDING_BOTTOM on the cell above, so there is none here. -->
+      <div class="pc-quote" style="text-align:center;padding:40px 72px 0;">
         <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:rgba(0,0,0,0.55);line-height:1.0;margin:0 0 12px 0;">{{QUOTE_ACCENT}}</p>
         <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.4;max-width:430px;margin:0 auto 16px auto;">{{PULL_QUOTE}}</p>
         <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(0,0,0,0.55);margin:0;">{{QUOTE_ATTRIBUTION}}</p>
