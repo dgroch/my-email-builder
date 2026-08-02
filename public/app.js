@@ -63,6 +63,11 @@ function remove(i) { campaign.blocks.splice(i, 1); renderBlocks(); livePreview()
 // ── case helpers ────────────────────────────────────────────────────────────────
 const violatesLower = v => v && /[A-Z]/.test(v);
 const violatesSentence = v => v && (v === v.toUpperCase() && /[A-Z]/.test(v) || /^[a-z]/.test(v));
+// Mirrors LENGTH_RE in lib/validate.js — keep the two in step.
+const violatesLength = {
+  ok: v => /^(?:0|\d+(?:\.\d+)?(?:px|em|rem|%))$/.test(String(v).trim()),
+  bare: v => /^\d+(?:\.\d+)?$/.test(String(v).trim()),
+};
 function fixLower(v) { return v.toLowerCase(); }
 function fixSentence(v) { let s = v; if (s === s.toUpperCase()) s = s.toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -144,14 +149,23 @@ function fieldFor(t, block) {
   wrap.append(warn);
   function validate() {
     const v = block.tokens[t.name] || '';
-    let bad = false, msg = '';
-    if (t.case === 'lower' && violatesLower(v)) { bad = true; msg = 'Should be lowercase (Cervanttis).'; }
-    if (t.case === 'sentence' && violatesSentence(v)) { bad = true; msg = 'Should be Sentence case (Lust).'; }
+    let bad = false, msg = '', repair = null;
+    if (t.case === 'lower' && violatesLower(v)) { bad = true; msg = 'Should be lowercase (Cervanttis).'; repair = () => fixLower(v); }
+    if (t.case === 'sentence' && violatesSentence(v)) { bad = true; msg = 'Should be Sentence case (Lust).'; repair = () => fixSentence(v); }
+    // A unitless dimension makes the CSS shorthand invalid, so the browser drops it and the
+    // value renders as 0 — silently, and identically to "my edit did nothing".
+    if (t.type === 'length' && v !== '' && !violatesLength.ok(v)) {
+      bad = true;
+      msg = 'Needs a unit, e.g. "40px" — without one this renders as 0.';
+      if (violatesLength.bare(v)) repair = () => v.trim() + 'px';
+    }
     warn.classList.toggle('hidden', !bad);
     if (bad) {
       warn.innerHTML = msg;
-      const fix = el('button', { class: 'fix', text: 'fix', onclick: () => { const nv = t.case === 'lower' ? fixLower(v) : fixSentence(v); block.tokens[t.name] = nv; input.value = nv; validate(); scheduleLive(); } });
-      warn.append(fix);
+      if (repair) {
+        const fix = el('button', { class: 'fix', text: 'fix', onclick: () => { const nv = repair(); block.tokens[t.name] = nv; input.value = nv; validate(); scheduleLive(); } });
+        warn.append(fix);
+      }
     }
   }
   validate();
@@ -160,12 +174,31 @@ function fieldFor(t, block) {
 
 // ── preview ───────────────────────────────────────────────────────────────────
 let liveTimer = null;
-function scheduleLive() { clearTimeout(liveTimer); liveTimer = setTimeout(livePreview, 450); }
+// The live preview re-fetches on every edit, but the Rendered PNG and Slices tabs are only
+// populated when their button is clicked. Without this bookkeeping an edited campaign shows the
+// *previous* rasterisation — indistinguishable from "my change did nothing".
+//
+// Staleness is keyed off the campaign's own content rather than a mutation counter, so it stays
+// correct no matter which code path changed the campaign (edit, reorder, palette, import, load)
+// and can't race the debounced live preview. A rendered view records the key it was built from.
+// Stale views are badged, and opening one re-rasterises it.
+const campaignKey = () => JSON.stringify([campaign.blocks, campaign.campaignName, campaign.bodyBg]);
+let pngKey = null, slicesKey = null;
+function isStale(which) { return (which === 'png' ? pngKey : slicesKey) !== campaignKey(); }
+function refreshStaleBadges() {
+  for (const [which, sel, key] of [['png', '#pngWrap', pngKey], ['slices', '#slicesWrap', slicesKey]]) {
+    const wrap = $(sel);
+    if (wrap) wrap.classList.toggle('stale', key !== null && isStale(which));
+  }
+}
+
+function scheduleLive() { refreshStaleBadges(); clearTimeout(liveTimer); liveTimer = setTimeout(livePreview, 450); }
 function setStatus(msg, cls = '') { const s = $('#status'); s.textContent = msg; s.className = 'status ' + cls; }
 
 async function livePreview() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   const frame = $('#liveFrame');
   if (!campaign.blocks.length) { frame.srcdoc = ''; return; }
   setStatus('rendering…');
@@ -213,9 +246,11 @@ async function renderPng() {
   setStatus('rasterising (Puppeteer)…');
   showTab('png');
   try {
+    const at = campaignKey();
     const r = await fetch('/api/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
     const { pngBase64, brokenImages } = await r.json();
     $('#pngImg').src = 'data:image/png;base64,' + pngBase64;
+    pngKey = at; refreshStaleBadges();
     if (brokenImages && brokenImages.length) setStatus(`${brokenImages.length} broken image(s)`, 'warn');
     else setStatus('rendered ✓', 'ok');
   } catch (e) { setStatus('render failed', 'warn'); }
@@ -228,6 +263,14 @@ function showTab(which) {
   $('#slicesWrap').classList.toggle('hidden', which !== 'slices');
 }
 
+// Opening a rasterised tab whose content predates the current campaign re-renders it, so the
+// tab never answers a question about the current design with a stale picture.
+function openTab(which) {
+  showTab(which);
+  if (which === 'png' && isStale('png')) return renderPng();
+  if (which === 'slices' && isStale('slices')) return renderSlices();
+}
+
 // ── slices (one PNG per block, for hand-assembly in Klaviyo) ────────────────────
 let SLICES = [];
 async function renderSlices() {
@@ -235,9 +278,11 @@ async function renderSlices() {
   setStatus('slicing (Puppeteer)…');
   $('#btnDownloadSlices').disabled = true;
   try {
+    const at = campaignKey();
     const r = await fetch('/api/render-slices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
     const { slices, brokenImages } = await r.json();
     SLICES = slices || [];
+    slicesKey = at; refreshStaleBadges();
     const wrap = $('#slices'); wrap.innerHTML = '';
     SLICES.forEach((s) => {
       const name = sliceName(s);
@@ -512,7 +557,7 @@ function bindToolbar() {
   $('#createSubmit').onclick = submitCreate;
   $('#createCancel').onclick = () => $('#createDialog').close();
   $('#designsClose').onclick = () => $('#designsDialog').close();
-  document.querySelectorAll('.tab').forEach(t => t.onclick = () => showTab(t.dataset.tab));
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => openTab(t.dataset.tab));
 }
 
 // ── persisted designs (save / reopen / clone / delete) ──────────────────────────
@@ -521,6 +566,7 @@ let currentDesignId = null;   // server id of the design currently loaded (null 
 async function saveDesign() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
   try {
     let r;

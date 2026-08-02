@@ -406,6 +406,68 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   }
 }
 
+// ── Dimension tokens: a unitless value must be rejected, not silently rendered as 0 ────
+// PADDING_TOP interpolates straight into a CSS shorthand. A bare "100" produces
+// `padding:100 72px 100`, which is invalid, so the browser drops the whole declaration and the
+// padding renders as 0. Nothing errors and the block just looks unchanged — the exact symptom
+// that makes an author think the lever does nothing.
+{
+  const pc = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const padTokens = pc.tokens.filter((t) => t.name.startsWith('PADDING_'));
+  eq(padTokens.length, 2, 'the collage exposes both padding tokens');
+  for (const t of padTokens) eq(t.type, 'length', `${t.name} is typed as a CSS length`);
+
+  const bare = sampleData.sampleCampaignFor(pc);
+  bare.blocks[0].tokens.PADDING_TOP = '100';
+  const rep = validateCampaign(bare, schema, { requireUnsubscribe: false });
+  const lenIssue = rep.issues.find((i) => i.type === 'invalid_length' && i.token === 'PADDING_TOP');
+  ok(lenIssue, 'a unitless dimension is flagged as invalid_length');
+  eq(lenIssue && lenIssue.severity, 'error', 'invalid_length is an error');
+  eq(lenIssue && lenIssue.value, '100', 'invalid_length reports the offending value');
+  eq(lenIssue && lenIssue.suggestion, '100px', 'invalid_length suggests the value with a unit');
+  eq(rep.ok, false, 'a campaign with a unitless dimension does not validate');
+  eq(rep.blocks[0].valid, false, 'the offending block is marked invalid');
+
+  // Junk that isn't even a number is rejected, with no bogus suggestion.
+  const junk = sampleData.sampleCampaignFor(pc);
+  junk.blocks[0].tokens.PADDING_BOTTOM = 'lots';
+  const jIssue = validateCampaign(junk, schema, { requireUnsubscribe: false })
+    .issues.find((i) => i.type === 'invalid_length' && i.token === 'PADDING_BOTTOM');
+  ok(jIssue, 'a non-numeric dimension is flagged');
+  eq(jIssue && jIssue.suggestion, undefined, 'no suggestion is offered when none can be derived');
+
+  // Valid units — and bare 0, which is legal CSS — all pass.
+  for (const good of ['0', '40px', '2.5rem', '10%', '1em']) {
+    const camp = sampleData.sampleCampaignFor(pc);
+    camp.blocks[0].tokens.PADDING_TOP = good;
+    ok(!validateCampaign(camp, schema, { requireUnsubscribe: false }).issues
+        .some((i) => i.type === 'invalid_length'), `"${good}" is accepted as a CSS length`);
+  }
+
+  // Every length token in the schema enforces units, and no sample trips a false positive.
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      if (t.type !== 'length') continue;
+      const camp = sampleData.sampleCampaignFor(c);
+      camp.blocks[0].tokens[t.name] = '12';
+      ok(validateCampaign(camp, schema, { requireUnsubscribe: false }).issues
+          .some((i) => i.type === 'invalid_length' && i.token === t.name),
+        `'${c.name}'.${t.name} rejects a unitless value`);
+    }
+    const camp = sampleData.sampleCampaignFor(c);
+    ok(!validateCampaign(camp, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'invalid_length'),
+      `'${c.name}' sample uses only valid CSS lengths`);
+  }
+
+  // The builder's client-side check must agree with the server's, or the UI warns on values the
+  // validator accepts (or worse, stays silent on ones it rejects).
+  const appJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const clientRe = (appJs.match(/ok:\s*v\s*=>\s*\/([^/]+)\/\.test/) || [])[1];
+  const serverRe = (fs.readFileSync(path.join(__dirname, '..', 'lib', 'validate.js'), 'utf8')
+    .match(/const LENGTH_RE\s*=\s*\/([^/]+)\//) || [])[1];
+  ok(clientRe && serverRe && clientRe === serverRe, 'the builder and the validator share one length rule');
+}
+
 // ── Unsubscribe compliance: the footer tag must survive to production HTML ────────────
 // Klaviyo does NOT inject an unsubscribe link into a CODE-editor template, so the literal
 // {% unsubscribe %} block tag has to reach the exported HTML. The preview substitution
