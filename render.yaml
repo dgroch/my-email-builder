@@ -32,7 +32,7 @@ services:
       # Live context (passed into the LLM call so generated campaigns reference
       # real products / audiences / blog URLs / lifestyle imagery instead of
       # stale snapshots).
-      #   SHOPIFY_STORE_DOMAIN           — optional, default 'figandbloom.com.au' (no auth needed for the public feed)
+      #   SHOPIFY_STORE_DOMAIN           — optional, default 'figandbloom.com' (no auth needed for the public feed)
       #   KLAVIYO_API_KEY                — already set above; used for live audiences
       #   NOTION_TOKEN                   — already set above; (still used for the saved-designs Notion DB; no longer needed for blog)
       #   SHOPIFY_BLOG_FEED_URL          — optional, default 'https://figandbloom.com/blogs/news.atom' (Shopify-published Atom feed, no auth, top 20 most recent posts)

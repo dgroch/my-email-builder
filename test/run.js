@@ -331,9 +331,20 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
       `'${c.name}' sample uses only canonical Fig & Bloom links`);
   }
 
-  // No .com.au URL host anywhere in the shipped source. Email addresses are a separate
-  // question (the team's mail is on .com.au) and are deliberately not touched.
-  for (const dir of ['examples', 'lib', 'design-system', 'public']) {
+  // No reference to the legacy .com.au domain anywhere in the shipped source — links, email
+  // addresses, config defaults, prose. Nothing is served from it, so any pointer is a pointer
+  // at a redirect nobody owns. lib/validate.js is exempt: it implements this rule and has to
+  // name the host it rejects.
+  // Root-level config and docs count too — a stale default in render.yaml is exactly the kind
+  // of pointer that outlives the code change it describes.
+  for (const f of ['server.js', 'render.yaml', 'README.md', 'Dockerfile', 'package.json']) {
+    const full = path.join(ROOT, f);
+    if (!fs.existsSync(full)) continue;
+    const hits = fs.readFileSync(full, 'utf8').match(/figandbloom\.com\.au/g) || [];
+    eq(hits.length, 0, `${f} has no reference to the legacy .com.au domain`);
+  }
+
+  for (const dir of ['examples', 'lib', 'design-system', 'public', 'docs']) {
     const stack = [path.join(ROOT, dir)];
     while (stack.length) {
       const cur = stack.pop();
@@ -342,10 +353,9 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
         if (e.isDirectory()) { stack.push(full); continue; }
         if (!/\.(js|json|md|html|css)$/.test(e.name)) continue;
         const txt = fs.readFileSync(full, 'utf8');
-        // Only real links — an https:// URL. Prose and regexes that *name* the redirect host
-        // (lib/validate.js implements the rule and has to mention it) are not links.
-        const hosts = txt.match(/https?:\/\/(?:[\w-]+\.)*figandbloom\.com\.au/g) || [];
-        eq(hosts.length, 0, `${path.relative(ROOT, full)} has no .com.au URL host`);
+        if (full.endsWith(path.join('lib', 'validate.js'))) continue;
+        const hits = txt.match(/figandbloom\.com\.au/g) || [];
+        eq(hits.length, 0, `${path.relative(ROOT, full)} has no reference to the legacy .com.au domain`);
       }
     }
   }
