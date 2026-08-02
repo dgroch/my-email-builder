@@ -174,7 +174,7 @@ The host calls the LLM with a `liveContext` object alongside the brief. The shap
 
 | Source | What | How the email builder gets it | How the agent gets it |
 |---|---|---|---|
-| **Shopify products** | Active bouquets, arrangements, vases, candles, cards — title, handle, from-price, image, tags | Public `figandbloom.com.au/products.json` (no auth) | Same, or a richer Admin API pull |
+| **Shopify products** | Active bouquets, arrangements, vases, candles, cards — title, handle, from-price, image, tags | Public `figandbloom.com/products.json` (no auth) | Same, or a richer Admin API pull |
 | **Klaviyo audiences** | Lists + segments with real IDs | `GET /api/klaviyo-audiences` (server uses KLAVIYO_API_KEY) | Same |
 | **Notion blog index** | Published blog posts with canonical Shopify URLs | New `GET /api/blog-index` (server uses NOTION_TOKEN, optional) | Agent reads the Notion marketing space directly |
 | **Asset library (semantic image search)** | Lifestyle imagery, recipient reactions, hand-tied detail, interior shots — semantically ranked for the brief, with real R2 URLs usable directly in `HERO_IMAGE_URL` / `POLAROID_IMAGE_URL` / `PHOTO_1_URL` etc. | `GET https://asset-library-u70t.onrender.com/api/search?q=<brief>` (no auth, just a `Referer` header) | Same; the agent can also use its own multimodal judgement to pick the best fit |

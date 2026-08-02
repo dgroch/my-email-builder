@@ -1,6 +1,6 @@
 {
   "version": "4.0",
-  "description": "Fig & Bloom email template library. Agent selects templates and injects content tokens. No HTML is generated \u2014 only token values.",
+  "description": "Fig & Bloom email template library. Agent selects templates and injects content tokens. No HTML is generated — only token values.",
   "assembly": {
     "shell_preview": "shell/shell-preview.html",
     "shell_production": "shell/shell-production.html",
@@ -8,7 +8,7 @@
       "CAMPAIGN_NAME": "Email subject line or campaign name",
       "BODY_BG": "Body background colour (default: #2c2825)",
       "FONT_CDN_LINK": "Production only: <link> tag for hosted font CSS. Omit if not configured.",
-      "COMPONENTS": "Assembled component HTML \u2014 injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->"
+      "COMPONENTS": "Assembled component HTML — injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->"
     },
     "method": "1. Select components. 2. Fill all {{TOKEN}} values. 3. Read each template file. 4. Replace tokens. 5. Concatenate. 6. Inject into shell between markers. 7. Validate no {{}} remain.",
     "html_only_components": [
@@ -16,6 +16,7 @@
       "section-headline",
       "delivery-cutoffs",
       "footer",
+      "button",
       "body-copy-plain",
       "divider-line",
       "divider-whitespace",
@@ -45,11 +46,11 @@
       "footer"
     ],
     "optional_positions": {
-      "opt-out": "Immediately after hero \u2014 position 3. Required for: Mothers Day, Fathers Day, Valentines Day, pregnancy/baby, memorial.",
+      "opt-out": "Immediately after hero — position 3. Required for: Mothers Day, Fathers Day, Valentines Day, pregnancy/baby, memorial.",
       "divider": "Max one non-line divider per email. Between body-copy and products.",
       "testimonial": "After products, before promo-code.",
       "promo-code": "After testimonial, before upsell.",
-      "upsell-noir": "Near bottom \u2014 closing beat. After promo-code.",
+      "upsell-noir": "Near bottom — closing beat. After promo-code.",
       "delivery-cutoffs": "After upsell, before trust-bar.",
       "three-column-steps-*": "After body-copy or after products. Use when a step-by-step partner flow (e.g. card creation) needs explaining. Max one per email. Choose variant by background: -beige (warm off-white), -50clay (50% clay, token clay_50, #EBE5DF), -clay (brand clay), or -white (silk white).",
       "journal-tile": "After products, before upsell — a 'From the Journal' row of 2–3 linked posts."
@@ -466,6 +467,29 @@
         "token_defaults": {
           "PADDING_TOP": "48px",
           "PADDING_BOTTOM": "48px"
+        }
+      },
+      "button": {
+        "file": "templates/sections/button.html",
+        "classification": "html-safe",
+        "description": "A call-to-action button on its own — square, NeuzeitGro Bold caps label, on a palette-preset panel. Outlook gets a VML roundrect so the button survives the Word renderer instead of collapsing to underlined text.",
+        "when_to_use": "When a text section needs its own call to action, or the closing beat is a button alone. Does not replace the CTA already built into heroes, offer-panel or three-column-steps — use those when the button belongs to that component.",
+        "tokens": [
+          "CTA_TEXT",
+          "CTA_URL",
+          "ALIGN",
+          "BTN_WIDTH",
+          "PADDING_TOP",
+          "PADDING_BOTTOM",
+          "PANEL_BG",
+          "BTN_BG",
+          "BTN_TEXT"
+        ],
+        "token_defaults": {
+          "ALIGN": "center",
+          "BTN_WIDTH": "260px",
+          "PADDING_TOP": "32px",
+          "PADDING_BOTTOM": "40px"
         }
       }
     },
@@ -897,17 +921,60 @@
     },
     "block_palette_presets": {
       "_about": "Designed blocks are PARAMETRISED on palette via four PANEL_* tokens. Fill all four by copying ONE preset row verbatim — the agent never invents hex. Keeps every variation inside the locked Noir/Clay/White system. Buttons stay square black on light presets; on the noir preset swap the button to white-on-black.",
-      "white": { "PANEL_BG": "#ffffff", "PANEL_TEXT": "#444444", "PANEL_SUB": "#aaaaaa", "PANEL_BORDER": "#e8e2da" },
-      "clay": { "PANEL_BG": "#D8CCBE", "PANEL_TEXT": "#000000", "PANEL_SUB": "#5f574d", "PANEL_BORDER": "#c7b9a9" },
-      "50clay": { "PANEL_BG": "#EBE5DF", "PANEL_TEXT": "#666666", "PANEL_SUB": "#8a8178", "PANEL_BORDER": "#ded7cf" },
-      "noir": { "PANEL_BG": "#000000", "PANEL_TEXT": "#cfcac3", "PANEL_SUB": "#888888", "PANEL_BORDER": "#2c2825", "button": "white-on-black" }
+      "white": {
+        "PANEL_BG": "#ffffff",
+        "PANEL_TEXT": "#444444",
+        "PANEL_SUB": "#aaaaaa",
+        "PANEL_BORDER": "#e8e2da"
+      },
+      "clay": {
+        "PANEL_BG": "#D8CCBE",
+        "PANEL_TEXT": "#000000",
+        "PANEL_SUB": "#5f574d",
+        "PANEL_BORDER": "#c7b9a9"
+      },
+      "50clay": {
+        "PANEL_BG": "#EBE5DF",
+        "PANEL_TEXT": "#666666",
+        "PANEL_SUB": "#8a8178",
+        "PANEL_BORDER": "#ded7cf"
+      },
+      "noir": {
+        "PANEL_BG": "#000000",
+        "PANEL_TEXT": "#cfcac3",
+        "PANEL_SUB": "#888888",
+        "PANEL_BORDER": "#2c2825",
+        "button": "white-on-black"
+      }
     },
     "variation_rules": {
       "_about": "Derived from the corpus mine (references/research/freq.json). Goal: consecutive sends must not feel same-y, while every variation stays inside the locked system. Variation comes from (1) which designed block opens/affirms/closes, (2) the palette preset, and (3) the layout lever — NOT from new colours, fonts or illustrations.",
       "beats": {
-        "OPEN": ["editorial-hero", "caption-bar-hero", "offer-panel (promo sends)", "hero-a", "hero-b-*", "hero-c*", "hero-d-*", "hero-image-only"],
-        "AFFIRM": ["feature-list", "story", "polaroid-collage", "testimonial", "designed-product-card", "howto-steps", "comparison-vs"],
-        "CLOSE": ["upsell-noir", "offer-panel", "promo-code", "designed-product-card"]
+        "OPEN": [
+          "editorial-hero",
+          "caption-bar-hero",
+          "offer-panel (promo sends)",
+          "hero-a",
+          "hero-b-*",
+          "hero-c*",
+          "hero-d-*",
+          "hero-image-only"
+        ],
+        "AFFIRM": [
+          "feature-list",
+          "story",
+          "polaroid-collage",
+          "testimonial",
+          "designed-product-card",
+          "howto-steps",
+          "comparison-vs"
+        ],
+        "CLOSE": [
+          "upsell-noir",
+          "offer-panel",
+          "promo-code",
+          "designed-product-card"
+        ]
       },
       "rotation": "Across a campaign series, rotate the OPEN block and its palette so no two consecutive sends repeat the same opener+palette pair. Track the last send's (open_block, palette) and pick a different combination. Editorial/newsletter sends (the corpus's largest bucket, 25.5%) should lean on caption-bar-hero + story; promo sends on editorial-hero + designed-product-card. Care-guide / how-to sends affirm with howto-steps; us-vs-them / before-after sends affirm with comparison-vs.",
       "levers": {
@@ -933,26 +1000,30 @@
     "gif_hero": {
       "_about": "Animated GIF heroes are FIRST-CLASS: ~31% of the corpus ships one, and image/gif ALWAYS means an animated hero (see research/freq.json). The static slicer (slice.js) emits PNG; the animated path uses slice-gif.js in the puppeteer skill.",
       "when": "Use a GIF hero for reveal moments (flower-of-the-month / product reveals, 2–4 frames), UGC / review carousels (8–18 frames), or sale/urgency flashes (4–5 frames).",
-      "applies_to_blocks": ["caption-bar-hero", "editorial-hero", "hero-image-only"],
+      "applies_to_blocks": [
+        "caption-bar-hero",
+        "editorial-hero",
+        "hero-image-only"
+      ],
       "workflow_ref": "SKILL.md Step 5e — produce N frame HTML states of the SAME block, render to one looping GIF via reference/reference-puppeteer/references/scripts/slice-gif.js, then upload/link like any other slice.",
       "slicer": "scripts/slice-gif.js (deps: gifenc, pngjs — installed by the same npm install as slice.js)"
     }
   },
   "token_rules": {
-    "HEADLINE": "Case depends on font: CERVANTTIS templates (heroes, upsell-noir, opt-out) \u2192 MUST be lowercase. LUST templates (body-copy, section-headline, products) \u2192 Sentence case. Check the template comment to confirm which font is used before writing the value.",
-    "OPT_OUT_HEADLINE": "Cervanttis font \u2014 MUST be lowercase. e.g. 'a gentle note'.",
-    "UNSUBSCRIBE_URL": "Use exact Klaviyo syntax: {{ unsubscribe_url }} \u2014 single braces, with spaces inside.",
-    "REVIEW_STARS": "Use actual Unicode star characters: \u2605\u2605\u2605\u2605\u2605",
-    "PRODUCT_IMAGE_URL": "Must be 4:5 ratio (1000\u00d71250px source min). Hosted on Klaviyo media library.",
+    "HEADLINE": "Case depends on font: CERVANTTIS templates (heroes, upsell-noir, opt-out) → MUST be lowercase. LUST templates (body-copy, section-headline, products) → Sentence case. Check the template comment to confirm which font is used before writing the value.",
+    "OPT_OUT_HEADLINE": "Cervanttis font — MUST be lowercase. e.g. 'a gentle note'.",
+    "UNSUBSCRIBE_URL": "Use exact Klaviyo syntax: {{ unsubscribe_url }} — single braces, with spaces inside.",
+    "REVIEW_STARS": "Use actual Unicode star characters: ★★★★★",
+    "PRODUCT_IMAGE_URL": "Must be 4:5 ratio (1000×1250px source min). Hosted on Klaviyo media library.",
     "HERO_IMAGE_URL": "Hosted on Klaviyo media library. Lifestyle photography preferred.",
     "BODY_P2": "Leave empty string if only one paragraph needed.",
-    "PRODUCT_NAME": "Lust font \u2014 sentence case. e.g. 'Blush & Wild', 'Garden Natives'.",
-    "ACCENT_SCRIPT": "Designed-block Cervanttis script accent (editorial-hero) \u2014 MUST be lowercase. e.g. 'with love,'.",
-    "POLAROID_CAPTION": "Designed-block Cervanttis polaroid caption (feature-list) \u2014 MUST be lowercase. e.g. 'osaka, our bestseller'.",
-    "PHOTO_1_CAPTION / PHOTO_2_CAPTION / PHOTO_3_CAPTION": "Designed-block Cervanttis polaroid captions (polaroid-collage) \u2014 MUST be lowercase.",
-    "QUOTE_ACCENT": "Designed-block Cervanttis accent line (polaroid-collage) \u2014 MUST be lowercase. e.g. 'in their words'.",
-    "PULL_QUOTE": "Designed-block Lust pull-quote (polaroid-collage) \u2014 sentence case.",
-    "designed_block_HEADLINE": "In designed blocks (editorial-hero, feature-list) HEADLINE is Lust \u2192 sentence case. The Cervanttis accent lives in a separate token (ACCENT_SCRIPT), which is lowercase."
+    "PRODUCT_NAME": "Lust font — sentence case. e.g. 'Blush & Wild', 'Garden Natives'.",
+    "ACCENT_SCRIPT": "Designed-block Cervanttis script accent (editorial-hero) — MUST be lowercase. e.g. 'with love,'.",
+    "POLAROID_CAPTION": "Designed-block Cervanttis polaroid caption (feature-list) — MUST be lowercase. e.g. 'osaka, our bestseller'.",
+    "PHOTO_1_CAPTION / PHOTO_2_CAPTION / PHOTO_3_CAPTION": "Designed-block Cervanttis polaroid captions (polaroid-collage) — MUST be lowercase.",
+    "QUOTE_ACCENT": "Designed-block Cervanttis accent line (polaroid-collage) — MUST be lowercase. e.g. 'in their words'.",
+    "PULL_QUOTE": "Designed-block Lust pull-quote (polaroid-collage) — sentence case.",
+    "designed_block_HEADLINE": "In designed blocks (editorial-hero, feature-list) HEADLINE is Lust → sentence case. The Cervanttis accent lives in a separate token (ACCENT_SCRIPT), which is lowercase."
   },
   "locked_styles": {
     "note": "The following are baked into templates. Do not attempt to override via tokens.",
@@ -973,7 +1044,7 @@
     "body_background": "#2c2825"
   },
   "font_cdn": {
-    "status": "complete \u2014 all fonts confirmed on Shopify CDN",
+    "status": "complete — all fonts confirmed on Shopify CDN",
     "cervanttis": {
       "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cervanttis.ttf",
       "format": "truetype",
@@ -1019,5 +1090,5 @@
     }
   },
   "logo_cdn_url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/F_B_Logo_Horizontal_BLK_914x200_0eb09d11-e91b-4f05-8ef4-9e54a99cb903.png",
-  "logo_dimensions": "914\u00d7200px source, displayed at 120\u00d726px in email"
+  "logo_dimensions": "914×200px source, displayed at 120×26px in email"
 }

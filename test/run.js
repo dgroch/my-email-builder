@@ -100,12 +100,12 @@ eq(good.ok, true, `seed example '${seeds[0].id}' validates clean`);
 const mdHtml = render.assemble({ blocks: [{ component: 'blocks/editorial-hero', tokens: {
   HERO_IMAGE_URL: 'x.jpg', SUPER_LABEL: 'Notes', ACCENT_SCRIPT: 'with love,',
   HEADLINE: 'The last of the **Rosehaven** blooms',
-  SUBHEADLINE: 'Shop *now* before [they go](https://figandbloom.com.au/x).',
+  SUBHEADLINE: 'Shop *now* before [they go](https://figandbloom.com/x).',
   CTA_TEXT: 'Shop', CTA_URL: 'https://x.com',
 } }] }, { assetsBase: '/a' }).html;
 ok(/<h1[^>]*>The last of the <strong>Rosehaven<\/strong> blooms<\/h1>/.test(mdHtml), 'bold renders in body text');
 ok(/<em>now<\/em>/.test(mdHtml), 'italic renders in body text');
-ok(/<a href="https:\/\/figandbloom\.com\.au\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
+ok(/<a href="https:\/\/figandbloom\.com\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
 // The same token in an alt="" attribute must stay plain text (no tags leak into attributes).
 ok(/alt="The last of the Rosehaven blooms"/.test(mdHtml), 'markdown is flattened inside attributes');
 // Schema advertises markdown support on text tokens only.
@@ -275,7 +275,7 @@ for (const name of ['blocks/editorial-hero', 'blocks/image-text', 'heroes/hero-d
   eq(unfilled.filter((u) => u.token !== '(missing template)').length, 0, `${name}: blank CTA leaves no unfilled tokens`);
 }
 // On publish the whole block still links to CTA_URL even with no button.
-eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figandbloom.com.au/x',
+eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandbloom.com/x',
   'deriveLink keeps the component-level click-through from CTA_URL');
 
 // ── Column recomposition (a live GIF beside rasterised text, e.g. blocks/image-text) ──
@@ -286,7 +286,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   const row = klaviyo.columnRow([
     { url: 'https://cdn.example/text-col.png', widthPx: 200, pct: 33.33, bg: '#000000' },
     { url: 'https://cdn.example/anim.gif', widthPx: 400, pct: 66.67, bg: '#000000' },
-  ], { href: 'https://figandbloom.com.au/collections/bouquets', alt: 'Something new' });
+  ], { href: 'https://figandbloom.com/collections/bouquets', alt: 'Something new' });
   ok(/text-col\.png/.test(row) && /anim\.gif/.test(row), 'columnRow keeps both the PNG text column and the live GIF');
   ok(row.indexOf('text-col.png') < row.indexOf('anim.gif'), 'columnRow preserves left-to-right column order');
   ok((row.match(/<td width="33\.33%"/).length && /<td width="66\.67%"/.test(row)), 'columnRow cells carry proportional percentage widths (mobile scales, not stacks)');
@@ -295,6 +295,190 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   ok(/^<tr><td[^>]*><table width="100%"/.test(row) && (row.match(/<tr>/g) || []).length === 2, 'columnRow is a single outer row wrapping one inner row');
   const single = klaviyo.columnRow([{ url: 'https://cdn.example/x.gif', widthPx: 600, pct: 100, bg: '' }], {});
   ok(!/bgcolor/.test(single) && !/<a /.test(single), 'columnRow omits bgcolor and link when absent');
+}
+
+// ── Brand domain: figandbloom.com is canonical; .com.au redirects to it ────────────────
+// A .com.au link resolves, just via a 301, so nothing looks broken in review and it ships.
+// Exemplars are what the generator imitates, which is how one stray host propagates.
+{
+  const jt = schema.components.find((c) => c.name === 'blocks/journal-tile');
+  const withUrl = (url) => {
+    const c = sampleData.sampleCampaignFor(jt);
+    c.blocks[0].tokens.TILE_1_LINK_URL = url;
+    return validateCampaign(c, schema, { requireUnsubscribe: false }).issues
+      .filter((i) => i.type === 'wrong_domain');
+  };
+
+  const bad = withUrl('https://figandbloom.com.au/blogs/journal/x');
+  eq(bad.length, 1, 'a .com.au link is flagged as wrong_domain');
+  eq(bad[0].suggestion, 'https://figandbloom.com/blogs/journal/x', 'the suggestion drops the .au');
+  eq(bad[0].severity, 'error', 'wrong_domain is an error');
+
+  eq(withUrl('https://figandbloom.com/blogs/journal/x').length, 0, 'the canonical host passes');
+  eq(withUrl('https://cdn.shopify.com/s/files/x.jpg').length, 0, 'third-party hosts are not policed');
+  eq(withUrl('https://notfigandbloom.com.au/x').length, 0, 'a lookalike host is not ours to police');
+  eq(withUrl('{{ unsubscribe_url }}').length, 0, 'a merge tag is not treated as a URL');
+
+  // Every shipped exemplar and every sample is on the canonical host — these are the two
+  // surfaces the generator copies from, so a regression here spreads.
+  for (const ex of seeds) {
+    eq(validateCampaign(ex.campaign, schema).issues.filter((i) => i.type === 'wrong_domain').length, 0,
+      `exemplar '${ex.id}' uses only canonical Fig & Bloom links`);
+  }
+  for (const c of schema.components) {
+    eq(validateCampaign(sampleData.sampleCampaignFor(c), schema, { requireUnsubscribe: false })
+      .issues.filter((i) => i.type === 'wrong_domain').length, 0,
+      `'${c.name}' sample uses only canonical Fig & Bloom links`);
+  }
+
+  // No reference to the legacy .com.au domain anywhere in the shipped source — links, email
+  // addresses, config defaults, prose. Nothing is served from it, so any pointer is a pointer
+  // at a redirect nobody owns. lib/validate.js is exempt: it implements this rule and has to
+  // name the host it rejects.
+  // Root-level config and docs count too — a stale default in render.yaml is exactly the kind
+  // of pointer that outlives the code change it describes.
+  for (const f of ['server.js', 'render.yaml', 'README.md', 'Dockerfile', 'package.json']) {
+    const full = path.join(ROOT, f);
+    if (!fs.existsSync(full)) continue;
+    const hits = fs.readFileSync(full, 'utf8').match(/figandbloom\.com\.au/g) || [];
+    eq(hits.length, 0, `${f} has no reference to the legacy .com.au domain`);
+  }
+
+  for (const dir of ['examples', 'lib', 'design-system', 'public', 'docs']) {
+    const stack = [path.join(ROOT, dir)];
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of fs.readdirSync(cur, { withFileTypes: true })) {
+        const full = path.join(cur, e.name);
+        if (e.isDirectory()) { stack.push(full); continue; }
+        if (!/\.(js|json|md|html|css)$/.test(e.name)) continue;
+        const txt = fs.readFileSync(full, 'utf8');
+        if (full.endsWith(path.join('lib', 'validate.js'))) continue;
+        const hits = txt.match(/figandbloom\.com\.au/g) || [];
+        eq(hits.length, 0, `${path.relative(ROOT, full)} has no reference to the legacy .com.au domain`);
+      }
+    }
+  }
+}
+
+// ── Outlook degradation: report the real exposure, not every use of unsupported CSS ────
+// Outlook lays out with Word, which silently drops a known set of CSS. But most blocks that
+// lean on it are rasterised to a PNG on publish, so Outlook never sees the CSS at all. A report
+// that flags those is noise; the exposure is the intersection of "stays live HTML" and
+// "declares unsupported CSS" and "has no VML fallback".
+{
+  const risk = (name) => render.outlookRisks({ blocks: [{ component: name, tokens: {} }] })[0];
+
+  // A designed block: leans hard on unsupported CSS, but ships as a PNG, so it is not at risk.
+  const pc = risk('blocks/polaroid-collage');
+  ok(pc, 'the collage is detected as using unsupported CSS');
+  ok(pc.unsupported.some((u) => u.property === 'position:absolute'), 'position:absolute is detected');
+  eq(pc.rasterisedOnPublish, true, 'the collage is rasterised on publish');
+  eq(pc.atRisk, false, 'a rasterised block is not reported at risk — Outlook gets a PNG');
+
+  // Live HTML + a VML fallback: covered.
+  const btn = risk('sections/button');
+  eq(btn.rasterisedOnPublish, false, 'the button stays live HTML');
+  eq(btn.hasVmlFallback, true, 'the button ships a VML fallback');
+  eq(btn.atRisk, false, 'a VML-covered block is not reported at risk');
+
+  // text-transform is supported by Word and must not be confused for transform — otherwise
+  // every component with an uppercase micro-label is reported broken.
+  const bcp = risk('sections/body-copy-plain');
+  ok(bcp && !bcp.unsupported.some((u) => u.property === 'transform'),
+    'text-transform is not mistaken for transform');
+  ok(/text-transform/.test(fs.readFileSync(path.join(DS, 'templates/sections/body-copy-plain.html'), 'utf8')),
+    '…and that component really does use text-transform (guards the guard)');
+
+  // The degradation stylesheet neutralises the properties rather than deleting markup.
+  const html = render.assemble({ blocks: [{ component: 'blocks/polaroid-collage', tokens: {} }] }, { assetsBase: '/a' }).html;
+  const degraded = render.applyOutlookDegradation(html);
+  ok(/position:\s*static\s*!important/.test(degraded), 'degradation forces position:static');
+  ok(/transform:\s*none\s*!important/.test(degraded), 'degradation forces transform:none');
+  ok(degraded.includes('{{PHOTO_1_URL}}') === html.includes('{{PHOTO_1_URL}}'), 'degradation does not alter content');
+  ok(degraded.length > html.length, 'degradation only adds a stylesheet');
+
+  // A CSS button is the commonest Outlook failure and a property scan misses it: Word drops
+  // padding + display:inline-block on an <a>, collapsing the button to underlined text.
+  ok(btn.unsupported.some((u) => u.property === 'padding on <a>'),
+    'a padded <a> is detected as an Outlook risk');
+
+  // The at-risk set is pinned exactly. It is small and each entry is a decision someone made;
+  // a new entry means a block that ships as live HTML picked up CSS Word drops, which is the
+  // regression this whole report exists to catch.
+  const schemaCampaign = { blocks: schema.components.map((c) => ({ component: c.name, tokens: {} })) };
+  const atRisk = render.outlookRisks(schemaCampaign).filter((r) => r.atRisk);
+  const actual = atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort();
+  const expected = [
+    'sections/body-copy-plain: max-width',
+    'sections/full-width-image: max-width',
+    'sections/opt-out: max-width+padding on <a>',
+  ];
+  eq(actual.join(' | '), expected.join(' | '), 'the Outlook at-risk set is exactly the documented one');
+
+  // opt-out is the one that isn't merely cosmetic: its button becomes bare text, on the sends
+  // (Mother's Day, memorial) where an obvious opt-out control is the point.
+  const optOut = atRisk.find((r) => r.component === 'sections/opt-out');
+  ok(optOut && optOut.unsupported.some((u) => u.property === 'padding on <a>'),
+    'the opt-out control is flagged — its button degrades to plain text in Outlook');
+}
+
+// ── sections/button: a standalone CTA that survives publish and Outlook ───────────────
+// Every other component bakes its CTA in, so there was no way to put a button after a text
+// section. The two ways a standalone button dies are (a) publish rasterises it, turning the
+// href into a flat image, and (b) Outlook's Word renderer drops padding on an <a>, collapsing
+// it to underlined text. Both are pinned here.
+{
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  ok(btn, 'sections/button is in the schema');
+  eq(btn.designed, false, 'the button is not a DESIGNED (sliced) block');
+  eq(btn.static, false, 'the button has editable tokens');
+
+  // Must be html-only on push, or the Klaviyo slice flattens it to a PNG and the link dies.
+  ok(render.isHtmlOnlyComponent('sections/button', schema.assembly.html_only_components),
+    'the button is html-only on push, so its href survives');
+
+  const camp = sampleData.sampleCampaignFor(btn);
+  const html = render.assemble(camp, { assetsBase: '/a' }).html;
+
+  // Outlook fallback: VML draws the button, and the <a> is hidden from Outlook so only one renders.
+  ok(/<!--\[if gte mso 9\]>[\s\S]*<v:roundrect[\s\S]*<!\[endif\]-->/.test(html),
+    'a VML roundrect is emitted for Outlook');
+  ok(/arcsize="0%"/.test(html), 'the Outlook button is square, matching the brand style');
+  ok(/<!--\[if !gte mso 9\]><!-->[\s\S]*<a href[\s\S]*<!--<!\[endif\]-->/.test(html),
+    'the <a> is hidden from Outlook so the button never renders twice');
+  const vml = (html.match(/<v:roundrect[\s\S]*?<\/v:roundrect>/) || [''])[0];
+  ok(vml.includes(camp.blocks[0].tokens.CTA_URL), 'the VML button carries the same href as the <a>');
+  ok(vml.includes(camp.blocks[0].tokens.CTA_TEXT), 'the VML button carries the same label as the <a>');
+
+  // ALIGN drives the HTML attribute too — Outlook positions on `align`, not text-align.
+  const aligned = (a) => {
+    const c = sampleData.sampleCampaignFor(btn);
+    c.blocks[0].tokens.ALIGN = a;
+    return render.assemble(c, { assetsBase: '/a' }).html;
+  };
+  for (const a of ['center', 'left', 'right']) {
+    const h = aligned(a);
+    ok(h.includes(`align="${a}"`), `ALIGN=${a} sets the align attribute (Outlook)`);
+    ok(h.includes(`text-align:${a}`), `ALIGN=${a} sets text-align (everyone else)`);
+  }
+  const lever = btn.tokens.find((t) => t.name === 'ALIGN');
+  eq(lever && (lever.enumOptions || []).join(','), 'center,left,right', 'ALIGN is a locked enum');
+
+  // The noir preset flips the button to white-on-black; light presets stay black-on-white.
+  const presetOf = (name) => {
+    const c = sampleData.sampleCampaignFor(btn, { palette: name });
+    return c.blocks[0].tokens;
+  };
+  eq(presetOf('noir').BTN_BG, '#ffffff', 'noir flips the button background to white');
+  eq(presetOf('noir').BTN_TEXT, '#000000', 'noir flips the button label to black');
+  eq(presetOf('clay').BTN_BG, '#000000', 'light presets keep the black button');
+
+  // Padding frames the block (the polaroid lesson — pin the element, not just the height).
+  const c2 = sampleData.sampleCampaignFor(btn);
+  c2.blocks[0].tokens.PADDING_TOP = '100px'; c2.blocks[0].tokens.PADDING_BOTTOM = '10px';
+  ok(/padding:100px 48px 10px;/.test(render.assemble(c2, { assetsBase: '/a' }).html),
+    'the padding tokens frame the button cell');
 }
 
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────

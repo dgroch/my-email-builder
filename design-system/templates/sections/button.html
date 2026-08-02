@@ -1,0 +1,50 @@
+<!-- COMPONENT: sections/button | STANDALONE CTA BUTTON
+TOKENS:
+  {{CTA_TEXT}}       — NeuzeitGro Bold caps button label (e.g. "Shop the collection")
+  {{CTA_URL}}        — button href
+  {{ALIGN}}          — ALIGN lever: "center" / "left" / "right". Locked to these three.
+  {{BTN_WIDTH}}      — Outlook-only button width in px (e.g. "260px"). Default: 260px.
+  {{PADDING_TOP}}    — Block top padding in px (e.g. "32px"). Default: 32px.
+  {{PADDING_BOTTOM}} — Block bottom padding in px (e.g. "40px"). Default: 40px.
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{BTN_BG}} {{BTN_TEXT}}
+RULES:
+  - HTML-SAFE: never slice this block. A rasterised button is an image — the href dies, the label
+    stops being selectable text, and it can't be restyled. It has to stay live HTML.
+  - Square button only, no border radius (locked brand style — arcsize="0%" in the VML).
+  - The label is NeuzeitGro Bold, uppercase, .16em tracking, 14px/40px padding — identical to the
+    inline CTA every other component already renders, so a standalone button is not a second
+    button style loose in the system.
+  - This component is the button ALONE. It does not replace the CTA built into a hero, an
+    offer-panel or a three-column-steps — use it when a text section needs its own call to
+    action, or when the closing beat is a button on its own.
+  - OUTLOOK: the Word renderer ignores padding on an <a>, which collapses the button to bare
+    underlined text. The VML roundrect draws the real button there and the <a> is hidden from
+    Outlook, so the two never both render. BTN_WIDTH sizes the VML only — Outlook cannot
+    shrink-wrap a button to its label, so a long label needs a wider BTN_WIDTH or it clips.
+    Every other client ignores BTN_WIDTH and shrink-wraps the <a>.
+PALETTE PRESETS (copy one row verbatim into the three palette tokens):
+  white :  PANEL_BG=#ffffff  BTN_BG=#000000  BTN_TEXT=#ffffff
+  clay  :  PANEL_BG=#D8CCBE  BTN_BG=#000000  BTN_TEXT=#ffffff
+  50clay:  PANEL_BG=#EBE5DF  BTN_BG=#000000  BTN_TEXT=#ffffff
+  noir  :  PANEL_BG=#000000  BTN_BG=#ffffff  BTN_TEXT=#000000
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};">
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="{{PANEL_BG}}">
+  <tr>
+    <td align="{{ALIGN}}" style="padding:{{PADDING_TOP}} 48px {{PADDING_BOTTOM}};background:{{PANEL_BG}};text-align:{{ALIGN}};">
+      <!--[if gte mso 9]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{CTA_URL}}" arcsize="0%" stroke="f" fillcolor="{{BTN_BG}}"
+                   style="height:40px;width:{{BTN_WIDTH}};v-text-anchor:middle;">
+        <w:anchorlock/>
+        <center style="font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:{{BTN_TEXT}};">{{CTA_TEXT}}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !gte mso 9]><!-->
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:{{BTN_BG}};color:{{BTN_TEXT}};text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+</td></tr>
