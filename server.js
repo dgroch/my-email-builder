@@ -52,6 +52,16 @@ function safeJoin(base, rel) {
   return p.startsWith(base) ? p : null;
 }
 
+// Absolute, externally-reachable base for the bundled design-system assets. The preview used to
+// emit the host-relative '/design-system/assets/…', which reads as a broken image to any consumer
+// of the HTML that isn't the editor's own iframe (QA critics, saved snapshots, other agents).
+// Same derivation the Klaviyo push uses, so every surface agrees on one URL.
+function assetsBaseFor(req) {
+  const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+  const host = req.headers.host;
+  return host ? `${proto}://${host}/design-system/assets` : '/design-system/assets';
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = ''; req.on('data', c => { data += c; if (data.length > 25e6) req.destroy(); });
@@ -90,8 +100,10 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && p === '/api/assemble') {
-      const { campaign, markBlocks } = await readBody(req);
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '/design-system/assets', markBlocks: !!markBlocks });
+      // `production` keeps the real Klaviyo merge tags ({% unsubscribe %}, {{ organization.* }})
+      // instead of the readable preview substitutions — for callers reviewing send-accurate HTML.
+      const { campaign, markBlocks, production } = await readBody(req);
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: assetsBaseFor(req), markBlocks: !!markBlocks, production: !!production });
       // Actionable validation alongside the raw unfilled list (additive — old field kept).
       const validation = validateCampaign(campaign || {}, schema());
       return json(res, 200, { html, unfilled, validation });
@@ -192,10 +204,15 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, { pngBase64: buffer.toString('base64'), brokenImages, height });
     }
 
+    // Export is the *production* HTML — the thing that gets pushed to Klaviyo — so the footer
+    // keeps its real merge tags. The preview substitution ({% unsubscribe %} → "unsubscribe
+    // here") is for the on-screen iframe only; leaking it into the export shipped emails whose
+    // unsubscribe link was inert text.
     if (req.method === 'POST' && p === '/api/export') {
       const { campaign } = await readBody(req);
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}' });
-      return json(res, 200, { html, unfilled, campaign });
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', production: true });
+      const validation = validateCampaign(campaign || {}, schema());
+      return json(res, 200, { html, unfilled, validation, campaign });
     }
 
     // Rasterise every block to its own PNG ("slices"). Also returns each block's default
@@ -272,8 +289,7 @@ const server = http.createServer(async (req, res) => {
       if (!campaign || !Array.isArray(campaign.blocks) || !campaign.blocks.length) {
         return json(res, 400, { error: 'No campaign blocks to slice. Pass a `campaign` with blocks, or a `designId` whose saved design has blocks.' });
       }
-      const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
-      const assetsBase = `${proto}://${req.headers.host}/design-system/assets`;
+      const assetsBase = assetsBaseFor(req);
       const linkOverride = links || {};
       try {
         // 1. Rasterise each block from the production-shelled, block-marked HTML.

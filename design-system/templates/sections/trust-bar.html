@@ -1,13 +1,28 @@
-<!-- COMPONENT: sections/trust-bar | STATIC — NO TOKENS
+<!-- COMPONENT: sections/trust-bar | STATIC — NO TOKENS — DRAFT: BLOCKED ON NEW ARTWORK
 Single pre-rendered CDN image with all 5 USP icons.
 Replaces inline SVGs which email clients strip.
+
+DRAFT — DO NOT SHIP UNTIL THE ARTWORK IS REPLACED.
+The baked PNG currently reads:
+  "Fresh Daily Flowers · Perfect for Every Occasion · Australia-Wide Service ·
+   Same Day Delivery · Order Before 1pm"
+Two problems, both inside the flattened image, so neither is fixable from a token:
+  1. "Perfect for Every Occasion" is on the banned-language list.
+  2. "Same Day Delivery · Order Before 1pm" is a delivery claim with a cut-off time, which
+     requires sign-off — and it currently rides along on every send that uses this component,
+     including the approved exemplars.
+The alt text below has been corrected to drop both claims, but the PIXELS still carry them.
+Replacement artwork must be produced and re-uploaded to the CDN; until then, omit the trust
+bar from campaigns (this component is flagged draft so the library badges it as not ship-ready).
+Required copy for the new artwork: the two remaining USPs only —
+  "Fresh Daily Flowers · Australia-Wide Service"
 -->
 <tr><td>
 <table border="0" cellpadding="0" cellspacing="0" width="600">
 <tr>
 <td style="padding:0;background:#D5D0C4;">
 <a href="https://figandbloom.com/" style="text-decoration:none;display:block;">
-<img alt="Fresh Daily Flowers · Perfect for Every Occasion · Australia-Wide Service · Same Day Delivery · Order Before 1pm" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/5ee7f699-fa5f-4cf5-9b8c-161b1d44ecfd.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+<img alt="Fresh Daily Flowers · Australia-Wide Service" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/5ee7f699-fa5f-4cf5-9b8c-161b1d44ecfd.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
 </a>
 </td>
 </tr>

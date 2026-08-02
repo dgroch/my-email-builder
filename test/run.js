@@ -136,7 +136,9 @@ ok(!render.isGifUrl('https://example.com/gif-explainer'), 'a path that merely co
 // empty field or a casing violation, and new components are forced to keep sample data in step.
 for (const c of schema.components) {
   const camp = sampleData.sampleCampaignFor(c);
-  const rep = validateCampaign(camp, schema);
+  // Single component in isolation — no footer by construction, so the campaign-level
+  // unsubscribe assertion doesn't apply (it's asserted on whole campaigns below).
+  const rep = validateCampaign(camp, schema, { requireUnsubscribe: false });
   eq(rep.ok, true, `sample for '${c.name}' validates clean (${rep.errorCount} errors: ${(rep.issues[0] || {}).message || ''})`);
   const { unfilled } = render.assemble(camp, { assetsBase: '/design-system/assets' });
   const leftover = unfilled.filter((u) => u.token !== '(missing template)');
@@ -149,7 +151,17 @@ ok(storyV.lever && storyV.lever.name === 'TYPE_SCALE', 'story variant lever is t
 
 // ── draft flag is surfaced on the schema (coverage lens + library badges rely on it) ──
 const draftNames = schema.components.filter((c) => c.draft).map((c) => c.name).sort();
-eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage', 'exactly the two DRAFT blocks are flagged draft');
+// sections/trust-bar is draft for a different reason from the other two: its baked artwork
+// carries a banned phrase and an unapproved delivery cut-off, so it must not ship until the
+// PNG is replaced (the copy is inside the flattened image — no token can disable it).
+eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage,sections/trust-bar',
+  'exactly the DRAFT components are flagged draft');
+{
+  const tb = fs.readFileSync(path.join(ROOT, 'design-system/templates/sections/trust-bar.html'), 'utf8');
+  const altText = (tb.match(/alt="([^"]*)"/) || [])[1] || '';
+  ok(!/perfect for every occasion/i.test(altText), 'trust-bar alt text drops the banned phrase');
+  ok(!/same day|order before/i.test(altText), 'trust-bar alt text drops the unapproved delivery claim');
+}
 ok(schema.components.find((c) => c.name === 'header').draft === false, 'non-draft component is not flagged draft');
 
 // ── blocks/journal-tile: live-HTML "From the Journal" row (2–3 linked article tiles) ──
@@ -179,7 +191,7 @@ if (jt) {
 
   // Assemble a full 3-tile campaign → validates clean, no residual tokens, 3 distinct hrefs.
   const jt3 = sampleData.sampleCampaignFor(jt);
-  const jt3Rep = validateCampaign(jt3, schema);
+  const jt3Rep = validateCampaign(jt3, schema, { requireUnsubscribe: false });
   eq(jt3Rep.ok, true, '3-tile journal campaign validates clean');
   const out3 = render.assemble(jt3, { assetsBase: '/a' }).html;
   ok(!/\{\{[#/]?[A-Z0-9_]+\}\}/.test(out3), '3-tile render leaves no residual {{tokens}} or section markers');
@@ -191,7 +203,7 @@ if (jt) {
   // Assemble with TILE_3_IMAGE_URL:"" → validates, renders a 2-up row, no broken third cell.
   const jt2 = sampleData.sampleCampaignFor(jt);
   jt2.blocks[0].tokens.TILE_3_IMAGE_URL = '';
-  const jt2Rep = validateCampaign(jt2, schema);
+  const jt2Rep = validateCampaign(jt2, schema, { requireUnsubscribe: false });
   eq(jt2Rep.ok, true, '2-up journal campaign (blank TILE_3_IMAGE_URL) validates clean');
   const out2 = render.assemble(jt2, { assetsBase: '/a' }).html;
   ok(!/\{\{[#/]?[A-Z0-9_]+\}\}/.test(out2), '2-up render leaves no residual {{tokens}} or section markers');
@@ -254,7 +266,7 @@ for (const name of ['blocks/editorial-hero', 'blocks/image-text', 'heroes/hero-d
   // Button hidden when CTA_TEXT is blank — and no residual tokens / markers leak.
   const blankCta = sampleData.sampleCampaignFor(comp);
   blankCta.blocks[0].tokens.CTA_TEXT = '';
-  const offRep = validateCampaign(blankCta, schema);
+  const offRep = validateCampaign(blankCta, schema, { requireUnsubscribe: false });
   eq(offRep.ok, true, `${name}: blank CTA_TEXT still validates clean`);
   const offHtml = render.assemble(blankCta, { assetsBase: '/a' }).html;
   ok(!/href="\{\{CTA_URL\}\}"/.test(offHtml), `${name}: no half-filled button when CTA_TEXT blank`);
@@ -283,6 +295,156 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   ok(/^<tr><td[^>]*><table width="100%"/.test(row) && (row.match(/<tr>/g) || []).length === 2, 'columnRow is a single outer row wrapping one inner row');
   const single = klaviyo.columnRow([{ url: 'https://cdn.example/x.gif', widthPx: 600, pct: 100, bg: '' }], {});
   ok(!/bgcolor/.test(single) && !/<a /.test(single), 'columnRow omits bgcolor and link when absent');
+}
+
+// ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────
+// The block used to hard-code filter:grayscale(100%) on LEFT_IMAGE_URL, so a neutral A-vs-B
+// comparison silently rendered the author's own product in black and white.
+{
+  const cvs = schema.components.find((c) => c.name === 'blocks/comparison-vs');
+  const lever = cvs.tokens.find((t) => t.name === 'LEFT_TREATMENT');
+  ok(lever, 'comparison-vs exposes a LEFT_TREATMENT token');
+  eq(lever && lever.type, 'enum', 'LEFT_TREATMENT is a locked enum');
+  eq(lever && (lever.enumOptions || []).join(','), 'none,grayscale', 'LEFT_TREATMENT options are none / grayscale');
+  eq(lever && lever.default, 'none', 'LEFT_TREATMENT defaults to none (no silent desaturation)');
+
+  const imgTag = (html) => (html.match(/<img[^>]*cvs-left-img[^>]*>/) || [])[0] || '';
+  const camp = sampleData.sampleCampaignFor(cvs);
+  const neutral = render.assemble(camp, { assetsBase: '/a' }).html;
+  ok(/class="cvs treat-none"/.test(neutral), 'default treatment renders treat-none');
+  ok(!/grayscale/.test(imgTag(neutral)), 'the left image carries no inline grayscale filter');
+
+  // Omitting the token entirely (an existing saved campaign) still assembles at the default.
+  const omitted = JSON.parse(JSON.stringify(camp));
+  delete omitted.blocks[0].tokens.LEFT_TREATMENT;
+  ok(/class="cvs treat-none"/.test(render.assemble(omitted, { assetsBase: '/a' }).html),
+    'a campaign predating the token falls back to treat-none');
+  eq(validateCampaign(omitted, schema, { requireUnsubscribe: false }).ok, true,
+    'a campaign predating the token still validates');
+
+  // Opting in restores the us-vs-them treatment.
+  const grey = JSON.parse(JSON.stringify(camp));
+  grey.blocks[0].tokens.LEFT_TREATMENT = 'grayscale';
+  const greyHtml = render.assemble(grey, { assetsBase: '/a' }).html;
+  ok(/class="cvs treat-grayscale"/.test(greyHtml), 'grayscale treatment renders treat-grayscale');
+  ok(/\.cvs\.treat-grayscale \.cvs-left-img \{ filter:grayscale\(100%\); \}/.test(greyHtml),
+    'the grayscale rule is present for the rasteriser to bake in');
+}
+
+// ── Alt text: every content image describes itself when images are blocked ────────────
+// A content image is one whose src comes from a maker-supplied token ({{…_URL}}) — those must
+// carry alt text derived from a descriptive token. Brand illustrations served from
+// {{ASSETS_BASE}} stay alt="" (decorative), as does dividers/divider-image (a visual pause).
+{
+  const DECORATIVE = new Set(['dividers/divider-image']);
+  for (const c of schema.components) {
+    const html = fs.readFileSync(path.join(ROOT, c.file), 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+    for (const tag of html.match(/<img[\s\S]*?>/g) || []) {
+      const src = (tag.match(/src="([^"]*)"/) || [])[1] || '';
+      if (!/^\{\{[A-Z0-9_]+\}\}$/.test(src)) continue;      // {{ASSETS_BASE}} illustration → decorative
+      if (DECORATIVE.has(c.name)) continue;
+      const alt = (tag.match(/alt="([^"]*)"/) || [])[1];
+      ok(alt !== undefined && /\{\{[A-Z0-9_]+\}\}/.test(alt),
+        `'${c.name}': content image ${src} must take alt from a descriptive token (got alt="${alt}")`);
+    }
+  }
+
+  // End to end: the sample polaroid collage renders each photo's caption as its alt text.
+  const pcComp = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const pcHtml = render.assemble(sampleData.sampleCampaignFor(pcComp), { assetsBase: '/a' }).html;
+  for (const caption of ['thank you,', 'with love,', 'thinking of you,']) {
+    ok(pcHtml.includes(`alt="${caption}"`), `polaroid photo carries alt="${caption}" from its caption token`);
+  }
+  ok(!/<img[^>]*src="https[^"]*"[^>]*alt=""/.test(pcHtml), 'no content image in the collage ships alt=""');
+}
+
+// ── Locked enums: an off-list lever value must be rejected, not silently ignored ──────
+// The levers drive CSS class names (`illo-{{ACCENT_ILLO}}`), so an off-list value matches no
+// rule and reads as "off" — a silent, confusing no-op. Every enum token is checked.
+{
+  const pc = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const bad = sampleData.sampleCampaignFor(pc);
+  bad.blocks[0].tokens.ACCENT_ILLO = 'none';                 // documented enum is "on" / "off"
+  const rep = validateCampaign(bad, schema, { requireUnsubscribe: false });
+  const enumIssue = rep.issues.find((i) => i.type === 'invalid_enum' && i.token === 'ACCENT_ILLO');
+  ok(enumIssue, 'off-list enum value is flagged as invalid_enum');
+  eq(enumIssue && enumIssue.severity, 'error', 'invalid_enum is an error');
+  eq(enumIssue && enumIssue.value, 'none', 'invalid_enum reports the offending value');
+  eq(enumIssue && (enumIssue.options || []).join(','), 'on,off', 'invalid_enum lists the locked options');
+  ok(enumIssue && ['on', 'off'].includes(enumIssue.suggestion), 'invalid_enum suggests a real option');
+  eq(rep.ok, false, 'a campaign with an off-list enum value does not validate');
+  eq(rep.blocks[0].valid, false, 'the offending block is marked invalid');
+
+  // Case-sensitive: the templates lower-case the class names, so "On" is not "on".
+  const cased = sampleData.sampleCampaignFor(pc);
+  cased.blocks[0].tokens.ROTATION = 'Subtle';
+  ok(validateCampaign(cased, schema, { requireUnsubscribe: false }).issues
+      .some((i) => i.type === 'invalid_enum' && i.token === 'ROTATION'), 'wrong-case enum value is flagged');
+
+  // A blank enum is invalid too — it renders a dangling `dens-` class.
+  const blank = sampleData.sampleCampaignFor(pc);
+  blank.blocks[0].tokens.DENSITY = '';
+  ok(validateCampaign(blank, schema, { requireUnsubscribe: false }).issues
+      .some((i) => i.type === 'invalid_enum' && i.token === 'DENSITY'), 'blank enum value is flagged');
+
+  // Every enum token in the schema enforces its own options (not just the polaroid levers).
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      if (t.type !== 'enum' || !(t.enumOptions || []).length) continue;
+      const camp = sampleData.sampleCampaignFor(c);
+      camp.blocks[0].tokens[t.name] = '__not_an_option__';
+      ok(validateCampaign(camp, schema, { requireUnsubscribe: false }).issues
+          .some((i) => i.type === 'invalid_enum' && i.token === t.name),
+        `'${c.name}'.${t.name} rejects an off-list value`);
+    }
+  }
+  // …and the on-list values still pass (no false positives from the sample data).
+  for (const c of schema.components) {
+    const camp = sampleData.sampleCampaignFor(c);
+    ok(!validateCampaign(camp, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'invalid_enum'),
+      `'${c.name}' sample uses only on-list enum values`);
+  }
+}
+
+// ── Unsubscribe compliance: the footer tag must survive to production HTML ────────────
+// Klaviyo does NOT inject an unsubscribe link into a CODE-editor template, so the literal
+// {% unsubscribe %} block tag has to reach the exported HTML. The preview substitution
+// (readable "unsubscribe here" text) is for the on-screen iframe only.
+{
+  const footerCampaign = { campaignName: 'T', blocks: [{ component: 'footer', tokens: {} }] };
+  const prod = render.assemble(footerCampaign, { assetsBase: '/a', production: true }).html;
+  ok(prod.includes('{% unsubscribe %}'), 'production assembly keeps the literal {% unsubscribe %} tag');
+  ok(!prod.includes('unsubscribe here'), 'production assembly does not carry the inert preview text');
+  const prev = render.assemble(footerCampaign, { assetsBase: '/a' }).html;
+  ok(prev.includes('unsubscribe here'), 'preview assembly still substitutes readable text');
+  ok(!prev.includes('{% unsubscribe %}'), 'preview assembly has no raw merge tag');
+
+  // The validator fails a campaign with no unsubscribe mechanism, and passes one with a footer.
+  const noUnsub = validateCampaign({ blocks: [{ component: 'sections/section-headline',
+    tokens: sampleData.sampleTokensFor(schema.components.find((c) => c.name === 'sections/section-headline')) }] }, schema);
+  const unsubIssue = noUnsub.issues.find((i) => i.type === 'missing_unsubscribe');
+  ok(unsubIssue, 'a campaign with no unsubscribe tag is flagged');
+  eq(unsubIssue && unsubIssue.severity, 'error', 'missing_unsubscribe is an error, not a warning');
+  eq(noUnsub.ok, false, 'a campaign with no unsubscribe tag does not validate');
+
+  const withFooter = validateCampaign({ blocks: [
+    { component: 'sections/section-headline', tokens: sampleData.sampleTokensFor(schema.components.find((c) => c.name === 'sections/section-headline')) },
+    { component: 'footer', tokens: {} },
+  ] }, schema);
+  ok(!withFooter.issues.some((i) => i.type === 'missing_unsubscribe'), 'a campaign carrying the footer is not flagged');
+  eq(withFooter.ok, true, 'a campaign carrying the footer validates clean');
+
+  // sections/opt-out's {{ unsubscribe_url }} merge tag satisfies the assertion too.
+  const optOut = schema.components.find((c) => c.name === 'sections/opt-out');
+  const withOptOut = validateCampaign({ blocks: [{ component: 'sections/opt-out', tokens: sampleData.sampleTokensFor(optOut) }] }, schema);
+  ok(!withOptOut.issues.some((i) => i.type === 'missing_unsubscribe'), 'opt-out\'s {{ unsubscribe_url }} satisfies the unsubscribe assertion');
+
+  // Every shipped exemplar must be sendable — this is the gate that stops a non-compliant
+  // reference campaign propagating to everything copied from it.
+  for (const ex of seeds) {
+    const rep = validateCampaign(ex.campaign, schema);
+    ok(!rep.issues.some((i) => i.type === 'missing_unsubscribe'), `exemplar '${ex.id}' carries an unsubscribe tag`);
+  }
 }
 
 // ── report ────────────────────────────────────────────────────────────────────────────
