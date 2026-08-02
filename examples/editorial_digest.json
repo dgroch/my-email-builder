@@ -39,7 +39,7 @@
           "SUPER_LABEL": "IN BLOOM · JUNE",
           "CAPTION": "this month, we slowed down",
           "CTA_TEXT": "Read this month’s edit",
-          "CTA_URL": "https://figandbloom.com.au/blogs/journal",
+          "CTA_URL": "https://figandbloom.com/blogs/journal",
           "PANEL_BG": "#ffffff",
           "PANEL_TEXT": "#000000",
           "PANEL_SUB": "#aaaaaa",
@@ -56,7 +56,7 @@
           "BODY_P2": "Below: the bloom we couldn’t stop reaching for, and a small way to make yours last a little longer.",
           "SIGNATURE": "— dan & kellie",
           "CTA_TEXT": "Read the journal",
-          "CTA_URL": "https://figandbloom.com.au/blogs/journal",
+          "CTA_URL": "https://figandbloom.com/blogs/journal",
           "PANEL_BG": "#ffffff",
           "PANEL_TEXT": "#444444",
           "PANEL_SUB": "#aaaaaa",
@@ -81,7 +81,7 @@
           "PRODUCT_NAME": "Winterlight",
           "PRODUCT_OCCASION": "Deep tones for the cooler months",
           "PRODUCT_PRICE": "From $129",
-          "PRODUCT_URL": "https://figandbloom.com.au/products/winterlight"
+          "PRODUCT_URL": "https://figandbloom.com/products/winterlight"
         }
       },
       {
@@ -113,7 +113,7 @@
           "HEADLINE": "a small ritual",
           "BODY": "Re-cut your stems on an angle and refresh the water every second day — a quiet two minutes that buys you nearly a week.",
           "CTA_TEXT": "More care notes",
-          "CTA_URL": "https://figandbloom.com.au/blogs/journal/flower-care"
+          "CTA_URL": "https://figandbloom.com/blogs/journal/flower-care"
         }
       },
       { "component": "sections/trust-bar", "tokens": {} },

@@ -100,12 +100,12 @@ eq(good.ok, true, `seed example '${seeds[0].id}' validates clean`);
 const mdHtml = render.assemble({ blocks: [{ component: 'blocks/editorial-hero', tokens: {
   HERO_IMAGE_URL: 'x.jpg', SUPER_LABEL: 'Notes', ACCENT_SCRIPT: 'with love,',
   HEADLINE: 'The last of the **Rosehaven** blooms',
-  SUBHEADLINE: 'Shop *now* before [they go](https://figandbloom.com.au/x).',
+  SUBHEADLINE: 'Shop *now* before [they go](https://figandbloom.com/x).',
   CTA_TEXT: 'Shop', CTA_URL: 'https://x.com',
 } }] }, { assetsBase: '/a' }).html;
 ok(/<h1[^>]*>The last of the <strong>Rosehaven<\/strong> blooms<\/h1>/.test(mdHtml), 'bold renders in body text');
 ok(/<em>now<\/em>/.test(mdHtml), 'italic renders in body text');
-ok(/<a href="https:\/\/figandbloom\.com\.au\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
+ok(/<a href="https:\/\/figandbloom\.com\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
 // The same token in an alt="" attribute must stay plain text (no tags leak into attributes).
 ok(/alt="The last of the Rosehaven blooms"/.test(mdHtml), 'markdown is flattened inside attributes');
 // Schema advertises markdown support on text tokens only.
@@ -275,7 +275,7 @@ for (const name of ['blocks/editorial-hero', 'blocks/image-text', 'heroes/hero-d
   eq(unfilled.filter((u) => u.token !== '(missing template)').length, 0, `${name}: blank CTA leaves no unfilled tokens`);
 }
 // On publish the whole block still links to CTA_URL even with no button.
-eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figandbloom.com.au/x',
+eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandbloom.com/x',
   'deriveLink keeps the component-level click-through from CTA_URL');
 
 // ── Column recomposition (a live GIF beside rasterised text, e.g. blocks/image-text) ──
@@ -286,7 +286,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   const row = klaviyo.columnRow([
     { url: 'https://cdn.example/text-col.png', widthPx: 200, pct: 33.33, bg: '#000000' },
     { url: 'https://cdn.example/anim.gif', widthPx: 400, pct: 66.67, bg: '#000000' },
-  ], { href: 'https://figandbloom.com.au/collections/bouquets', alt: 'Something new' });
+  ], { href: 'https://figandbloom.com/collections/bouquets', alt: 'Something new' });
   ok(/text-col\.png/.test(row) && /anim\.gif/.test(row), 'columnRow keeps both the PNG text column and the live GIF');
   ok(row.indexOf('text-col.png') < row.indexOf('anim.gif'), 'columnRow preserves left-to-right column order');
   ok((row.match(/<td width="33\.33%"/).length && /<td width="66\.67%"/.test(row)), 'columnRow cells carry proportional percentage widths (mobile scales, not stacks)');
@@ -295,6 +295,60 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   ok(/^<tr><td[^>]*><table width="100%"/.test(row) && (row.match(/<tr>/g) || []).length === 2, 'columnRow is a single outer row wrapping one inner row');
   const single = klaviyo.columnRow([{ url: 'https://cdn.example/x.gif', widthPx: 600, pct: 100, bg: '' }], {});
   ok(!/bgcolor/.test(single) && !/<a /.test(single), 'columnRow omits bgcolor and link when absent');
+}
+
+// ── Brand domain: figandbloom.com is canonical; .com.au redirects to it ────────────────
+// A .com.au link resolves, just via a 301, so nothing looks broken in review and it ships.
+// Exemplars are what the generator imitates, which is how one stray host propagates.
+{
+  const jt = schema.components.find((c) => c.name === 'blocks/journal-tile');
+  const withUrl = (url) => {
+    const c = sampleData.sampleCampaignFor(jt);
+    c.blocks[0].tokens.TILE_1_LINK_URL = url;
+    return validateCampaign(c, schema, { requireUnsubscribe: false }).issues
+      .filter((i) => i.type === 'wrong_domain');
+  };
+
+  const bad = withUrl('https://figandbloom.com.au/blogs/journal/x');
+  eq(bad.length, 1, 'a .com.au link is flagged as wrong_domain');
+  eq(bad[0].suggestion, 'https://figandbloom.com/blogs/journal/x', 'the suggestion drops the .au');
+  eq(bad[0].severity, 'error', 'wrong_domain is an error');
+
+  eq(withUrl('https://figandbloom.com/blogs/journal/x').length, 0, 'the canonical host passes');
+  eq(withUrl('https://cdn.shopify.com/s/files/x.jpg').length, 0, 'third-party hosts are not policed');
+  eq(withUrl('https://notfigandbloom.com.au/x').length, 0, 'a lookalike host is not ours to police');
+  eq(withUrl('{{ unsubscribe_url }}').length, 0, 'a merge tag is not treated as a URL');
+
+  // Every shipped exemplar and every sample is on the canonical host — these are the two
+  // surfaces the generator copies from, so a regression here spreads.
+  for (const ex of seeds) {
+    eq(validateCampaign(ex.campaign, schema).issues.filter((i) => i.type === 'wrong_domain').length, 0,
+      `exemplar '${ex.id}' uses only canonical Fig & Bloom links`);
+  }
+  for (const c of schema.components) {
+    eq(validateCampaign(sampleData.sampleCampaignFor(c), schema, { requireUnsubscribe: false })
+      .issues.filter((i) => i.type === 'wrong_domain').length, 0,
+      `'${c.name}' sample uses only canonical Fig & Bloom links`);
+  }
+
+  // No .com.au URL host anywhere in the shipped source. Email addresses are a separate
+  // question (the team's mail is on .com.au) and are deliberately not touched.
+  for (const dir of ['examples', 'lib', 'design-system', 'public']) {
+    const stack = [path.join(ROOT, dir)];
+    while (stack.length) {
+      const cur = stack.pop();
+      for (const e of fs.readdirSync(cur, { withFileTypes: true })) {
+        const full = path.join(cur, e.name);
+        if (e.isDirectory()) { stack.push(full); continue; }
+        if (!/\.(js|json|md|html|css)$/.test(e.name)) continue;
+        const txt = fs.readFileSync(full, 'utf8');
+        // Only real links — an https:// URL. Prose and regexes that *name* the redirect host
+        // (lib/validate.js implements the rule and has to mention it) are not links.
+        const hosts = txt.match(/https?:\/\/(?:[\w-]+\.)*figandbloom\.com\.au/g) || [];
+        eq(hosts.length, 0, `${path.relative(ROOT, full)} has no .com.au URL host`);
+      }
+    }
+  }
 }
 
 // ── Outlook degradation: report the real exposure, not every use of unsupported CSS ────
