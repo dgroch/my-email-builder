@@ -297,6 +297,126 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com.au/x' }), 'https://figa
   ok(!/bgcolor/.test(single) && !/<a /.test(single), 'columnRow omits bgcolor and link when absent');
 }
 
+// ── Outlook degradation: report the real exposure, not every use of unsupported CSS ────
+// Outlook lays out with Word, which silently drops a known set of CSS. But most blocks that
+// lean on it are rasterised to a PNG on publish, so Outlook never sees the CSS at all. A report
+// that flags those is noise; the exposure is the intersection of "stays live HTML" and
+// "declares unsupported CSS" and "has no VML fallback".
+{
+  const risk = (name) => render.outlookRisks({ blocks: [{ component: name, tokens: {} }] })[0];
+
+  // A designed block: leans hard on unsupported CSS, but ships as a PNG, so it is not at risk.
+  const pc = risk('blocks/polaroid-collage');
+  ok(pc, 'the collage is detected as using unsupported CSS');
+  ok(pc.unsupported.some((u) => u.property === 'position:absolute'), 'position:absolute is detected');
+  eq(pc.rasterisedOnPublish, true, 'the collage is rasterised on publish');
+  eq(pc.atRisk, false, 'a rasterised block is not reported at risk — Outlook gets a PNG');
+
+  // Live HTML + a VML fallback: covered.
+  const btn = risk('sections/button');
+  eq(btn.rasterisedOnPublish, false, 'the button stays live HTML');
+  eq(btn.hasVmlFallback, true, 'the button ships a VML fallback');
+  eq(btn.atRisk, false, 'a VML-covered block is not reported at risk');
+
+  // text-transform is supported by Word and must not be confused for transform — otherwise
+  // every component with an uppercase micro-label is reported broken.
+  const bcp = risk('sections/body-copy-plain');
+  ok(bcp && !bcp.unsupported.some((u) => u.property === 'transform'),
+    'text-transform is not mistaken for transform');
+  ok(/text-transform/.test(fs.readFileSync(path.join(DS, 'templates/sections/body-copy-plain.html'), 'utf8')),
+    '…and that component really does use text-transform (guards the guard)');
+
+  // The degradation stylesheet neutralises the properties rather than deleting markup.
+  const html = render.assemble({ blocks: [{ component: 'blocks/polaroid-collage', tokens: {} }] }, { assetsBase: '/a' }).html;
+  const degraded = render.applyOutlookDegradation(html);
+  ok(/position:\s*static\s*!important/.test(degraded), 'degradation forces position:static');
+  ok(/transform:\s*none\s*!important/.test(degraded), 'degradation forces transform:none');
+  ok(degraded.includes('{{PHOTO_1_URL}}') === html.includes('{{PHOTO_1_URL}}'), 'degradation does not alter content');
+  ok(degraded.length > html.length, 'degradation only adds a stylesheet');
+
+  // A CSS button is the commonest Outlook failure and a property scan misses it: Word drops
+  // padding + display:inline-block on an <a>, collapsing the button to underlined text.
+  ok(btn.unsupported.some((u) => u.property === 'padding on <a>'),
+    'a padded <a> is detected as an Outlook risk');
+
+  // The at-risk set is pinned exactly. It is small and each entry is a decision someone made;
+  // a new entry means a block that ships as live HTML picked up CSS Word drops, which is the
+  // regression this whole report exists to catch.
+  const schemaCampaign = { blocks: schema.components.map((c) => ({ component: c.name, tokens: {} })) };
+  const atRisk = render.outlookRisks(schemaCampaign).filter((r) => r.atRisk);
+  const actual = atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort();
+  const expected = [
+    'sections/body-copy-plain: max-width',
+    'sections/full-width-image: max-width',
+    'sections/opt-out: max-width+padding on <a>',
+  ];
+  eq(actual.join(' | '), expected.join(' | '), 'the Outlook at-risk set is exactly the documented one');
+
+  // opt-out is the one that isn't merely cosmetic: its button becomes bare text, on the sends
+  // (Mother's Day, memorial) where an obvious opt-out control is the point.
+  const optOut = atRisk.find((r) => r.component === 'sections/opt-out');
+  ok(optOut && optOut.unsupported.some((u) => u.property === 'padding on <a>'),
+    'the opt-out control is flagged — its button degrades to plain text in Outlook');
+}
+
+// ── sections/button: a standalone CTA that survives publish and Outlook ───────────────
+// Every other component bakes its CTA in, so there was no way to put a button after a text
+// section. The two ways a standalone button dies are (a) publish rasterises it, turning the
+// href into a flat image, and (b) Outlook's Word renderer drops padding on an <a>, collapsing
+// it to underlined text. Both are pinned here.
+{
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  ok(btn, 'sections/button is in the schema');
+  eq(btn.designed, false, 'the button is not a DESIGNED (sliced) block');
+  eq(btn.static, false, 'the button has editable tokens');
+
+  // Must be html-only on push, or the Klaviyo slice flattens it to a PNG and the link dies.
+  ok(render.isHtmlOnlyComponent('sections/button', schema.assembly.html_only_components),
+    'the button is html-only on push, so its href survives');
+
+  const camp = sampleData.sampleCampaignFor(btn);
+  const html = render.assemble(camp, { assetsBase: '/a' }).html;
+
+  // Outlook fallback: VML draws the button, and the <a> is hidden from Outlook so only one renders.
+  ok(/<!--\[if gte mso 9\]>[\s\S]*<v:roundrect[\s\S]*<!\[endif\]-->/.test(html),
+    'a VML roundrect is emitted for Outlook');
+  ok(/arcsize="0%"/.test(html), 'the Outlook button is square, matching the brand style');
+  ok(/<!--\[if !gte mso 9\]><!-->[\s\S]*<a href[\s\S]*<!--<!\[endif\]-->/.test(html),
+    'the <a> is hidden from Outlook so the button never renders twice');
+  const vml = (html.match(/<v:roundrect[\s\S]*?<\/v:roundrect>/) || [''])[0];
+  ok(vml.includes(camp.blocks[0].tokens.CTA_URL), 'the VML button carries the same href as the <a>');
+  ok(vml.includes(camp.blocks[0].tokens.CTA_TEXT), 'the VML button carries the same label as the <a>');
+
+  // ALIGN drives the HTML attribute too — Outlook positions on `align`, not text-align.
+  const aligned = (a) => {
+    const c = sampleData.sampleCampaignFor(btn);
+    c.blocks[0].tokens.ALIGN = a;
+    return render.assemble(c, { assetsBase: '/a' }).html;
+  };
+  for (const a of ['center', 'left', 'right']) {
+    const h = aligned(a);
+    ok(h.includes(`align="${a}"`), `ALIGN=${a} sets the align attribute (Outlook)`);
+    ok(h.includes(`text-align:${a}`), `ALIGN=${a} sets text-align (everyone else)`);
+  }
+  const lever = btn.tokens.find((t) => t.name === 'ALIGN');
+  eq(lever && (lever.enumOptions || []).join(','), 'center,left,right', 'ALIGN is a locked enum');
+
+  // The noir preset flips the button to white-on-black; light presets stay black-on-white.
+  const presetOf = (name) => {
+    const c = sampleData.sampleCampaignFor(btn, { palette: name });
+    return c.blocks[0].tokens;
+  };
+  eq(presetOf('noir').BTN_BG, '#ffffff', 'noir flips the button background to white');
+  eq(presetOf('noir').BTN_TEXT, '#000000', 'noir flips the button label to black');
+  eq(presetOf('clay').BTN_BG, '#000000', 'light presets keep the black button');
+
+  // Padding frames the block (the polaroid lesson — pin the element, not just the height).
+  const c2 = sampleData.sampleCampaignFor(btn);
+  c2.blocks[0].tokens.PADDING_TOP = '100px'; c2.blocks[0].tokens.PADDING_BOTTOM = '10px';
+  ok(/padding:100px 48px 10px;/.test(render.assemble(c2, { assetsBase: '/a' }).html),
+    'the padding tokens frame the button cell');
+}
+
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────
 // The block used to hard-code filter:grayscale(100%) on LEFT_IMAGE_URL, so a neutral A-vs-B
 // comparison silently rendered the author's own product in black and white.

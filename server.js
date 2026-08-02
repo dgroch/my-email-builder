@@ -197,11 +197,19 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+    // ?client=outlook rasterises the Outlook (Word renderer) degradation instead of the true
+    // design, and returns the static risk report alongside it. The two answer different halves
+    // of the question: the PNG shows how the layout reflows, `outlookRisks` names the CSS that
+    // caused it and flags the blocks whose VML fallback makes the picture pessimistic.
     if (req.method === 'POST' && p === '/api/render') {
       const { campaign } = await readBody(req);
+      const client = (u.searchParams.get('client') || '').toLowerCase();
       const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}' }); // re-tokenise for file:// swap
-      const { buffer, brokenImages, height } = await render.renderToPng(html);
-      return json(res, 200, { pngBase64: buffer.toString('base64'), brokenImages, height });
+      const { buffer, brokenImages, height } = await render.renderToPng(html, client ? { client } : {});
+      return json(res, 200, {
+        pngBase64: buffer.toString('base64'), brokenImages, height,
+        ...(client === 'outlook' ? { client, outlookRisks: render.outlookRisks(campaign || {}) } : {}),
+      });
     }
 
     // Export is the *production* HTML — the thing that gets pushed to Klaviyo — so the footer
