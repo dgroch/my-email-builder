@@ -35,8 +35,8 @@ reflows; `outlookRisks` names the CSS that caused it and, crucially, whether it 
 
 ## Read `atRisk`, not the picture
 
-The degraded PNG on its own cries wolf. Across the 55 components in the system, **48 declare CSS
-Word drops, but only 3 are genuinely exposed.** The difference is what happens at publish:
+The degraded PNG on its own cries wolf. Across the 55 components in the system, **46 declare CSS
+Word drops and none are currently exposed.** The difference is what happens at publish:
 
 - **Rasterised blocks are immune.** Every designed block is flattened to a PNG slice on push.
   Outlook receives an image. `position:absolute`, `transform`, `opacity` and `box-shadow` in
@@ -49,20 +49,20 @@ Word drops, but only 3 are genuinely exposed.** The difference is what happens a
 
 ### Currently at risk
 
-| Component | Property | What Outlook shows |
+**Nothing.** The set is empty and a test pins it there, so a block that picks up unsupported CSS
+fails the suite rather than quietly joining a list.
+
+### What was exposed, and how it was closed
+
+| Component | Was | Now |
 |---|---|---|
-| `sections/body-copy-plain` | `max-width` | Body paragraphs run the full 600px instead of the intended 440px measure. Readable, but a longer line length than designed. |
-| `sections/full-width-image` | `max-width` | Same — the capped element fills the width. |
-| `sections/opt-out` | `max-width`, **`padding on <a>`** | The measure widens as above, **and the "Opt Out" button collapses to bare uppercase text** — it carries `text-decoration:none`, so it does not even read as a link. |
+| `sections/opt-out` | The "Opt Out" button was a padded `<a>` with no fallback, so Word rendered it as bare uppercase text carrying `text-decoration:none` — it did not even read as a link. The body measure also blew out from 380px to **504px**. | VML `roundrect` (outline style preserved via `strokecolor`, no fill), and a fixed-width 380px table. Measured 380px with and without the CSS. |
+| `sections/body-copy-plain` | Body measure ran from 440px out to **472px**. | Fixed-width 440px table. Measured 440px either way. |
+| `sections/full-width-image` | Reported for `max-width`. | **Was never a real risk** — the `<img>` carries `width="600"` inside a 600px container, so dropping the cap changes nothing. Measured 600px both ways. The scanner no longer reports `max-width` on an element that also has a `width` attribute. |
 
-Two of the three are cosmetic: text set wider than intended. Nothing breaks, nothing disappears,
-no link dies. Fixing them means swapping the `max-width` cap for a fixed-width inner table, the
-email-safe way to constrain a measure — worth doing, not urgent.
-
-**`sections/opt-out` is the one to actually fix.** It is the control offering people a way out of
-Mother's Day, Father's Day and memorial sends — the context where an obvious, obviously-clickable
-opt-out is the entire point — and in Outlook it renders as unstyled text. It needs the same VML
-roundrect treatment `sections/button` now carries.
+`sections/opt-out` was the one that mattered: it is the control offering people a way out of
+Mother's Day, Father's Day and memorial sends, exactly where an obviously-clickable opt-out is
+the entire point.
 
 ## The properties Word ignores
 
@@ -75,7 +75,7 @@ roundrect treatment `sections/button` now carries.
 | `filter` | Grayscale/blur render as the original image. |
 | `box-shadow` | Edges render flat. |
 | `border-radius` | Rounded corners render square. |
-| `max-width` | Ignored on block elements, so width-capped text runs full width. |
+| `max-width` | Ignored on block elements, so width-capped text runs full width. Constrain a measure with a fixed-width table instead. Not reported when the element also carries a `width` attribute, which Word honours — the cap is then redundant, not load-bearing. |
 | `background-image` | Only supported via VML — a CSS background image does not paint. |
 | `object-fit` | Images stretch to their width/height attributes instead of cropping. |
 | `padding` + `display:inline-block` on an `<a>` | The commonest failure of the lot, and the reason `sections/button` ships VML: Word ignores both on an inline element, so a CSS button loses its box, colour and shape and becomes bare underlined text. Detected separately from the property list, since it is a markup pattern rather than one declaration. |

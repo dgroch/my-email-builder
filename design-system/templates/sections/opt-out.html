@@ -8,14 +8,38 @@ RULES:
   - Background is locked (#EBE5DF)
   - Headline MUST be lowercase — write token value in lowercase
   - Button is outline style (not filled)
+  - LIVE HTML (html_only) — never sliced, so the unsubscribe link stays clickable.
+  - OUTLOOK: this block ships as live HTML, so Word's renderer sees this markup directly and
+    every gap in it is real. Two are closed here. The body measure is a fixed-width table, not
+    a max-width cap (Word ignores max-width, which ran the copy from 380px to 504px). The
+    button is a VML roundrect, because Word ignores padding and display:inline-block on an
+    <a> — this control degraded to bare uppercase text carrying text-decoration:none, so it
+    did not even read as a link, on precisely the sensitive sends where an obvious way out is
+    the point.
 -->
 <tr><td>
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e0dbd4;">
   <tr>
     <td class="sp" align="center" style="padding:28px 48px;background:#EBE5DF;text-align:center;border-bottom:1px solid #e0dbd4;">
       <h2 style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:22px;color:#000000;margin:0 0 12px 0;">{{OPT_OUT_HEADLINE}}</h2>
-      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:#666666;line-height:1.7;max-width:380px;margin:0 auto 18px auto;">{{OPT_OUT_BODY}}</p>
+      <!-- Fixed-width table, not max-width: the measure has to survive Word. -->
+      <table width="380" cellpadding="0" cellspacing="0" border="0" align="center" style="width:380px;margin:0 auto;">
+        <tr>
+          <td style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:#666666;line-height:1.7;text-align:center;padding:0 0 18px 0;">{{OPT_OUT_BODY}}</td>
+        </tr>
+      </table>
+      <!--[if gte mso 9]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{UNSUBSCRIBE_URL}}" arcsize="0%" fillcolor="#EBE5DF"
+                   strokecolor="#000000" strokeweight="1.5pt"
+                   style="height:34px;width:120px;v-text-anchor:middle;">
+        <w:anchorlock/>
+        <center style="font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#000000;">Opt Out</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !gte mso 9]><!-->
       <a href="{{UNSUBSCRIBE_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.14em;text-transform:uppercase;background:transparent;color:#000000;text-decoration:none;border:1.5px solid #000000;padding:10px 28px;display:inline-block;">Opt Out</a>
+      <!--<![endif]-->
     </td>
   </tr>
 </table>
