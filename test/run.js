@@ -384,8 +384,10 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
 
   // text-transform is supported by Word and must not be confused for transform — otherwise
   // every component with an uppercase micro-label is reported broken.
+  // body-copy-plain still sets text-transform on its micro-label but is otherwise clean, so a
+  // false match here would be its *only* reported risk — which makes it the sharpest guard.
   const bcp = risk('sections/body-copy-plain');
-  ok(bcp && !bcp.unsupported.some((u) => u.property === 'transform'),
+  ok(!bcp || !bcp.unsupported.some((u) => u.property === 'transform'),
     'text-transform is not mistaken for transform');
   ok(/text-transform/.test(fs.readFileSync(path.join(DS, 'templates/sections/body-copy-plain.html'), 'utf8')),
     '…and that component really does use text-transform (guards the guard)');
@@ -403,24 +405,64 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   ok(btn.unsupported.some((u) => u.property === 'padding on <a>'),
     'a padded <a> is detected as an Outlook risk');
 
-  // The at-risk set is pinned exactly. It is small and each entry is a decision someone made;
-  // a new entry means a block that ships as live HTML picked up CSS Word drops, which is the
-  // regression this whole report exists to catch.
+  // Documentation comments are not markup. Every template opens with a COMPONENT/TOKENS/RULES
+  // block that discusses these very properties, so a component explaining "fixed-width table,
+  // not max-width" would otherwise report itself broken.
+  ok(!render.outlookRisks({ blocks: [{ component: 'sections/opt-out', tokens: {} }] })[0]
+      .unsupported.some((u) => u.property === 'max-width'),
+    'max-width named in a doc comment is not counted as markup');
+
+  // …but the downlevel-revealed branch IS markup, and its opening marker ends in a bare `<!--`
+  // that a naive comment strip runs past, swallowing the very <a> it reveals.
+  ok(render.outlookRisks({ blocks: [{ component: 'sections/button', tokens: {} }] })[0]
+      .unsupported.some((u) => u.property === 'padding on <a>'),
+    'markup inside a downlevel-revealed block is still scanned');
+
+  // max-width on an element that also carries a width="…" attribute cannot degrade — Word
+  // honours the attribute. sections/full-width-image measures 600px with and without the cap.
+  const fwi = render.outlookRisks({ blocks: [{ component: 'sections/full-width-image', tokens: {} }] })[0];
+  ok(!fwi || !fwi.unsupported.some((u) => u.property === 'max-width'),
+    'max-width alongside a width attribute is not reported — it cannot degrade');
+
+  // The at-risk set is pinned exactly. Every entry is a decision someone made; a new one means
+  // a block that ships as live HTML picked up CSS Word drops, which is the regression this
+  // whole report exists to catch. It is currently empty, and should stay that way.
   const schemaCampaign = { blocks: schema.components.map((c) => ({ component: c.name, tokens: {} })) };
   const atRisk = render.outlookRisks(schemaCampaign).filter((r) => r.atRisk);
-  const actual = atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort();
-  const expected = [
-    'sections/body-copy-plain: max-width',
-    'sections/full-width-image: max-width',
-    'sections/opt-out: max-width+padding on <a>',
-  ];
-  eq(actual.join(' | '), expected.join(' | '), 'the Outlook at-risk set is exactly the documented one');
+  eq(atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort().join(' | '),
+    '', 'no component is exposed to the Outlook renderer');
+}
 
-  // opt-out is the one that isn't merely cosmetic: its button becomes bare text, on the sends
-  // (Mother's Day, memorial) where an obvious opt-out control is the point.
-  const optOut = atRisk.find((r) => r.component === 'sections/opt-out');
-  ok(optOut && optOut.unsupported.some((u) => u.property === 'padding on <a>'),
-    'the opt-out control is flagged — its button degrades to plain text in Outlook');
+// ── The two components that were exposed, and how they were closed ────────────────────
+// sections/opt-out is the one that mattered: its control is the way out of Mother's Day and
+// memorial sends, and in Outlook it rendered as unstyled text that did not read as a link.
+{
+  const tpl = (n) => fs.readFileSync(path.join(DS, 'templates/sections', n + '.html'), 'utf8');
+
+  const oo = tpl('opt-out');
+  ok(/<v:roundrect[\s\S]*?href="\{\{UNSUBSCRIBE_URL\}\}"/.test(oo) || /<v:roundrect[\s\S]*?\{\{UNSUBSCRIBE_URL\}\}/.test(oo),
+    'the opt-out button ships a VML roundrect carrying the unsubscribe URL');
+  ok(/strokecolor="#000000"/.test(oo), 'the VML keeps the outline (not filled) button style');
+  ok(/<!--\[if !gte mso 9\]><!-->[\s\S]*<a href[\s\S]*<!--<!\[endif\]-->/.test(oo),
+    'the opt-out <a> is hidden from Outlook so the button never renders twice');
+
+  // Both measures are fixed-width tables now, not max-width caps that Word discards.
+  for (const [name, width] of [['opt-out', 380], ['body-copy-plain', 440]]) {
+    const t = tpl(name);
+    ok(new RegExp(`<table width="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
+    ok(!/max-width/.test(t.replace(/<!--[\s\S]*?-->/g, '')), `${name} no longer relies on a max-width cap`);
+  }
+
+  // The unsubscribe mechanism still survives assembly — the whole point of the block.
+  const camp = { campaignName: 't', blocks: [{ component: 'sections/opt-out', tokens: {
+    OPT_OUT_HEADLINE: 'a gentle note', OPT_OUT_BODY: 'x', UNSUBSCRIBE_URL: '{{ unsubscribe_url }}',
+  } }] };
+  // Counted as hrefs: the template's own TOKENS comment also mentions the tag, and assembly
+  // substitutes tokens inside comments too, so a raw count of the merge tag reads 4.
+  const prod = render.assemble(camp, { assetsBase: '/a', production: true }).html;
+  eq((prod.match(/href="\{\{ unsubscribe_url \}\}"/g) || []).length, 2,
+    'both the VML and the <a> link to the unsubscribe merge tag');
+  eq(validateCampaign(camp, schema).ok, true, 'an opt-out block still satisfies the unsubscribe assertion');
 }
 
 // ── sections/button: a standalone CTA that survives publish and Outlook ───────────────

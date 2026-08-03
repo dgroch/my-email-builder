@@ -15,8 +15,16 @@ RULES:
     <td class="sp" align="center" style="padding:44px 64px;background:#ffffff;text-align:center;">
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 14px 0;">{{SUPER_LABEL}}</p>
       <h2 class="sh" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:28px;color:#000000;line-height:1.2;margin:0 0 20px 0;">{{HEADLINE}}</h2>
-      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#444444;line-height:1.85;margin:0 auto 14px auto;max-width:440px;">{{BODY_P1}}</p>
-      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#444444;line-height:1.85;margin:0 auto;max-width:440px;">{{BODY_P2}}</p>
+      <!-- Fixed-width table, not a max-width cap: Word ignores max-width, which ran the
+           measure from 440px out to the full 472px of available width. -->
+      <table width="440" cellpadding="0" cellspacing="0" border="0" align="center" style="width:440px;margin:0 auto;">
+        <tr>
+          <td style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#444444;line-height:1.85;text-align:center;padding:0 0 14px 0;">{{BODY_P1}}</td>
+        </tr>
+        <tr>
+          <td style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#444444;line-height:1.85;text-align:center;">{{BODY_P2}}</td>
+        </tr>
+      </table>
     </td>
   </tr>
 </table>
