@@ -371,14 +371,17 @@ function download(name, content, type) {
   const blob = new Blob([content], { type }); const a = el('a', { href: URL.createObjectURL(blob), download: name }); a.click(); URL.revokeObjectURL(a.href);
 }
 async function exportHtml() {
-  const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
+  // Bake the preview line into the exported HTML's hidden preheader (best available source:
+  // the Klaviyo modal field, else the loaded design's saved preview, else the campaign's own).
+  const previewText = $('#kvPreview').value.trim() || currentDesignMeta.previewText || campaign.previewText || '';
+  const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign, previewText }) });
   const { html } = await r.json();
   download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', html, 'text/html');
 }
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {
   const fr = new FileReader();
-  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; currentDesignId = null; hydrate(); } catch (e) { alert('Invalid JSON'); } };
+  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; currentDesignId = null; currentDesignMeta = {}; hydrate(); } catch (e) { alert('Invalid JSON'); } };
   fr.readAsText(file);
 }
 function hydrate() {
@@ -510,6 +513,7 @@ async function submitCreate() {
     uid = Math.max(1, ...campaign.blocks.map(b => (b && b.id) || 0)) + 1;
     if (data.design && data.design.id) currentDesignId = data.design.id;
     else currentDesignId = null;
+    currentDesignMeta = { subjectLine: (data.design && data.design.subjectLine) || camp.subjectLine || '', previewText: (data.design && data.design.previewText) || camp.previewText || '' };
     $('#campaignName').value = campaign.campaignName || (data.design && data.design.name) || '';
     $('#bodyBg').value = campaign.bodyBg || '#2c2825';
     hydrate();
@@ -548,7 +552,7 @@ function bindToolbar() {
   $('#btnExportJson').onclick = exportJson;
   $('#btnImport').onclick = () => $('#fileImport').click();
   $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
-  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; currentDesignId = null; hydrate(); };
+  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; currentDesignId = null; currentDesignMeta = {}; hydrate(); };
   $('#btnKlaviyo').onclick = openKlaviyo;
   $('#kvSubmit').onclick = submitKlaviyo;
   $('#btnSave').onclick = saveDesign;
@@ -562,6 +566,7 @@ function bindToolbar() {
 
 // ── persisted designs (save / reopen / clone / delete) ──────────────────────────
 let currentDesignId = null;   // server id of the design currently loaded (null = unsaved)
+let currentDesignMeta = {};   // { subjectLine, previewText } of the loaded design — feeds the Klaviyo modal prefill
 
 async function saveDesign() {
   campaign.campaignName = $('#campaignName').value;
@@ -617,6 +622,7 @@ async function loadDesign(id) {
     campaign = d.campaign;
     uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1;
     currentDesignId = d.id;
+    currentDesignMeta = { subjectLine: d.subjectLine || '', previewText: d.previewText || '' };
     $('#designsDialog').close();
     hydrate();
     setStatus('opened “' + (d.name || 'design') + '”', 'ok');
@@ -635,7 +641,7 @@ async function deleteDesign(id, row) {
   if (!confirm('Delete this design? This cannot be undone.')) return;
   try {
     await fetch('/api/designs/' + id, { method: 'DELETE' });
-    if (id === currentDesignId) currentDesignId = null;
+    if (id === currentDesignId) { currentDesignId = null; currentDesignMeta = {}; }
     row.remove();
   } catch (e) { setStatus('delete failed', 'warn'); }
 }
@@ -645,7 +651,10 @@ const KV_KEYS = { kvListId: 'kvListId', kvFromEmail: 'kvFromEmail', kvFromLabel:
 function openKlaviyo() {
   if (!campaign.blocks.length) { setStatus('add a block first', 'warn'); return; }
   for (const id of Object.keys(KV_KEYS)) { const v = localStorage.getItem(KV_KEYS[id]); if (v != null) $('#' + id).value = v; }
-  if (!$('#kvSubject').value) $('#kvSubject').value = campaign.campaignName || '';
+  // Prefill subject + preview from the design's saved lines (or the generated campaign's own) —
+  // NEVER from the campaign name, which is an internal label ("F&B | 2026-08 …"), not a subject.
+  if (!$('#kvSubject').value) $('#kvSubject').value = currentDesignMeta.subjectLine || campaign.subjectLine || '';
+  if (!$('#kvPreview').value) $('#kvPreview').value = currentDesignMeta.previewText || campaign.previewText || '';
   const result = $('#kvResult'); result.classList.add('hidden'); result.textContent = '';
   loadAudiences();
   $('#klaviyoDialog').showModal();
@@ -696,8 +705,14 @@ async function loadAudiences() {
 async function submitKlaviyo() {
   const listId = $('#kvListId').value.trim();
   const fromEmail = $('#kvFromEmail').value.trim();
+  const subject = $('#kvSubject').value.trim();
+  const previewText = $('#kvPreview').value.trim();
   const result = $('#kvResult');
   if (!listId || !fromEmail) { showKvResult('List/segment ID and from email are required.', true); return; }
+  // The server rejects these too — surface it before slicing/uploading starts. Without an
+  // explicit preview baked into the HTML, Gmail/Apple Mail scrape the snippet from the body
+  // (image alt text) instead of your copy.
+  if (!subject || !previewText) { showKvResult('A subject line and preview text are required — they are what the inbox and lock-screen preview show.', true); return; }
   // remember audience + sender for next time
   for (const id of Object.keys(KV_KEYS)) localStorage.setItem(KV_KEYS[id], $('#' + id).value.trim());
   const btn = $('#kvSubmit'); btn.disabled = true;
@@ -713,8 +728,8 @@ async function submitKlaviyo() {
         campaign, listId, fromEmail, links, designId: currentDesignId,
         fromLabel: $('#kvFromLabel').value.trim(),
         replyToEmail: $('#kvReplyTo').value.trim(),
-        subject: $('#kvSubject').value.trim(),
-        previewText: $('#kvPreview').value.trim(),
+        subject,
+        previewText,
       }),
     });
     const data = await r.json();

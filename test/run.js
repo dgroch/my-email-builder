@@ -767,6 +767,67 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   }
 }
 
+// ── Inbox preview: preheader baked into the shells + human alt text ───────────────────
+// Klaviyo does not inject preview_text into CODE-editor templates, so the snippet Gmail /
+// Apple Mail show is whatever text they scrape first from the body. These guards keep that
+// text ours: a hidden preheader ahead of everything, and alt text that is copy, never slugs.
+{
+  const klaviyo = require('../lib/klaviyo');
+
+  for (const s of ['shell-preview.html', 'shell-production.html']) {
+    const src = fs.readFileSync(path.join(DS, 'shell', s), 'utf8');
+    ok(src.includes('{{PREHEADER}}'), `${s} carries the {{PREHEADER}} slot`);
+    ok(src.indexOf('{{PREHEADER}}') < src.indexOf('{{COMPONENTS}}'), `${s} preheader sits before the components`);
+  }
+
+  const ph = render.preheader('Knowing what to send & when <3');
+  ok(ph.includes('display:none'), 'preheader div is hidden');
+  ok(ph.includes('mso-hide:all'), 'preheader div is hidden for Outlook');
+  ok(ph.includes('Knowing what to send &amp; when &lt;3'), 'preheader text is HTML-escaped');
+  ok((ph.match(/&zwnj;&nbsp;/g) || []).length >= 80, 'preheader pads the snippet so body text cannot trail the preview line');
+  eq(render.preheader(''), '', 'blank preview text produces no preheader div');
+  eq(render.preheader('   '), '', 'whitespace-only preview text produces no preheader div');
+
+  const wrapped = render.wrapProductionShell('<tr><td>x</td></tr>', { campaignName: 'n', previewText: 'The intended line' });
+  ok(wrapped.includes('The intended line'), 'production shell carries the baked preview text');
+  ok(!wrapped.includes('{{PREHEADER}}'), 'production shell has no unfilled PREHEADER token');
+  const bare = render.wrapProductionShell('<tr><td>x</td></tr>', { campaignName: 'n' });
+  ok(!bare.includes('{{PREHEADER}}'), 'production shell without preview text still fills the slot');
+  const asmPrev = render.assemble({ blocks: [] }, {}).html;
+  ok(!asmPrev.includes('{{PREHEADER}}'), 'preview assembly fills the PREHEADER slot');
+  const asmProd = render.assemble({ blocks: [] }, { production: true, previewText: 'Line for export' }).html;
+  ok(asmProd.includes('Line for export'), 'production assembly bakes the export preview text');
+  ok(asmProd.indexOf('Line for export') < asmProd.indexOf('<table'), 'preheader sits ahead of all body content');
+
+  eq(render.deriveAlt({ CAPTION: 'peonies are back', SUPER_LABEL: 'FLOWER OF THE MONTH' }), 'peonies are back',
+    'deriveAlt prefers real copy (caption)');
+  eq(render.deriveAlt({ SUPER_LABEL: 'FROM THE JOURNAL' }), 'FROM THE JOURNAL', 'deriveAlt falls back to the super label');
+  eq(render.deriveAlt({ HEADLINE: '**When** the card is *hard*' }), 'When the card is hard', 'deriveAlt flattens markdown (alt is an attribute)');
+  eq(render.deriveAlt({}), '', 'a block with no copy tokens gets an empty (decorative) alt, never a slug');
+
+  // Regression guard: the push handler derives alt from copy tokens, never the component name —
+  // "blocks/caption-bar-hero" leading a sent campaign's Gmail snippet is the bug this pins down.
+  const serverSrc = fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8');
+  ok(serverSrc.includes('render.deriveAlt('), 'server push path uses render.deriveAlt');
+  ok(!/HEADLINE\s*\|\|\s*b\.component/.test(serverSrc), 'server push path no longer falls back to the component name for alt');
+
+  let threw = null;
+  try { klaviyo.assertSendReady({ subject: '', previewText: 'x' }); } catch (e) { threw = e; }
+  ok(threw && /subject/i.test(threw.message), 'a draft with no subject line is refused');
+  threw = null;
+  try { klaviyo.assertSendReady({ subject: 'x', previewText: '  ' }); } catch (e) { threw = e; }
+  ok(threw && /preview/i.test(threw.message), 'a draft with no preview text is refused');
+  threw = null;
+  try { klaviyo.assertSendReady({ subject: "When you don't know what to send", previewText: 'Knowing what to send, and when.' }); } catch (e) { threw = e; }
+  ok(!threw, 'a real subject + preview pass the send-ready guard');
+
+  // Exemplars are the fallback source for subject/preview on push — they must carry both.
+  for (const ex of seeds) {
+    ok(ex.subjectLine && String(ex.subjectLine).trim(), `exemplar '${ex.id}' carries a subjectLine`);
+    ok(ex.previewText && String(ex.previewText).trim(), `exemplar '${ex.id}' carries previewText`);
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 if (failures.length) {
   console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);

@@ -183,11 +183,11 @@
     <label>Reply-to email (optional)
       <input id="kvReplyTo" type="email" placeholder="optional">
     </label>
-    <label>Subject line
-      <input id="kvSubject" type="text" placeholder="Defaults to campaign name">
+    <label>Subject line (required)
+      <input id="kvSubject" type="text" required maxlength="120" placeholder="Front-load the first ~35 characters — phones truncate there">
     </label>
-    <label>Preview text
-      <input id="kvPreview" type="text" placeholder="Shown after the subject in the inbox">
+    <label>Preview text (required)
+      <input id="kvPreview" type="text" required maxlength="200" placeholder="The line under the subject — ~40–90 characters; baked into the email">
     </label>
     <div id="kvResult" class="kv-result hidden"></div>
     <div class="kv-actions">

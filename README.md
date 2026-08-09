@@ -95,9 +95,9 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign}` | `{html, unfilled, validation, campaign}` — **production** HTML: keeps `{{ASSETS_BASE}}` and the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}` |
+| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign}` — **production** HTML: keeps `{{ASSETS_BASE}}` and the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
-| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, fromLabel?, replyToEmail?, subject?, previewText?, links?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices |
+| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
 | GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt, isExample, objective, approvalStatus, componentsUsed, …}]}` (metadata only) |
 | POST | `/api/designs`        | `{name?, campaign, …metadata}` | the saved design (incl. metadata) |
@@ -164,7 +164,8 @@ backends): `isExample`, `objective`, `campaignType`, `audienceAwareness`, `prima
 `componentsUsed` (derived), `sourceBriefLink`, `klaviyoLink`, `resultNotes`. Flag a design
 `isExample:true` to surface it through `/api/examples`. The persisted `subjectLine` /
 `previewText` are used as the fallback subject/preview when `/api/klaviyo-draft` is called
-without them. See *Saving designs* for how the Notion backend stores these.
+without them — and since the push now **requires** both lines, a design saved with them is
+pushable by `designId` alone. See *Saving designs* for how the Notion backend stores these.
 
 > **Note — `/api/agent-contract` was intentionally not built.** The execution contract is
 > `/api/schema` (now including intent + objectives) and the workflow rules live in the skill;
@@ -244,8 +245,35 @@ own image with its own click-through link. Under the hood it:
 2. uploads each PNG to your Klaviyo **media library** (`POST /api/image-upload`), getting a hosted
    `image_url`;
 3. assembles a `CODE` template where every block is a `<tr>` with that hosted image wrapped in its
-   own `<a href>` link;
+   own `<a href>` link — with the **preview text baked into a hidden preheader** at the top of the
+   body (see below);
 4. creates a draft campaign + message and assigns the template.
+
+### Subject + preview text are required (and why the preheader is baked in)
+
+Klaviyo **does not inject** a campaign's `preview_text` field into `CODE`-editor (raw HTML)
+templates — that field only feeds Klaviyo's own UI. Mail clients have no "preview text" header
+either: the snippet Gmail / Apple Mail show under the subject (and on the lock screen) is just the
+**first text they can scrape out of the email body**. A sliced email's first scrapable text is the
+first image's `alt` attribute — which is how a sent campaign once shipped with
+`blocks/caption-bar-hero` leading its Gmail preview.
+
+The builder therefore:
+
+- **bakes the preview text into the HTML** as a hidden, padded preheader `<div>` (first thing
+  inside `<body>`), which is the only mechanism clients actually honour;
+- **requires** a subject line and preview text on push — `/api/klaviyo-draft` returns 400 without
+  them (the internal campaign name is never used as a fallback subject);
+- derives slice `alt` text from the block's **copy tokens** (headline / caption / label), never
+  from internal component names.
+
+Klaviyo's `preview_text` field is still set on the message so the Klaviyo UI matches — but the
+copy that reaches inboxes is the preheader in the HTML. **If you edit the subject or preview in
+Klaviyo afterwards, re-push from the builder** so the baked preheader stays in sync.
+
+Keep the subject's first ~35 characters meaningful (phone notifications truncate around there) and
+aim for ~40–90 characters of preview text; the preheader pads the remainder so body text never
+trails it.
 
 The **footer stays live HTML** (not an image) so its `{% unsubscribe %}` merge tag still works —
 rasterising it would break the legally-required unsubscribe link. You then finish/schedule/send the
@@ -262,8 +290,10 @@ Setup:
    On Render, add it under the service's *Environment*. Optionally pin `KLAVIYO_REVISION`
    (defaults to a recent stable revision).
 3. In the dialog, pick the **audience** from the list/segment dropdown (or paste an ID),
-   set the **from email**, and optionally from-label / reply-to / subject / preview text.
-   Audience + sender are remembered in your browser's localStorage for next time.
+   set the **from email**, the **subject line** and the **preview text** (both required —
+   prefilled from the loaded design's saved `subjectLine`/`previewText` when present), and
+   optionally from-label / reply-to. Audience + sender are remembered in your browser's
+   localStorage for next time.
 
 Note: line-art assets in the slices are baked into the uploaded PNGs, so they don't depend on the
 server being reachable. Push from the deployed (Render) instance rather than localhost so Chromium

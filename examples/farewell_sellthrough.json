@@ -1,6 +1,8 @@
 {
   "id": "seed-farewell",
   "name": "2026-06 Farewell Weekend + Glow Up Tease",
+  "subjectLine": "The last of the Rosehaven blooms",
+  "previewText": "Three years of Rosehaven come to a close this weekend \u2014 one final gathering of the range.",
   "isExample": true,
   "objective": "farewell_sellthrough",
   "campaignType": "Range farewell / final sell-through",
