@@ -8,7 +8,8 @@
       "CAMPAIGN_NAME": "Email subject line or campaign name",
       "BODY_BG": "Body background colour (default: #2c2825)",
       "FONT_CDN_LINK": "Production only: <link> tag for hosted font CSS. Omit if not configured.",
-      "COMPONENTS": "Assembled component HTML — injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->"
+      "COMPONENTS": "Assembled component HTML — injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->",
+      "PREHEADER": "Hidden inbox-preview (preheader) div, baked from the campaign's previewText at assembly/push time. Klaviyo does not inject preview_text into CODE-editor templates, so this is the only thing that controls the Gmail/Apple Mail snippet. Filled automatically; blank-safe."
     },
     "method": "1. Select components. 2. Fill all {{TOKEN}} values. 3. Read each template file. 4. Replace tokens. 5. Concatenate. 6. Inject into shell between markers. 7. Validate no {{}} remain.",
     "html_only_components": [

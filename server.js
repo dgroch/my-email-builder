@@ -217,8 +217,10 @@ const server = http.createServer(async (req, res) => {
     // here") is for the on-screen iframe only; leaking it into the export shipped emails whose
     // unsubscribe link was inert text.
     if (req.method === 'POST' && p === '/api/export') {
-      const { campaign } = await readBody(req);
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', production: true });
+      const { campaign, previewText } = await readBody(req);
+      // previewText (optional) is baked into the shell as a hidden preheader so manually
+      // pasted exports control their inbox snippet the same way the sliced push does.
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', production: true, previewText });
       const validation = validateCampaign(campaign || {}, schema());
       return json(res, 200, { html, unfilled, validation, campaign });
     }
@@ -297,6 +299,15 @@ const server = http.createServer(async (req, res) => {
       if (!campaign || !Array.isArray(campaign.blocks) || !campaign.blocks.length) {
         return json(res, 400, { error: 'No campaign blocks to slice. Pass a `campaign` with blocks, or a `designId` whose saved design has blocks.' });
       }
+      // Fail loud on a missing subject or preview line. Klaviyo never injects preview_text
+      // into CODE-editor templates, and a sliced email has no early body text — so without an
+      // explicit preview baked into the HTML, Gmail/Apple Mail scrape the snippet from image
+      // alt text (this is how "blocks/caption-bar-hero" once led a sent campaign's preview).
+      subjectLine = String(subjectLine || '').trim();
+      preview = String(preview || '').trim();
+      if (!subjectLine || !preview) {
+        return json(res, 400, { error: 'A subject line and preview text are required to create a Klaviyo draft. Pass `subject` + `previewText` (or a `designId` whose saved design carries subjectLine/previewText) — without them the inbox snippet is scraped from body/alt text instead of your copy.' });
+      }
       const assetsBase = assetsBaseFor(req);
       const linkOverride = links || {};
       try {
@@ -331,7 +342,10 @@ const server = http.createServer(async (req, res) => {
           const segs = segmentsByIndex[b.index];
           if (!segs || !segs.length) { rows.push(b.html); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
-          const alt = b.tokens.HEADLINE || b.component;
+          // Alt text comes from the block's own copy tokens, never the component name — an
+          // internal identifier in the first slice's alt is what the Gmail snippet scraper
+          // leads with when it walks the body.
+          const alt = render.deriveAlt(b.tokens);
           const compBase = b.component.replace(/[\/]+/g, '-');
           // A column-split block (one partial-width GIF with content beside it, e.g.
           // blocks/image-text with an animated image) recomposes into ONE row of side-by-side
@@ -367,7 +381,7 @@ const server = http.createServer(async (req, res) => {
             rows.push(klaviyo.imageRow(imageUrl, { href: rowHref, alt: rowAlt }));
           }
         }
-        const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase });
+        const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase, previewText: preview });
 
         // 3. Create the draft (template → campaign → assign template).
         const result = await klaviyo.createDraftCampaign({
