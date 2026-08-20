@@ -21,7 +21,8 @@
       "body-copy-plain",
       "divider-line",
       "divider-whitespace",
-      "full-width-image"
+      "full-width-image",
+      "promo-code"
     ],
     "slice_components": [
       "header",

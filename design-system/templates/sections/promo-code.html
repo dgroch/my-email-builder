@@ -9,6 +9,13 @@ RULES:
   - Background is white (not clay) — code must pop
   - Promo code uses Lust font — font-weight:normal locked
   - Dashed border is locked (2px dashed #000)
+  - HTML-SAFE: never slice this block. The code is routinely a dynamic Klaviyo tag
+    ({% coupon_code %}) that Klaviyo substitutes per recipient at send time — rasterising bakes
+    the literal tag into pixels, so every recipient gets the same picture of a merge tag. It has
+    to stay selectable text, which also lets people copy the code.
+  - OUTLOOK: the Word renderer ignores padding on an <a>, which collapses the CTA to bare
+    underlined text. The VML roundrect draws the real button there and the <a> is hidden from
+    Outlook, so the two never both render — same fallback as sections/button.
 -->
 <tr><td>
 <table width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
@@ -19,7 +26,17 @@ RULES:
         <span style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:20px;color:#000000;letter-spacing:.08em;">{{PROMO_CODE}}</span>
       </div>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:#666666;margin:0 0 22px 0;">{{PROMO_TERMS}}</p>
-      {{#CTA_TEXT}}<a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>{{/CTA_TEXT}}
+      {{#CTA_TEXT}}<!--[if gte mso 9]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{CTA_URL}}" arcsize="0%" stroke="f" fillcolor="#000000"
+                   style="height:40px;width:260px;v-text-anchor:middle;">
+        <w:anchorlock/>
+        <center style="font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#ffffff;">{{CTA_TEXT}}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !gte mso 9]><!-->
+      <a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>
+      <!--<![endif]-->{{/CTA_TEXT}}
     </td>
   </tr>
 </table>

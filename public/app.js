@@ -292,7 +292,7 @@ async function renderSlices() {
       // region slices (multi-link blocks like journal-tile) carry a fixed per-region link.
       let linkRow;
       if (s.keepHtml) {
-        linkRow = el('div', { class: 'slice-link note', text: 'Stays as live HTML (keeps the unsubscribe link) — not an image.' });
+        linkRow = el('div', { class: 'slice-link note', text: 'Stays as live HTML (live links / dynamic Klaviyo tags) — not an image.' });
       } else if (s.region) {
         linkRow = el('div', { class: 'slice-link note', text: s.link ? `Links to ${s.link}` : 'No link (header slice).' });
       } else {

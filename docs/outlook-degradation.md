@@ -41,9 +41,9 @@ Word drops and none are currently exposed.** The difference is what happens at p
 - **Rasterised blocks are immune.** Every designed block is flattened to a PNG slice on push.
   Outlook receives an image. `position:absolute`, `transform`, `opacity` and `box-shadow` in
   `blocks/polaroid-collage` are irrelevant to Outlook because Outlook never sees that HTML.
-- **Blocks with a VML fallback are covered.** `sections/button`, `heroes/hero-a` and
-  `heroes/hero-image-only` ship Microsoft's vector markup inside `<!--[if gte mso 9]>`, so
-  Outlook gets purpose-built markup rather than the CSS version.
+- **Blocks with a VML fallback are covered.** `sections/button`, `sections/promo-code`,
+  `heroes/hero-a` and `heroes/hero-image-only` ship Microsoft's vector markup inside
+  `<!--[if gte mso 9]>`, so Outlook gets purpose-built markup rather than the CSS version.
 - **The genuine exposure is the intersection**: a block that stays live HTML on publish *and*
   declares unsupported CSS *and* has no VML fallback. That is what `atRisk: true` means.
 
@@ -58,6 +58,7 @@ fails the suite rather than quietly joining a list.
 |---|---|---|
 | `sections/opt-out` | The "Opt Out" button was a padded `<a>` with no fallback, so Word rendered it as bare uppercase text carrying `text-decoration:none` — it did not even read as a link. The body measure also blew out from 380px to **504px**. | VML `roundrect` (outline style preserved via `strokecolor`, no fill), and a fixed-width 380px table. Measured 380px with and without the CSS. |
 | `sections/body-copy-plain` | Body measure ran from 440px out to **472px**. | Fixed-width 440px table. Measured 440px either way. |
+| `sections/promo-code` | Became exposed the moment it joined the html-only list (the promo code has to stay live text so Klaviyo can substitute `{% coupon_code %}` per recipient) — its CTA was a padded `<a>` with no fallback, so Word collapsed it to underlined text. | VML `roundrect`, filled black at 260px, exactly as `sections/button` does it; the `<a>` is hidden from Outlook. |
 | `sections/full-width-image` | Reported for `max-width`. | **Was never a real risk** — the `<img>` carries `width="600"` inside a 600px container, so dropping the cap changes nothing. Measured 600px both ways. The scanner no longer reports `max-width` on an element that also has a `width` attribute. |
 
 `sections/opt-out` was the one that mattered: it is the control offering people a way out of

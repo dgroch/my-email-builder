@@ -237,8 +237,10 @@ if (jt) {
 }
 
 // ── Klaviyo push: html_only_components stay live HTML (not sliced) ─────────────────────
-// Slicing flattens a block to one PNG with a single click-through — so blocks that must keep
-// live anchors (opt-out's unsubscribe link, footer) stay html-only. blocks/journal-tile is NO
+// Slicing flattens a block to one PNG with a single click-through — and bakes whatever text the
+// block contains into pixels. So blocks stay html-only when they need live anchors (opt-out's
+// unsubscribe link, footer) OR dynamic Klaviyo tags rendered as text (promo-code's
+// {% coupon_code %} box, substituted per recipient at send time). blocks/journal-tile is NO
 // LONGER html-only: it now rasterises as a multi-region slice (header + one linked slice per
 // tile), which preserves its 2–3 per-tile links while restoring brand typography.
 const htmlOnly = (schema.assembly && schema.assembly.html_only_components) || [];
@@ -247,6 +249,7 @@ ok(!render.isHtmlOnlyComponent('blocks/journal-tile', htmlOnly), 'journal-tile i
 ok(render.isHtmlOnlyComponent('sections/body-copy-plain', htmlOnly), 'body-copy-plain is html-only');
 ok(render.isHtmlOnlyComponent('sections/opt-out', htmlOnly), 'opt-out is html-only (its live unsubscribe link must survive)');
 ok(render.isHtmlOnlyComponent('footer', htmlOnly), 'footer is html-only');
+ok(render.isHtmlOnlyComponent('sections/promo-code', htmlOnly), 'promo-code is html-only (Klaviyo must inject {% coupon_code %} into live text, not pixels)');
 ok(!render.isHtmlOnlyComponent('blocks/editorial-hero', htmlOnly), 'a designed/sliced block is not html-only');
 ok(!render.isHtmlOnlyComponent('products/card-horizontal', htmlOnly), 'a product card is not html-only');
 ok(!render.isHtmlOnlyComponent('', htmlOnly) && !render.isHtmlOnlyComponent('blocks/journal-tile', null), 'isHtmlOnlyComponent is null/empty safe');

@@ -225,8 +225,9 @@ classic "sliced email" build, but generated for you. The zip is built in the bro
 dependency); the PNGs are 2× for retina.
 
 Each slice also shows an editable **Link URL** (pre-filled from the block's tokens). These are the
-same per-block links used by **Push to Klaviyo** below, so set them here once. The unsubscribe
-footer is flagged as live HTML rather than an image.
+same per-block links used by **Push to Klaviyo** below, so set them here once. Blocks that stay
+live HTML — the unsubscribe footer, and blocks carrying dynamic Klaviyo tags such as the promo-code
+box — are flagged as such instead of getting a link field.
 
 **Multi-region blocks:** a block can declare sub-slice regions (a descendant with
 `data-eb-slice="…"`, optionally `data-eb-href` / `data-eb-alt`) and then emits *one linked slice
@@ -276,8 +277,11 @@ aim for ~40–90 characters of preview text; the preheader pads the remainder so
 trails it.
 
 The **footer stays live HTML** (not an image) so its `{% unsubscribe %}` merge tag still works —
-rasterising it would break the legally-required unsubscribe link. You then finish/schedule/send the
-draft inside Klaviyo.
+rasterising it would break the legally-required unsubscribe link. The **promo-code block stays live
+HTML** for the same reason: the code is routinely a `{% coupon_code %}` tag that Klaviyo substitutes
+per recipient at send time, and a PNG would ship every recipient the same picture of the literal
+tag. (The full list is `assembly.html_only_components` in the manifest.) You then
+finish/schedule/send the draft inside Klaviyo.
 
 **Per-block links:** open the **Slices** tab and click **Render slices** first — each image block
 gets an editable *Link URL* (pre-filled from its tokens: `CTA_URL` / `PRODUCT_URL` / `HERO_LINK_URL`).
