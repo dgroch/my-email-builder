@@ -338,9 +338,15 @@ const server = http.createServer(async (req, res) => {
         for (const s of slices) (segmentsByIndex[s.index] = segmentsByIndex[s.index] || []).push(s);
         const rows = [];
         for (const b of meta.blocks) {
-          if (render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly)) { rows.push(b.html); continue; }
+          // Live HTML goes to Klaviyo verbatim, so the template's COMPONENT/TOKENS/RULES comment
+          // would ship with it — and Klaviyo parses template tags inside HTML comments. A RULES
+          // line documenting a tag becomes a real tag: a bare `{% coupon_code %}` is invalid and
+          // fails the ENTIRE template's render (400), and footer's comment would emit a second,
+          // invisible {% unsubscribe %}. Strip the author docs on the way out (sliced blocks get
+          // this for free — the comment is rasterised away).
+          if (render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly)) { rows.push(render.stripDocComments(b.html)); continue; }
           const segs = segmentsByIndex[b.index];
-          if (!segs || !segs.length) { rows.push(b.html); continue; } // fallback: live HTML if no slice
+          if (!segs || !segs.length) { rows.push(render.stripDocComments(b.html)); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
           // Alt text comes from the block's own copy tokens, never the component name — an
           // internal identifier in the first slice's alt is what the Gmail snippet scraper

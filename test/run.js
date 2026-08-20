@@ -250,6 +250,24 @@ ok(render.isHtmlOnlyComponent('sections/body-copy-plain', htmlOnly), 'body-copy-
 ok(render.isHtmlOnlyComponent('sections/opt-out', htmlOnly), 'opt-out is html-only (its live unsubscribe link must survive)');
 ok(render.isHtmlOnlyComponent('footer', htmlOnly), 'footer is html-only');
 ok(render.isHtmlOnlyComponent('sections/promo-code', htmlOnly), 'promo-code is html-only (Klaviyo must inject {% coupon_code %} into live text, not pixels)');
+
+// ── Live-HTML blocks must not ship their author comment to Klaviyo ────────────────────────
+// html_only blocks are pushed as raw HTML, and Klaviyo parses template tags even inside HTML
+// comments. promo-code's RULES line documents the merge tag as prose; shipped raw, that bare
+// `{% coupon_code %}` (no coupon name) is invalid and Klaviyo fails the WHOLE template with
+// 400 "The template could not be rendered with the provided context." stripDocComments() has
+// to remove the doc comment while leaving the Outlook conditionals and tokens untouched.
+const promoRaw = fs.readFileSync(path.join(render.DS, 'templates', 'sections', 'promo-code.html'), 'utf8');
+const promoDoc = (promoRaw.match(/^<!--[\s\S]*?-->/) || [''])[0];
+ok(/coupon_code/.test(promoDoc), "promo-code's doc comment does contain a coupon_code tag (the hazard this strip exists for)");
+const promoStripped = render.stripDocComments(promoRaw);
+ok(!/\{%\s*coupon_code\s*%\}/.test(promoStripped), 'stripDocComments removes the bare {% coupon_code %} that would 400 the whole Klaviyo template');
+ok(/\[if gte mso 9\]/.test(promoStripped), 'stripDocComments keeps the [if gte mso 9] conditional (real VML, not a doc comment)');
+ok(/<v:roundrect/.test(promoStripped), 'stripDocComments keeps the VML roundrect markup inside the conditional');
+ok(/\{\{CTA_URL\}\}/.test(promoStripped), 'stripDocComments leaves {{CTA_URL}} tokens intact');
+const footerStripped = render.stripDocComments(fs.readFileSync(path.join(render.DS, 'templates', 'footer.html'), 'utf8'));
+ok((footerStripped.match(/\{%\s*unsubscribe\s*%\}/g) || []).length === 1,
+  'footer ships exactly one {% unsubscribe %} after stripping — the live one, not the duplicate its doc comment describes');
 ok(!render.isHtmlOnlyComponent('blocks/editorial-hero', htmlOnly), 'a designed/sliced block is not html-only');
 ok(!render.isHtmlOnlyComponent('products/card-horizontal', htmlOnly), 'a product card is not html-only');
 ok(!render.isHtmlOnlyComponent('', htmlOnly) && !render.isHtmlOnlyComponent('blocks/journal-tile', null), 'isHtmlOnlyComponent is null/empty safe');
