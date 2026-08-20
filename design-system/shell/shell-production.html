@@ -3,6 +3,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!-- Light-only: iOS/Apple Mail and Gmail auto-invert email colours in dark mode, but they
+     only invert LIVE HTML — images are never touched. Our Klaviyo push is a mix (designed
+     blocks ship as rasterised image slices, html_only_components ship as live HTML), so
+     without this opt-out the email renders as a patchwork: sliced blocks keep their designed
+     colours while live blocks flip (a live black band under a black hero slice went WHITE).
+     Declaring the email light-only keeps every block exactly as designed. -->
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>{{CAMPAIGN_NAME}}</title>
 <!--[if !mso]><!-->
 <style>
@@ -21,6 +29,7 @@
 <style>
 /* PRODUCTION: No base64 fonts. Font CDN link above for Apple Mail/iOS.
    All elements use fallback stacks inline. */
+:root{color-scheme:light;supported-color-schemes:light;}
 *{margin:0;padding:0;box-sizing:border-box;}
 body,table,td{font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;}
 img{border:0;line-height:100%;outline:none;text-decoration:none;display:block;}

@@ -236,6 +236,24 @@ if (jt) {
   eq(region2.join(','), 'header,tile-1,tile-2', '2-up marks header + 2 tile regions (tile-3 region dropped)');
 }
 
+// ── Dark mode: the production shell declares itself light-only ────────────────────────────
+// iOS/Apple Mail and Gmail auto-invert colours in dark mode, but they only invert LIVE HTML —
+// images are never touched. Our push is a mix (designed blocks rasterise to image slices,
+// html_only_components ship as live HTML), so without an opt-out the email goes patchwork:
+// a live black band under a black hero slice rendered WHITE, and the white promo-code block
+// rendered dark. Declaring the email light-only is the standard opt-out from auto-inversion.
+const prodShell = fs.readFileSync(path.join(render.DS, 'shell', 'shell-production.html'), 'utf8');
+ok(/<meta\s+name="color-scheme"\s+content="light"\s*\/?>/.test(prodShell),
+  'production shell declares <meta name="color-scheme" content="light">');
+ok(/<meta\s+name="supported-color-schemes"\s+content="light"\s*\/?>/.test(prodShell),
+  'production shell declares <meta name="supported-color-schemes" content="light">');
+ok(/color-scheme\s*:\s*light/.test(prodShell),
+  'production shell CSS carries a color-scheme:light declaration (clients that read the property, not the meta)');
+// And it survives assembly — the built email, not just the file on disk, carries the opt-out.
+const litEmail = render.wrapProductionShell('<tr><td>x</td></tr>', { campaignName: 'x' });
+ok(/<meta\s+name="color-scheme"\s+content="light"\s*\/?>/.test(litEmail),
+  'built production email carries the color-scheme:light meta through wrapProductionShell');
+
 // ── Klaviyo push: html_only_components stay live HTML (not sliced) ─────────────────────
 // Slicing flattens a block to one PNG with a single click-through — and bakes whatever text the
 // block contains into pixels. So blocks stay html-only when they need live anchors (opt-out's
