@@ -322,6 +322,52 @@ If Puppeteer renders show remote images as “broken”, the host is blocking Ch
 network. On a normal machine (and in every browser live-preview) the CDN images load fine; the
 local line-art assets always resolve via `file://`.
 
+## Script headlines and descender ink (`padding-bottom:0.65em`)
+Cervanttis is a script face whose glyph ink runs far past the bottom of its line box. Measured
+against the embedded font, the deepest lowercase descender is `j` at **0.74em** below the
+baseline, and the baseline itself sits at `lineHeight/2 + 0.5em` from the top of the line box. So
+for a script line the ink overshoots its own box by:
+
+```
+overshoot = 0.5em + maxDescent - lineHeight/2      ≈ 0.74em at line-height:1.0
+                                                   ≈ 0.77em at line-height:0.95
+```
+
+CSS lays the next element out against the **line box, not the ink**, so `margin-bottom` is
+measured from a boundary the glyph has already crossed. At `font-size:62px` that put roughly 25px
+of headline descender straight through the first line of the paragraph below it — text over text,
+on any headline whose last line contains `f g j p q y` (and on capitals, which dive deeper still:
+`A` reaches 0.81em).
+
+The fix is `padding-bottom:0.65em` on the script element, inline, alongside its `line-height`.
+`em` so it tracks any future `font-size` change — including the mobile `.uh`/`.hh` overrides in
+the shell, which shrink these headlines to 28–38px. Leading and `margin-bottom` are untouched, so
+multi-line script headlines keep their deliberate tight nesting.
+
+`0.65em` is the middle of a narrow feasible band, both ends measured:
+
+| Bound | Value | Set by |
+|---|---|---|
+| Floor — ink must clear the next element's box | 0.54em | `blocks/editorial-hero`, whose script line has only a 6px `margin-bottom` to spare |
+| Ceiling — content must stay inside the fixed-height hero | 0.69em | `heroes/hero-d-*`, a 500px container with a two-line headline |
+
+Full containment (ink entirely inside the padding box, `margin-bottom` then meaning exactly what
+it says) would need 0.78em, which overflows that 500px container. 0.65em leaves the worst-case
+lowercase glyph 14–15px clear of the paragraph in the tightest hero, and every fixed-height hero
+renders at exactly its declared height.
+
+Applied to the 19 script elements that are followed by flow text: all `heroes/hero-{a,b,c1,c2,d}-*`
+headlines, `sections/upsell-noir`, `blocks/{caption-bar-hero,editorial-hero,editorial-collage,story}`,
+and `blocks/polaroid-collage`'s `QUOTE_ACCENT`. Deliberately **not** applied where the ink is
+already contained: `sections/opt-out` (uses the default `line-height`, whose 1.8em line box
+absorbs the descender), the polaroid photo captions (the polaroid frame's own bottom padding
+contains them), and `blocks/comparison-vs` (`line-height:54px` on a 24px glyph).
+
+Not covered by this fix: the script **badges and chips** (`blocks/annotated-product`,
+`blocks/designed-product-card`, `blocks/offer-panel`) sit on their own coloured pill, and a
+descender escapes the pill's background by ~5px. Fixing those means changing each pill's shape,
+which is a design call rather than a layout bug.
+
 ## Keeping the design system in sync
 `design-system/` is a bundled copy of `creative-email-campaign-builder/references/`
 (templates, shells, assets, manifest). Re-copy that folder to pick up template changes.
