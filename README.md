@@ -83,7 +83,10 @@ server.js                 zero-dependency HTTP server (UI + /api/{schema,assembl
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
-lib/designs.js            designs backend: local-disk JSON store (fallback)
+lib/db.js                 Postgres pool + the schema it owns (used when DATABASE_URL is set)
+lib/recordStore.js        one collection API over two drivers (Postgres / local-disk JSON)
+lib/designs.js            designs backend: local-disk JSON store (last-resort fallback)
+lib/designsPg.js          designs backend: Postgres (used when DATABASE_URL is set)
 lib/notionStore.js        designs backend: Notion database store (used when NOTION_TOKEN is set)
 lib/compileComponent.js   Studio: canvas document → a real design-system template
 lib/componentStore.js     Studio: authored components, immutable versions, publish/unpublish
@@ -280,8 +283,18 @@ saved campaigns already reference don't silently disappear.
 The **Brand** tab edits the palette and type ramp every component inherits. This is the highest
 blast-radius surface in the tool, so each swatch reports what it touches (`clay` → 19 shipped
 components) *before* the change is saved, and **Reset to shipped** drops every override at once.
-Overrides live in `DATA_DIR/brand-tokens.json`; the manifest's `locked_styles` remains the
-baseline, and setting a value back to its baseline clears the override rather than pinning it.
+The manifest's `locked_styles` remains the baseline, and setting a value back to its baseline
+clears the override rather than pinning it.
+
+**A palette edit reaches components that were compiled before it — including the shipped
+templates on disk.** That works because a compiled template always speaks the *baseline*
+palette, and the override is applied as a single substitution pass over the assembled document
+(`brandTokens.applyOverrides`). So one edit restyles the whole library at once, and no immutable
+published version ever has to be rewritten for it.
+
+**Type-ramp edits do not work that way.** Font sizes are baked into each compiled template, and
+a `px` value carries no marker saying which ramp step produced it, so a type change applies to
+components compiled *after* it — cut a new version of a component to pick it up.
 
 Unknown palette keys and non-hex values are rejected rather than written through, so a typo cannot
 invent a brand colour that no component references.
@@ -294,11 +307,56 @@ structure does not need a deploy.
 
 ### Where it is stored
 
-Authored components, layouts and brand overrides are JSON under `DATA_DIR`
-(`components/`, `layouts/`, `brand-tokens.json`) — the same directory the disk designs backend
-uses. **On Render's free plan `DATA_DIR` is ephemeral**, so give the service a persistent disk (or
-port these stores to the Notion backend, as `lib/notionStore.js` does for designs) before a
-designer relies on it.
+Set **`DATABASE_URL`** and everything the Studio owns — authored components and their version
+histories, campaign layouts, brand overrides — lives in Postgres. See *Storage* below.
+
+## Storage
+
+Three backends, selected by environment variable. `GET /api/health` reports which one each
+store resolved to, so a misconfigured deployment is visible without reading logs.
+
+| Store | Notion | Postgres | Local disk |
+|---|---|---|---|
+| Saved designs | `NOTION_TOKEN` + `NOTION_DESIGNS_DB` | `DATABASE_URL` | fallback |
+| Studio components + versions | — | `DATABASE_URL` | fallback |
+| Campaign layouts | — | `DATABASE_URL` | fallback |
+| Brand overrides | — | `DATABASE_URL` | fallback |
+
+Designs prefer Notion when it is configured, so an existing Notion deployment keeps working
+untouched. Everything else prefers Postgres. With neither set, all of it falls back to JSON
+files under `DATA_DIR` — which is what a local checkout uses, and **which is wiped on every
+redeploy of a container with no persistent disk**. That is the reason this exists: a designer's
+component library cannot live somewhere a deploy erases.
+
+### Postgres
+
+`render.yaml` declares a free managed database and injects its `DATABASE_URL`, so **New →
+Blueprint** provisions it with no manual step. Anywhere else, point `DATABASE_URL` at any
+Postgres 12+ instance. TLS verification is relaxed for non-local hosts, since managed providers
+(Render included) terminate TLS with a certificate that does not chain to the default CA bundle.
+
+The schema in `lib/db.js` is created on boot and is idempotent — safe on every start, and the
+single place the shape is declared. Records are stored as `JSONB` with a few columns promoted
+out of them (`name`, `status`, `published_version`, `ever_published`, `updated_at`): the JSONB
+is the source of truth, and the columns exist so listing is indexed and the data is legible at a
+`psql` prompt. Columns added after the first deploy arrive through
+`ALTER TABLE … ADD COLUMN IF NOT EXISTS`, because `CREATE TABLE IF NOT EXISTS` is a no-op
+against a table that already exists.
+
+### Why there is still an in-memory snapshot
+
+`render.assemble()` resolves a component name to HTML **synchronously**, deep inside a call
+stack that is sync all the way down. A database is not. Rather than make assembly async — which
+would ripple through the render, slice and Klaviyo paths for no benefit — the published library
+is held in memory:
+
+- every write refreshes it immediately, so this instance is never stale to itself;
+- each `/api/*` request refreshes it if it is older than `STUDIO_CACHE_MS` (default 5000), which
+  bounds how long a *second* instance can serve a library another instance has already changed;
+- the snapshot query is narrowed to components with at least one published version
+  (`WHERE ever_published`), so drafts and long version histories stay out of the hot path.
+
+If you run more than one instance, `STUDIO_CACHE_MS` is the staleness window to think about.
 
 ## Tests
 `npm test` (zero-dependency runner). It asserts the two standing guardrails — every
@@ -312,8 +370,20 @@ descender padding and the conditional-CTA wrapper, that its guardrails fire (rot
 HTML, merge tag in a raster, missing alt, bad token name, canvas overflow), that published
 versions are immutable and version-pinned references keep resolving after a later publish or an
 unpublish, that a published upgrade shadows its shipped template and reverts on unpublish, and
-that brand overrides reach components and reset cleanly. The stores are pointed at a scratch
-`DATA_DIR`, so a test run never touches real designs.
+that a palette override reaches both a component compiled before the edit and a shipped
+template, in one pass that does not cascade when one colour's override is another's baseline.
+
+The Studio suite picks its driver from `DATABASE_URL` exactly as the app does, so:
+
+```bash
+npm test                                   # disk driver
+DATABASE_URL=postgres://… npm test         # the identical assertions against Postgres,
+                                           # plus that writes really land as rows
+```
+
+The disk run is pointed at a scratch `DATA_DIR`; the Postgres run truncates its tables at the
+start and end, so neither ever touches real designs. **Point it at a scratch database, not a
+production one.**
 
 ## Saving designs (persistence)
 **Save** stores the current design; **My designs** lists them to reopen, **clone**, or delete.

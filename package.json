@@ -7,10 +7,14 @@
   "scripts": {
     "start": "node server.js",
     "parse": "node lib/parseTemplates.js",
-    "test": "node test/run.js"
+    "test": "node test/run.js",
+    "test:pg": "node -e \"if(!process.env.DATABASE_URL){console.error('set DATABASE_URL to a scratch Postgres database');process.exit(1)}\" && node test/run.js"
   },
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "pg": "^8.23.0",
     "puppeteer": "^22.0.0"
   }
 }

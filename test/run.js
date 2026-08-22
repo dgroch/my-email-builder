@@ -879,12 +879,24 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
 // The load-bearing claim of the Studio is that a designer-authored component is not a special
 // case: it compiles to the same artefact a hand-written template is, and every downstream
 // consumer therefore handles it unchanged. These assertions hold that claim up.
-{
+// Driver is chosen by DATABASE_URL exactly as it is in production, so `npm test` covers the
+// disk driver and `DATABASE_URL=… npm test` runs the identical assertions against Postgres.
+async function studioSuite() {
   const { compileComponent } = require('../lib/compileComponent');
   const componentStore = require('../lib/componentStore');
   const templateSource = require('../lib/templateSource');
   const brandTokens = require('../lib/brandTokens');
   const layoutStore = require('../lib/layoutStore');
+  const db = require('../lib/db');
+  const driver = db.enabled ? 'postgres' : 'disk';
+  eq(componentStore.backend, driver, `component store uses the ${driver} driver`);
+  eq(layoutStore.backend, driver, `layout store uses the ${driver} driver`);
+
+  // A Postgres run reuses one database, so start from a clean slate rather than inheriting
+  // records from a previous run.
+  if (db.enabled) await db.query('TRUNCATE studio_components, studio_layouts, studio_brand, designs');
+  await componentStore.refresh();
+  await brandTokens.refresh();
 
   const docFor = (over = {}) => ({
     mode: 'designed',
@@ -958,19 +970,19 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   ok(overflow.warnings.some((w) => w.code === 'overflow'), 'content past the canvas bottom is flagged as cropped');
 
   // ── store: versions are immutable, publishing is reversible ───────────────────────────
-  const rec0 = componentStore.create({ title: 'Studio spec', group: 'blocks', slug: 'studio-spec', mode: 'designed' });
+  const rec0 = await componentStore.create({ title: 'Studio spec', group: 'blocks', slug: 'studio-spec', mode: 'designed' });
   eq(rec0.name, 'blocks/studio-spec', 'a new component takes its group/slug name');
   eq(rec0.status, 'draft', 'a new component starts as a draft');
   eq(rec0.publishedVersion, null, 'a new component publishes nothing');
 
-  componentStore.saveDoc(rec0.id, { doc: docFor() });
+  await componentStore.saveDoc(rec0.id, { doc: docFor() });
   ok(!templateSource.resolve('blocks/studio-spec'), 'an unpublished draft is invisible to campaigns');
 
-  const v1 = componentStore.cutVersion(rec0.id, compileComponent(docFor(), { name: 'blocks/studio-spec', version: 1 }), 'first');
+  const v1 = await componentStore.cutVersion(rec0.id, compileComponent(docFor(), { name: 'blocks/studio-spec', version: 1 }), 'first');
   eq(v1.version, 1, 'the first cut version is v1');
   ok(!templateSource.resolve('blocks/studio-spec'), 'cutting a version still does not publish it');
 
-  componentStore.publish(rec0.id, 1);
+  await componentStore.publish(rec0.id, 1);
   const resolved = templateSource.resolve('blocks/studio-spec');
   ok(resolved && resolved.source === 'authored', 'a published component resolves for campaigns');
   eq(resolved.version, 1, 'it resolves to the published version');
@@ -981,9 +993,9 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   // whether or not pinning worked.
   const docV2 = docFor();
   docV2.elements.find((e) => e.id === 'p1').rotation = -6;
-  componentStore.saveDoc(rec0.id, { doc: docV2 });
-  componentStore.cutVersion(rec0.id, compileComponent(docV2, { name: 'blocks/studio-spec', version: 2 }), 'reworded');
-  componentStore.publish(rec0.id, 2);
+  await componentStore.saveDoc(rec0.id, { doc: docV2 });
+  await componentStore.cutVersion(rec0.id, compileComponent(docV2, { name: 'blocks/studio-spec', version: 2 }), 'reworded');
+  await componentStore.publish(rec0.id, 2);
   eq(templateSource.resolve('blocks/studio-spec').version, 2, 'the newest published version wins by default');
   const pinned = templateSource.resolve('blocks/studio-spec@1');
   ok(pinned && pinned.version === 1, 'a version-pinned reference still resolves to the old version');
@@ -993,32 +1005,32 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
     'and the unpinned reference does pick up the newly published version');
 
   // Unpublishing is the escape hatch that makes every upgrade reversible without a deploy.
-  componentStore.unpublish(rec0.id);
+  await componentStore.unpublish(rec0.id);
   ok(!templateSource.resolve('blocks/studio-spec'), 'unpublishing withdraws the component from campaigns');
   ok(templateSource.resolve('blocks/studio-spec@1'), 'a pinned version keeps resolving after unpublish');
-  componentStore.publish(rec0.id, 2);
+  await componentStore.publish(rec0.id, 2);
 
   // A component that has ever shipped is archived rather than deleted, so pinned versions live.
-  componentStore.remove(rec0.id);
-  eq(componentStore.get(rec0.id).status, 'archived', 'a previously-published component is archived, not deleted');
+  await componentStore.remove(rec0.id);
+  eq((await componentStore.get(rec0.id)).status, 'archived', 'a previously-published component is archived, not deleted');
   ok(templateSource.resolve('blocks/studio-spec@2'), 'its published versions still resolve after archiving');
 
   // ── shadowing a shipped component (the "upgrade the library" half of the brief) ────────
   const shippedHtml = templateSource.resolve('sections/button');
   ok(shippedHtml && shippedHtml.source === 'disk', 'a shipped component resolves from disk by default');
-  const up = componentStore.create({ title: 'Button', group: 'sections', slug: 'button', mode: 'live', shadowsShipped: true });
+  const up = await componentStore.create({ title: 'Button', group: 'sections', slug: 'button', mode: 'live', shadowsShipped: true });
   eq(up.name, 'sections/button', 'an upgrade keeps the shipped name rather than being renamed aside');
   const upDoc = {
     mode: 'live', canvas: { height: 120, background: '#ffffff' },
     elements: [{ id: 'b', type: 'button', name: 'CTA', label: 'Shop', labelToken: 'CTA_TEXT', urlToken: 'CTA_URL', order: 0 }],
   };
-  componentStore.saveDoc(up.id, { doc: upDoc });
-  componentStore.cutVersion(up.id, compileComponent(upDoc, { name: 'sections/button', mode: 'live', version: 1 }), 'upgrade');
-  componentStore.publish(up.id, 1);
+  await componentStore.saveDoc(up.id, { doc: upDoc });
+  await componentStore.cutVersion(up.id, compileComponent(upDoc, { name: 'sections/button', mode: 'live', version: 1 }), 'upgrade');
+  await componentStore.publish(up.id, 1);
   eq(templateSource.resolve('sections/button').source, 'authored', 'a published upgrade overrides the shipped template');
   ok(templateSource.htmlOnlyExtras().includes('button'),
     'a live-HTML authored component joins the html-only list, so the push keeps it as real markup');
-  componentStore.unpublish(up.id);
+  await componentStore.unpublish(up.id);
   eq(templateSource.resolve('sections/button').source, 'disk', 'unpublishing reverts to the shipped template');
 
   // ── an authored component actually assembles into a campaign ──────────────────────────
@@ -1038,28 +1050,45 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   // ── brand primitives ──────────────────────────────────────────────────────────────────
   const base = brandTokens.getBrand();
   eq(base.colours.clay, '#D8CCBE', 'the brand baseline comes from the manifest locked_styles');
-  brandTokens.setBrand({ colours: { clay: '#CCBBAA', not_a_colour: '#123456', border: 'chartreuse' } });
+  await brandTokens.setBrand({ colours: { clay: '#CCBBAA', not_a_colour: '#123456', border: 'chartreuse' } });
   const edited = brandTokens.getBrand();
   eq(edited.colours.clay, '#CCBBAA', 'a valid palette override is applied');
   ok(!('not_a_colour' in edited.colours), 'an unknown palette key is rejected, not invented');
   eq(edited.colours.border, base.colours.border, 'a non-hex value is rejected rather than written through');
   ok(edited.overridden.colours.includes('clay'), 'the override is reported as changed from the baseline');
   ok(brandTokens.affectedBy('clay').length > 0, 'the blast radius of a palette change is knowable before publishing');
-  brandTokens.setBrand({ colours: { clay: '#D8CCBE' } });
+  await brandTokens.setBrand({ colours: { clay: '#D8CCBE' } });
   ok(!brandTokens.getBrand().overridden.colours.includes('clay'),
     'setting a colour back to its baseline clears the override rather than pinning it');
 
-  // A brand edit reaches components: the compiler resolves colours through the merged brand.
-  brandTokens.setBrand({ colours: { clay: '#112233' } });
+  // A palette edit has to reach components that were compiled before it — including shipped
+  // templates, which are static files nobody rewrites. That works because a compiled template
+  // always speaks the *baseline* palette and the override is applied at assembly.
   const clayDoc = { mode: 'designed', canvas: { height: 100 }, elements: [{ id: 'p', type: 'panel', name: 'P', w: 600, h: 80, bgKey: 'clay' }] };
-  ok(/#112233/.test(compileComponent(clayDoc, { name: 'blocks/clay', version: 1 }).html),
-    'a component referencing a brand colour picks up the edited value');
-  brandTokens.resetBrand();
-  ok(/#D8CCBE/.test(compileComponent(clayDoc, { name: 'blocks/clay', version: 1 }).html),
+  await brandTokens.setBrand({ colours: { clay: '#112233' } });
+  const clayCompiled = compileComponent(clayDoc, { name: 'blocks/clay', version: 1 }).html;
+  ok(/#D8CCBE/i.test(clayCompiled) && !/#112233/.test(clayCompiled),
+    'a compiled template bakes the baseline colour, never the current override — so a published version never needs rewriting');
+  ok(/#112233/.test(brandTokens.applyOverrides(clayCompiled)),
+    'the override is applied at assembly, so a component compiled before the edit still picks it up');
+
+  const shippedClay = fs.readFileSync(path.join(DS, 'templates', 'sections', 'three-column-steps-clay.html'), 'utf8');
+  ok(/#112233/.test(brandTokens.applyOverrides(shippedClay)),
+    'a palette edit reaches shipped templates too, which is what the Brand tab promises');
+
+  // Sequential per-colour replacement would cascade here: clay's override is clay_50's
+  // baseline, so a second pass would rewrite what the first pass just wrote.
+  await brandTokens.setBrand({ colours: { clay: '#EBE5DF', clay_50: '#00ff00' } });
+  const cascade = brandTokens.applyOverrides('<i>#D8CCBE</i><b>#EBE5DF</b>');
+  ok(/#EBE5DF/i.test(cascade) && /#00ff00/i.test(cascade),
+    'overrides are applied in one pass, so one colour mapping onto another does not cascade');
+
+  await brandTokens.resetBrand();
+  eq(brandTokens.applyOverrides('<i>#D8CCBE</i>'), '<i>#D8CCBE</i>',
     'resetting the brand restores the shipped value everywhere');
 
   // ── layouts ───────────────────────────────────────────────────────────────────────────
-  const lay = layoutStore.create({
+  const lay = await layoutStore.create({
     name: 'Range launch — photo-led', objective: 'range_launch',
     blocks: [{ component: 'header' }, { component: 'heroes/hero-a' }, { component: 'footer' }, { component: '' }],
   });
@@ -1069,14 +1098,33 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   eq(layCampaign.blocks.length, 3, 'a layout opens as a campaign skeleton');
   ok(layCampaign.blocks.every((b) => b.tokens && Object.keys(b.tokens).length === 0),
     'a layout carries structure only — no copy');
-  layoutStore.remove(lay.id);
-  ok(!layoutStore.get(lay.id), 'a layout can be deleted');
+  await layoutStore.remove(lay.id);
+  ok(!await layoutStore.get(lay.id), 'a layout can be deleted');
+
+  // Durability is the whole point of the Postgres driver: prove a record written through the
+  // store is really in the table, not just in the in-memory snapshot.
+  if (db.enabled) {
+    const fresh = await componentStore.create({ title: 'Durability probe', group: 'blocks', mode: 'designed' });
+    const row = await db.query('SELECT id, name, status FROM studio_components WHERE id = $1', [fresh.id]);
+    eq(row.rows.length, 1, 'a created component is a real row in Postgres');
+    eq(row.rows[0].name, fresh.name, 'the promoted name column matches the record');
+    await componentStore.remove(fresh.id);
+    const gone = await db.query('SELECT id FROM studio_components WHERE id = $1', [fresh.id]);
+    eq(gone.rows.length, 0, 'deleting a never-published component removes the row');
+    await db.query('TRUNCATE studio_components, studio_layouts, studio_brand, designs');
+  }
 }
 
 // ── report ────────────────────────────────────────────────────────────────────────────
-if (failures.length) {
-  console.error(`\n✗ ${failures.length} failure(s), ${passed} passed:\n`);
-  for (const f of failures) console.error('  • ' + f);
-  process.exit(1);
-}
-console.log(`\n✓ all ${passed} assertions passed\n`);
+studioSuite()
+  .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
+  .then(async () => {
+    try { await require('../lib/db').close(); } catch (_) { /* no pool to close */ }
+    const driver = process.env.DATABASE_URL ? 'postgres' : 'disk';
+    if (failures.length) {
+      console.error(`\n✗ ${failures.length} failure(s), ${passed} passed (studio driver: ${driver}):\n`);
+      for (const f of failures) console.error('  • ' + f);
+      process.exit(1);
+    }
+    console.log(`\n✓ all ${passed} assertions passed (studio driver: ${driver})\n`);
+  });

@@ -1,5 +1,15 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 # In Render: New → Blueprint → connect the repo → this file is auto-detected.
+# Managed Postgres. Everything the Studio owns (authored components and their versions,
+# campaign layouts, brand overrides) plus saved designs live here, so nothing is lost on a
+# redeploy — the free plan has no persistent disk, and DATA_DIR is wiped every deploy.
+# Render generates the credentials and injects them as DATABASE_URL below.
+databases:
+  - name: email-builder-db
+    plan: free
+    databaseName: emailbuilder
+    user: emailbuilder
+
 services:
   - type: web
     name: my-email-builder
@@ -11,13 +21,21 @@ services:
     envVars:
       - key: CHROMIUM_PATH
         value: /usr/bin/chromium
-      # Saved designs are stored in a Notion database (durable across redeploys),
-      # so no persistent disk / paid plan is required. Set these in the Render
-      # dashboard (kept out of the blueprint since they're secrets):
+      - key: DATABASE_URL
+        fromDatabase:
+          name: email-builder-db
+          property: connectionString
+      # Storage backends, most durable first. Saved designs go to Notion when it is
+      # configured, otherwise to Postgres (DATABASE_URL above), otherwise to local
+      # disk at DATA_DIR — which is ephemeral on the free plan. The Studio's own
+      # records always use Postgres when DATABASE_URL is set. GET /api/health
+      # reports which backend each store resolved to.
+      # Optional, only if you want designs in Notion rather than Postgres (set in
+      # the Render dashboard, kept out of the blueprint since they're secrets):
       #   NOTION_TOKEN        — internal integration secret (https://www.notion.so/my-integrations)
       #   NOTION_DESIGNS_DB   — the "Email Designs" database id
-      # If NOTION_TOKEN is unset, the app falls back to local-disk storage at
-      # DATA_DIR (ephemeral unless you add a persistent disk + paid plan).
+      #   STUDIO_CACHE_MS     — optional, default 5000. How long an instance may serve a
+      #                         published library another instance has already changed.
       #
       # Campaign generator ("Create campaign" button → POST /api/campaigns/generate).
       # The system prompt + user template are bundled under lib/prompts/. The
