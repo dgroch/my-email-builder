@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fig &amp; Bloom · Design Studio</title>
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/api/studio/fonts.css">
+<link rel="stylesheet" href="/studio.css">
+</head>
+<body class="studio">
+
+<header class="topbar">
+  <div class="brand">Fig<span>&amp;</span>Bloom <em>design studio</em></div>
+  <nav class="mode-toggle" role="tablist">
+    <button data-view="components" class="seg active" role="tab">Components</button>
+    <button data-view="layouts" class="seg" role="tab">Layouts</button>
+    <button data-view="brand" class="seg" role="tab">Brand</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="actions">
+    <span id="saveState" class="save-state"></span>
+    <a class="linkbtn" href="/">Back to builder</a>
+  </div>
+</header>
+
+<!-- ══ Components: list ══════════════════════════════════════════════════════ -->
+<section id="viewComponents" class="view">
+  <div class="view-head">
+    <div>
+      <h1>Components</h1>
+      <p class="lede">Create a new component, or upgrade one that already ships. Nothing you make here
+      reaches a campaign until it is published.</p>
+    </div>
+    <div class="actions">
+      <button id="btnNew" class="primary">New component</button>
+      <button id="btnUpgrade" class="ghost">Upgrade a shipped one</button>
+    </div>
+  </div>
+  <div id="componentList" class="card-grid"></div>
+
+  <h2 class="section-h">Shipped library <span class="count" id="shippedCount"></span></h2>
+  <p class="lede">The components that ship in the repo. Upgrading one creates an authored version that
+  overrides it — reversible at any time by unpublishing.</p>
+  <div id="shippedList" class="chip-grid"></div>
+</section>
+
+<!-- ══ Components: editor ════════════════════════════════════════════════════ -->
+<section id="viewEditor" class="view editor" hidden>
+  <div class="editor-bar">
+    <button id="btnBack" class="ghost mini">← All components</button>
+    <input id="edTitle" class="title-input" placeholder="Component name">
+    <span id="edName" class="mono-tag"></span>
+    <span id="edStatus" class="status-chip"></span>
+    <div class="spacer"></div>
+    <label class="inline-check" title="Designed blocks rasterise to a PNG on publish, so overlap and rotation are safe. Live-HTML blocks ship as real markup and stay in flow.">
+      <select id="edMode" class="mini-select">
+        <option value="designed">Designed block — rasterised</option>
+        <option value="live">Live HTML — real markup</option>
+      </select>
+    </label>
+    <button id="btnPreview" class="ghost">Preview in email</button>
+    <button id="btnSave" class="ghost">Save draft</button>
+    <button id="btnVersion" class="ghost">Cut version</button>
+    <button id="btnSubmit" class="primary">Submit for review</button>
+    <button id="btnPublish" class="primary" hidden>Publish</button>
+  </div>
+
+  <div class="editor-body">
+    <!-- left rail -->
+    <aside class="rail left">
+      <div class="rail-sec">
+        <h3>Add</h3>
+        <div class="add-grid">
+          <button data-add="text">Text</button>
+          <button data-add="image">Image</button>
+          <button data-add="button">Button</button>
+          <button data-add="panel">Panel</button>
+          <button data-add="rule">Rule</button>
+          <button data-add="illo">Illustration</button>
+          <button data-add="spacer">Spacer</button>
+        </div>
+      </div>
+      <div class="rail-sec grow">
+        <h3>Layers <span class="hint">front to back</span></h3>
+        <ul id="layers" class="layers"></ul>
+      </div>
+      <div class="rail-sec">
+        <h3>Reference <span class="hint">Figma export</span></h3>
+        <p class="rail-note">Drop a frame exported from Figma behind the canvas and build on top of it.</p>
+        <input id="refFile" type="file" accept="image/*" hidden>
+        <button id="btnRef" class="wide ghost">Choose image…</button>
+        <div id="refControls" hidden>
+          <label class="slider">Opacity <input id="refOpacity" type="range" min="0" max="100" value="45"></label>
+          <label class="slider">Scale <input id="refScale" type="range" min="25" max="200" value="100"></label>
+          <div class="row2">
+            <label>X <input id="refX" type="number" value="0"></label>
+            <label>Y <input id="refY" type="number" value="0"></label>
+          </div>
+          <div class="row2">
+            <button id="btnRefToggle" class="mini ghost">Hide</button>
+            <button id="btnRefClear" class="mini ghost">Remove</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- canvas -->
+    <div class="canvas-wrap">
+      <div class="canvas-bar">
+        <span class="mono-tag" id="canvasDims">600 × —</span>
+        <label class="inline">Height <input id="edHeight" type="number" min="40" step="10"></label>
+        <label class="inline">Background <input id="edBg" type="text" class="hex"></label>
+        <div class="spacer"></div>
+        <label class="inline">Zoom
+          <select id="edZoom" class="mini-select">
+            <option value="0.5">50%</option><option value="0.75">75%</option>
+            <option value="1" selected>100%</option><option value="1.25">125%</option>
+          </select>
+        </label>
+      </div>
+      <div class="canvas-scroll">
+        <div id="stageOuter" class="stage-outer">
+          <img id="refImg" class="ref-img" hidden alt="">
+          <div id="stage" class="stage"></div>
+          <div id="selBox" class="sel-box" hidden>
+            <span class="h nw"></span><span class="h ne"></span><span class="h sw"></span><span class="h se"></span>
+            <span class="h e"></span><span class="h s"></span>
+          </div>
+        </div>
+      </div>
+      <div id="guardrails" class="guardrails"></div>
+    </div>
+
+    <!-- right rail -->
+    <aside class="rail right">
+      <div id="inspector" class="rail-sec grow"></div>
+      <div class="rail-sec">
+        <h3>Component</h3>
+        <label class="fld">Group
+          <select id="edGroup">
+            <option value="heroes">heroes</option><option value="blocks">blocks</option>
+            <option value="sections">sections</option><option value="products">products</option>
+            <option value="dividers">dividers</option>
+          </select>
+        </label>
+        <label class="fld">Slug <input id="edSlug" type="text"></label>
+        <label class="fld">What it's for
+          <textarea id="edDesc" rows="3" placeholder="One line a campaign builder can choose on."></textarea>
+        </label>
+        <div id="versionList" class="versions"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ══ Layouts ═══════════════════════════════════════════════════════════════ -->
+<section id="viewLayouts" class="view" hidden>
+  <div class="view-head">
+    <div>
+      <h1>Campaign layouts</h1>
+      <p class="lede">The structural half of a campaign — which components, in what order — with no copy.
+      A layout answers "what does a range launch look like" once, instead of from memory each time.</p>
+    </div>
+    <div class="actions"><button id="btnNewLayout" class="primary">New layout</button></div>
+  </div>
+  <div id="layoutList" class="card-grid"></div>
+  <div id="layoutEditor" hidden></div>
+</section>
+
+<!-- ══ Brand ═════════════════════════════════════════════════════════════════ -->
+<section id="viewBrand" class="view" hidden>
+  <div class="view-head">
+    <div>
+      <h1>Brand primitives</h1>
+      <p class="lede">The palette and type ramp every component inherits. These are the highest
+      blast-radius controls in the Studio — each swatch shows how many components it touches
+      before you change it.</p>
+    </div>
+    <div class="actions">
+      <button id="btnBrandReset" class="ghost">Reset to shipped</button>
+      <button id="btnBrandSave" class="primary">Save brand</button>
+    </div>
+  </div>
+  <h2 class="section-h">Palette</h2>
+  <div id="brandColours" class="swatch-grid"></div>
+  <h2 class="section-h">Type ramp</h2>
+  <div id="brandType" class="type-grid"></div>
+</section>
+
+<div id="modal" class="modal" hidden><div class="modal-inner"><button id="modalClose" class="modal-x">×</button><div id="modalBody"></div></div></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="/studio.js"></script>
+</body>
+</html>

@@ -6,8 +6,14 @@
 const fs = require('fs');
 const path = require('path');
 
+const os = require('os');
+
 const ROOT = path.join(__dirname, '..');
 const DS = path.join(ROOT, 'design-system');
+
+// The Studio stores are disk-backed and read DATA_DIR when they load, so point them at a
+// scratch directory before anything requires them — a test run must never touch real designs.
+process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'eb-studio-test-'));
 
 const { buildSchema } = require('../lib/parseTemplates');
 const { OBJECTIVES, OBJECTIVE_GUIDANCE, COMPONENT_INTENT } = require('../lib/componentStrategy');
@@ -27,6 +33,7 @@ const names = new Set(schema.components.map((c) => c.name));
 // ── Guardrail: every schema component name resolves to an existing template file ──────
 // This single check prevents whole classes of the group-prefix bug.
 for (const c of schema.components) {
+  if (c.authored) continue; // authored components resolve to a published version, not a file
   ok(fs.existsSync(path.join(ROOT, c.file)), `template file missing for component '${c.name}': ${c.file}`);
 }
 
@@ -865,6 +872,205 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
     ok(ex.subjectLine && String(ex.subjectLine).trim(), `exemplar '${ex.id}' carries a subjectLine`);
     ok(ex.previewText && String(ex.previewText).trim(), `exemplar '${ex.id}' carries previewText`);
   }
+}
+
+// ══ Studio: authoring, compiling, versioning and publishing components ═══════════════════
+//
+// The load-bearing claim of the Studio is that a designer-authored component is not a special
+// case: it compiles to the same artefact a hand-written template is, and every downstream
+// consumer therefore handles it unchanged. These assertions hold that claim up.
+{
+  const { compileComponent } = require('../lib/compileComponent');
+  const componentStore = require('../lib/componentStore');
+  const templateSource = require('../lib/templateSource');
+  const brandTokens = require('../lib/brandTokens');
+  const layoutStore = require('../lib/layoutStore');
+
+  const docFor = (over = {}) => ({
+    mode: 'designed',
+    canvas: { height: 520, background: '#ffffff' },
+    elements: [
+      { id: 'i1', type: 'image', name: 'Hero', x: 0, y: 0, w: 600, h: 400, token: 'HERO_IMAGE_URL', src: 'https://example.com/a.jpg', alt: 'A bouquet' },
+      { id: 'p1', type: 'panel', name: 'Plate', x: 70, y: 300, w: 460, padding: 36, bgKey: '#ffffff', borderKey: 'border', borderWidth: 1, rotation: -2 },
+      { id: 't1', type: 'text', name: 'Script', parent: 'p1', order: 0, typeStyle: 'script-m', content: 'with love,', token: 'ACCENT_SCRIPT', align: 'center' },
+      { id: 't2', type: 'text', name: 'Headline', parent: 'p1', order: 1, typeStyle: 'display-m', tag: 'h1', content: 'When the card is the hard part', token: 'HEADLINE', align: 'center' },
+      { id: 'b1', type: 'button', name: 'CTA', parent: 'p1', order: 2, label: 'Shop the range', labelToken: 'CTA_TEXT', urlToken: 'CTA_URL', url: 'https://figandbloom.com' },
+    ],
+    ...over,
+  });
+
+  // ── the round-trip: compiled output parses back as a first-class component ─────────────
+  const compiled = compileComponent(docFor(), { name: 'blocks/studio-spec', title: 'Studio spec', version: 1 });
+  eq(compiled.errorCount, 0, 'a well-formed canvas compiles without errors');
+
+  const withAuthored = buildSchema(DS, {
+    extraTemplates: [{ name: 'blocks/studio-spec', html: compiled.html, version: 1, id: 'ctest-000001' }],
+  });
+  const parsed = withAuthored.components.find((c) => c.name === 'blocks/studio-spec');
+  ok(parsed, 'an authored component appears in the derived schema');
+  ok(parsed.authored, 'the schema marks it authored');
+  ok(parsed.designed, 'a designed-mode component is flagged DESIGNED BLOCK by its header');
+  ok(!parsed.draft, 'a published component header does not read as DRAFT');
+  ok(!parsed.static, 'a component with tokens is not flagged static');
+
+  const tok = (n) => parsed.tokens.find((t) => t.name === n);
+  ok(tok('HERO_IMAGE_URL'), 'the image slot survives the round-trip');
+  eq(tok('HERO_IMAGE_URL').type, 'image', 'an _URL image slot is typed as an image field');
+  eq(tok('ACCENT_SCRIPT').case, 'lower', 'a Cervanttis slot carries the lowercase case rule');
+  eq(tok('HEADLINE').case, 'sentence', 'a Lust slot carries the Sentence case rule');
+  eq(tok('CTA_URL').type, 'url', 'a URL slot is typed as a url field');
+
+  // ── invariants the compiler applies so a person cannot forget them ─────────────────────
+  ok(/font-family:'Cervanttis'[^"]*padding-bottom:0\.65em/.test(compiled.html),
+    'script text is compiled with the 0.65em descender padding (the overlap bug cannot be authored)');
+  ok(/\{\{#CTA_TEXT\}\}[\s\S]*\{\{\/CTA_TEXT\}\}/.test(compiled.html),
+    'a tokenised button compiles inside its conditional section, so a blank label drops the button');
+  ok(/rotate\(-2deg\)/.test(compiled.html), 'rotation survives in a designed (rasterised) block');
+  ok(/font-family:'Lust'/.test(compiled.html), 'the display role resolves to the locked Lust stack');
+
+  // ── guardrails that must fire ─────────────────────────────────────────────────────────
+  const liveRot = compileComponent(docFor({ mode: 'live' }), { name: 'sections/x', mode: 'live', version: 1 });
+  ok(liveRot.warnings.some((w) => w.code === 'live_rotation' && w.level === 'error'),
+    'rotation in a live-HTML component is an error, not a silent no-op');
+
+  const noAlt = compileComponent({
+    mode: 'designed', canvas: { height: 200 },
+    elements: [{ id: 'i', type: 'image', name: 'Photo', w: 600, h: 200, src: 'x.jpg' }],
+  }, { name: 'blocks/y', version: 1 });
+  ok(noAlt.warnings.some((w) => w.code === 'missing_alt'), 'an image with no alt text is flagged');
+
+  const badCase = compileComponent({
+    mode: 'designed', canvas: { height: 100 },
+    elements: [{ id: 't', type: 'text', name: 'S', typeStyle: 'script-m', content: 'With Love,' }],
+  }, { name: 'blocks/z', version: 1 });
+  ok(badCase.warnings.some((w) => w.code === 'case_violation'), 'capitals in a Cervanttis line are flagged');
+
+  const badToken = compileComponent({
+    mode: 'designed', canvas: { height: 100 },
+    elements: [{ id: 't', type: 'text', name: 'T', typeStyle: 'body-m', content: 'x', token: 'bad name!' }],
+  }, { name: 'blocks/z2', version: 1 });
+  ok(badToken.errorCount > 0, 'an invalid token name is a compile error');
+
+  const overflow = compileComponent({
+    mode: 'designed', canvas: { height: 100 },
+    elements: [{ id: 'i', type: 'image', name: 'Tall', x: 0, y: 0, w: 600, h: 400, src: 'x.jpg', alt: 'a' }],
+  }, { name: 'blocks/z3', version: 1 });
+  ok(overflow.warnings.some((w) => w.code === 'overflow'), 'content past the canvas bottom is flagged as cropped');
+
+  // ── store: versions are immutable, publishing is reversible ───────────────────────────
+  const rec0 = componentStore.create({ title: 'Studio spec', group: 'blocks', slug: 'studio-spec', mode: 'designed' });
+  eq(rec0.name, 'blocks/studio-spec', 'a new component takes its group/slug name');
+  eq(rec0.status, 'draft', 'a new component starts as a draft');
+  eq(rec0.publishedVersion, null, 'a new component publishes nothing');
+
+  componentStore.saveDoc(rec0.id, { doc: docFor() });
+  ok(!templateSource.resolve('blocks/studio-spec'), 'an unpublished draft is invisible to campaigns');
+
+  const v1 = componentStore.cutVersion(rec0.id, compileComponent(docFor(), { name: 'blocks/studio-spec', version: 1 }), 'first');
+  eq(v1.version, 1, 'the first cut version is v1');
+  ok(!templateSource.resolve('blocks/studio-spec'), 'cutting a version still does not publish it');
+
+  componentStore.publish(rec0.id, 1);
+  const resolved = templateSource.resolve('blocks/studio-spec');
+  ok(resolved && resolved.source === 'authored', 'a published component resolves for campaigns');
+  eq(resolved.version, 1, 'it resolves to the published version');
+
+  // Edit and publish again — the point of versioning is that v1 keeps rendering as it did.
+  // The v2 edit has to be one that reaches the compiled markup. Changing tokenised *copy*
+  // would not: it compiles to {{HEADLINE}} either way, and the assertion below would hold
+  // whether or not pinning worked.
+  const docV2 = docFor();
+  docV2.elements.find((e) => e.id === 'p1').rotation = -6;
+  componentStore.saveDoc(rec0.id, { doc: docV2 });
+  componentStore.cutVersion(rec0.id, compileComponent(docV2, { name: 'blocks/studio-spec', version: 2 }), 'reworded');
+  componentStore.publish(rec0.id, 2);
+  eq(templateSource.resolve('blocks/studio-spec').version, 2, 'the newest published version wins by default');
+  const pinned = templateSource.resolve('blocks/studio-spec@1');
+  ok(pinned && pinned.version === 1, 'a version-pinned reference still resolves to the old version');
+  ok(/rotate\(-2deg\)/.test(pinned.html) && !/rotate\(-6deg\)/.test(pinned.html),
+    'publishing v2 does not rewrite v1 — a campaign built against v1 renders as it was built');
+  ok(/rotate\(-6deg\)/.test(templateSource.resolve('blocks/studio-spec').html),
+    'and the unpinned reference does pick up the newly published version');
+
+  // Unpublishing is the escape hatch that makes every upgrade reversible without a deploy.
+  componentStore.unpublish(rec0.id);
+  ok(!templateSource.resolve('blocks/studio-spec'), 'unpublishing withdraws the component from campaigns');
+  ok(templateSource.resolve('blocks/studio-spec@1'), 'a pinned version keeps resolving after unpublish');
+  componentStore.publish(rec0.id, 2);
+
+  // A component that has ever shipped is archived rather than deleted, so pinned versions live.
+  componentStore.remove(rec0.id);
+  eq(componentStore.get(rec0.id).status, 'archived', 'a previously-published component is archived, not deleted');
+  ok(templateSource.resolve('blocks/studio-spec@2'), 'its published versions still resolve after archiving');
+
+  // ── shadowing a shipped component (the "upgrade the library" half of the brief) ────────
+  const shippedHtml = templateSource.resolve('sections/button');
+  ok(shippedHtml && shippedHtml.source === 'disk', 'a shipped component resolves from disk by default');
+  const up = componentStore.create({ title: 'Button', group: 'sections', slug: 'button', mode: 'live', shadowsShipped: true });
+  eq(up.name, 'sections/button', 'an upgrade keeps the shipped name rather than being renamed aside');
+  const upDoc = {
+    mode: 'live', canvas: { height: 120, background: '#ffffff' },
+    elements: [{ id: 'b', type: 'button', name: 'CTA', label: 'Shop', labelToken: 'CTA_TEXT', urlToken: 'CTA_URL', order: 0 }],
+  };
+  componentStore.saveDoc(up.id, { doc: upDoc });
+  componentStore.cutVersion(up.id, compileComponent(upDoc, { name: 'sections/button', mode: 'live', version: 1 }), 'upgrade');
+  componentStore.publish(up.id, 1);
+  eq(templateSource.resolve('sections/button').source, 'authored', 'a published upgrade overrides the shipped template');
+  ok(templateSource.htmlOnlyExtras().includes('button'),
+    'a live-HTML authored component joins the html-only list, so the push keeps it as real markup');
+  componentStore.unpublish(up.id);
+  eq(templateSource.resolve('sections/button').source, 'disk', 'unpublishing reverts to the shipped template');
+
+  // ── an authored component actually assembles into a campaign ──────────────────────────
+  const authoredCampaign = {
+    campaignName: 'Studio spec',
+    blocks: [{
+      component: 'blocks/studio-spec@2',
+      tokens: { HERO_IMAGE_URL: 'https://example.com/a.jpg', ACCENT_SCRIPT: 'with love,', HEADLINE: 'A headline', CTA_TEXT: 'Shop', CTA_URL: 'https://figandbloom.com' },
+    }],
+  };
+  const asm = render.assemble(authoredCampaign, { assetsBase: '/design-system/assets' });
+  eq(asm.unfilled.length, 0, 'a campaign using an authored component assembles with no unfilled tokens');
+  ok(/A headline/.test(asm.html), 'the campaign copy reaches the assembled HTML');
+  ok(!/\{\{[A-Z0-9_]+\}\}/.test(asm.html.split('COMPONENTS_END')[0].split('COMPONENTS_START')[1] || ''),
+    'no residual {{tokens}} survive assembly of an authored component');
+
+  // ── brand primitives ──────────────────────────────────────────────────────────────────
+  const base = brandTokens.getBrand();
+  eq(base.colours.clay, '#D8CCBE', 'the brand baseline comes from the manifest locked_styles');
+  brandTokens.setBrand({ colours: { clay: '#CCBBAA', not_a_colour: '#123456', border: 'chartreuse' } });
+  const edited = brandTokens.getBrand();
+  eq(edited.colours.clay, '#CCBBAA', 'a valid palette override is applied');
+  ok(!('not_a_colour' in edited.colours), 'an unknown palette key is rejected, not invented');
+  eq(edited.colours.border, base.colours.border, 'a non-hex value is rejected rather than written through');
+  ok(edited.overridden.colours.includes('clay'), 'the override is reported as changed from the baseline');
+  ok(brandTokens.affectedBy('clay').length > 0, 'the blast radius of a palette change is knowable before publishing');
+  brandTokens.setBrand({ colours: { clay: '#D8CCBE' } });
+  ok(!brandTokens.getBrand().overridden.colours.includes('clay'),
+    'setting a colour back to its baseline clears the override rather than pinning it');
+
+  // A brand edit reaches components: the compiler resolves colours through the merged brand.
+  brandTokens.setBrand({ colours: { clay: '#112233' } });
+  const clayDoc = { mode: 'designed', canvas: { height: 100 }, elements: [{ id: 'p', type: 'panel', name: 'P', w: 600, h: 80, bgKey: 'clay' }] };
+  ok(/#112233/.test(compileComponent(clayDoc, { name: 'blocks/clay', version: 1 }).html),
+    'a component referencing a brand colour picks up the edited value');
+  brandTokens.resetBrand();
+  ok(/#D8CCBE/.test(compileComponent(clayDoc, { name: 'blocks/clay', version: 1 }).html),
+    'resetting the brand restores the shipped value everywhere');
+
+  // ── layouts ───────────────────────────────────────────────────────────────────────────
+  const lay = layoutStore.create({
+    name: 'Range launch — photo-led', objective: 'range_launch',
+    blocks: [{ component: 'header' }, { component: 'heroes/hero-a' }, { component: 'footer' }, { component: '' }],
+  });
+  eq(lay.blocks.length, 3, 'a layout drops empty block entries');
+  eq(lay.status, 'draft', 'a new layout starts as a draft');
+  const layCampaign = layoutStore.toCampaign(lay);
+  eq(layCampaign.blocks.length, 3, 'a layout opens as a campaign skeleton');
+  ok(layCampaign.blocks.every((b) => b.tokens && Object.keys(b.tokens).length === 0),
+    'a layout carries structure only — no copy');
+  layoutStore.remove(lay.id);
+  ok(!layoutStore.get(lay.id), 'a layout can be deleted');
 }
 
 // ── report ────────────────────────────────────────────────────────────────────────────

@@ -72,6 +72,9 @@ git push -u origin main
 - **Saved designs** — **Save** a design to the server and reopen, **clone** or delete it later
   from **My designs**. Click a block in the preview to jump to its card on the left.
 - **Case validation** — warns + one-click fixes Cervanttis/Lust case violations as you type.
+- **Design Studio** (the **Studio** tab, `/studio`) — a visual authoring surface for the component
+  library itself: create and upgrade components on a 600px canvas, edit the brand primitives, and
+  define reusable campaign layouts. See *The Studio* below.
 - **Import / Export** — round-trip a `campaign.json`, or export the assembled HTML.
 
 ## Layout
@@ -82,7 +85,13 @@ lib/render.js             assembles the shell and rasterises (full PNG + per-blo
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
 lib/designs.js            designs backend: local-disk JSON store (fallback)
 lib/notionStore.js        designs backend: Notion database store (used when NOTION_TOKEN is set)
+lib/compileComponent.js   Studio: canvas document → a real design-system template
+lib/componentStore.js     Studio: authored components, immutable versions, publish/unpublish
+lib/templateSource.js     resolves a component name → template HTML (pin > authored > disk)
+lib/brandTokens.js        Studio: brand primitives (palette, type ramp) + override layer
+lib/layoutStore.js        Studio: authored campaign layouts (structure, no copy)
 public/                   editor UI (index.html, app.js, style.css)
+public/studio.*           the Design Studio (authoring canvas, brand editor, layouts)
 design-system/            bundled copy of the template library, shells, fonts, assets, manifest
 ```
 
@@ -105,6 +114,21 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | PUT  | `/api/designs/:id`    | `{name?, campaign?, …metadata}` | the updated design |
 | POST | `/api/designs/:id/clone` | `{name?}` | a new design copied from `:id` (starts as a fresh draft, not an example) |
 | DELETE | `/api/designs/:id`  | — | `{ok:true}` |
+| GET  | `/api/studio/components` | — | `{components:[…authored…], shipped:[…]}` — the Studio's component list |
+| POST | `/api/studio/components` | `{title, group, mode, slug?, shadowsShipped?}` | a new authored component (status `draft`) |
+| GET/PUT/DELETE | `/api/studio/components/:id` | `{doc?, title?, …}` | read / autosave the canvas document / archive |
+| POST | `/api/studio/components/:id/version` | `{note}` | cut an **immutable** version from the current document (400 if the compiler reports errors) |
+| POST | `/api/studio/components/:id/submit` | `{note}` | mark it `in_review` |
+| POST | `/api/studio/components/:id/publish` | `{version}` | publish that version — from here campaigns resolve it |
+| POST | `/api/studio/components/:id/unpublish` | — | withdraw it; a shadowed shipped template takes over again |
+| POST | `/api/studio/compile` | `{doc, meta}` | `{html, tokens, sampleTokens, warnings, errorCount}` — compile without saving (powers the live guardrail panel) |
+| POST | `/api/studio/preview` | `{doc, meta, tokens?}` | the working canvas assembled through the **real** preview pipeline |
+| GET  | `/api/studio/fonts.css` | — | the four brand faces, base64-embedded, so the canvas renders in real type |
+| GET/PUT | `/api/studio/brand` | `{colours?, typeScale?, bodyBackground?}` | brand primitives (merged baseline + overrides) |
+| POST | `/api/studio/brand/reset` | — | drop every override, back to the shipped values |
+| GET  | `/api/studio/brand/affected` | `?key=clay` | `{components:[…]}` — the blast radius of a palette change |
+| GET/POST | `/api/studio/layouts` | `{name, objective, blocks}` | authored campaign layouts |
+| GET/PUT/DELETE | `/api/studio/layouts/:id` | — | one layout; `…/:id/campaign` opens it as a campaign skeleton |
 
 A `campaign` is `{ campaignName, bodyBg, blocks:[{ component, tokens:{…}, palette? }] }`.
 
@@ -171,11 +195,125 @@ pushable by `designId` alone. See *Saving designs* for how the Notion backend st
 > `/api/schema` (now including intent + objectives) and the workflow rules live in the skill;
 > a second contract source would only add drift risk. See `docs/backend-tasks.md`.
 
+## The Studio — authoring components visually
+
+`/studio` (the **Studio** tab) is the authoring surface for the component library itself. It exists
+so a designer who is not a developer can create, upgrade and publish components without touching
+the repo, a template file or a manifest entry.
+
+### The idea that makes it work
+
+An authored component **compiles to an ordinary design-system template** — table HTML with
+`{{TOKEN}}` slots behind a leading `<!-- COMPONENT … TOKENS: … -->` header, exactly like a
+hand-written one. It is not a parallel format with its own renderer. That single decision is why
+`/api/schema`, the auto-generated form, `/api/validate`, the slice pipeline and the Klaviyo push
+all handle an authored component with **no code that knows it exists**: `lib/templateSource.js`
+answers "what HTML is this component?" and everything downstream just asks it.
+
+### Two modes, drawn along the rasterisation line
+
+The Studio gives different freedom either side of the line where email constraints stop mattering:
+
+| | **Designed block** | **Live HTML** |
+|---|---|---|
+| Ships as | a PNG slice | real markup |
+| Layout | free canvas — absolute position, overlap, rotation | flow only |
+| Why | the inbox receives an image, so Outlook's Word engine never sees the CSS | Word *does* lay this out, and merge tags must survive |
+| Refuses | a Klaviyo merge tag (every recipient would get a picture of `{% unsubscribe %}`) | rotation, overlap, absolute positioning |
+
+The compiler enforces this: rotation in a live-HTML component is a compile **error**, not a silent
+no-op, and a merge tag inside a rasterised block is refused outright.
+
+### Invariants the compiler applies, so nobody has to remember them
+
+- **Cervanttis descender padding.** Every script line compiles with `padding-bottom:0.65em`. The
+  overlap bug documented further down this README cannot be authored by hand.
+- **Locked font stacks.** The designer picks a *type role* (script / display / body / micro), never
+  a font stack — a fallback chain is a deliverability decision, not an aesthetic one.
+- **Case rules.** A slot on a Cervanttis role declares itself lowercase in its token description, so
+  `parseTemplates` reads the rule back and the builder's case validator enforces it. A capital in a
+  script line is flagged on the canvas as you type it.
+- **Conditional CTAs.** A tokenised button compiles inside `{{#CTA_TEXT}}…{{/CTA_TEXT}}`, so a
+  campaign that leaves the label blank drops the button instead of shipping an empty black
+  rectangle pointing at a raw `{{CTA_URL}}`.
+- **Palette resolution.** Colours resolve through the brand palette; an off-palette hex renders but
+  is flagged.
+
+Alt text, canvas overflow, unmarked slots and non-square buttons are surfaced in the same live
+guardrail strip under the canvas.
+
+### The Figma path
+
+The designer works in Figma first, so the canvas takes a **reference overlay**: drop a frame
+exported from Figma behind the canvas, set its opacity, scale and offset, and build on top of it.
+The canvas renders in the **real brand faces** (served base64-embedded from
+`/api/studio/fonts.css`, so it does not depend on the CDN being reachable) — a script headline
+judged in a fallback serif is not judged at all.
+
+### Draft → review → publish, and why versions are immutable
+
+Nothing an authored component does reaches a campaign until it is **published**.
+
+```
+draft ──save──▸ draft ──cut version──▸ v1 ──submit──▸ in_review ──publish──▸ live
+                                       │
+                                       └── v1 is frozen from here. Editing produces v2.
+```
+
+Publishing an edit **appends** a version; it never rewrites one. A campaign records the version it
+was built against and resolves it as `blocks/editorial-hero@2`, so publishing v3 today cannot
+restyle an email that shipped last month. A component that has ever published is **archived**
+rather than deleted, so those pinned versions keep resolving.
+
+### Upgrading a shipped component
+
+The brief is to upgrade the library as well as extend it, so an authored component may **shadow** a
+template shipped in the repo: publish `sections/button` from the Studio and it overrides
+`design-system/templates/sections/button.html` everywhere. **Unpublish and the shipped file takes
+over again** — every upgrade is reversible without a deploy.
+
+Upgrading pre-seeds the new canvas with the existing component's token contract, so the slots that
+saved campaigns already reference don't silently disappear.
+
+### Brand primitives
+
+The **Brand** tab edits the palette and type ramp every component inherits. This is the highest
+blast-radius surface in the tool, so each swatch reports what it touches (`clay` → 19 shipped
+components) *before* the change is saved, and **Reset to shipped** drops every override at once.
+Overrides live in `DATA_DIR/brand-tokens.json`; the manifest's `locked_styles` remains the
+baseline, and setting a value back to its baseline clears the override rather than pinning it.
+
+Unknown palette keys and non-hex values are rejected rather than written through, so a typo cannot
+invent a brand colour that no component references.
+
+### Campaign layouts
+
+The **Layouts** tab records the structural half of a campaign — which blocks, in what order, with
+no copy. It extends the objective taxonomy in `lib/componentStrategy.js` at runtime, so a new
+structure does not need a deploy.
+
+### Where it is stored
+
+Authored components, layouts and brand overrides are JSON under `DATA_DIR`
+(`components/`, `layouts/`, `brand-tokens.json`) — the same directory the disk designs backend
+uses. **On Render's free plan `DATA_DIR` is ephemeral**, so give the service a persistent disk (or
+port these stores to the Notion backend, as `lib/notionStore.js` does for designs) before a
+designer relies on it.
+
 ## Tests
 `npm test` (zero-dependency runner). It asserts the two standing guardrails — every
 `/api/schema` component `name` resolves to a real template file, and every `isExample` design
 assembles with zero `(missing template)` and zero unfilled tokens — plus the intent/objective
 table integrity and the validation behaviour.
+
+It also covers the Studio: that a compiled canvas round-trips back through `parseTemplates` as a
+first-class component (right field types, right case rules), that the compiler applies the
+descender padding and the conditional-CTA wrapper, that its guardrails fire (rotation in live
+HTML, merge tag in a raster, missing alt, bad token name, canvas overflow), that published
+versions are immutable and version-pinned references keep resolving after a later publish or an
+unpublish, that a published upgrade shadows its shipped template and reverts on unpublish, and
+that brand overrides reach components and reset cleanly. The stores are pointed at a scratch
+`DATA_DIR`, so a test run never touches real designs.
 
 ## Saving designs (persistence)
 **Save** stores the current design; **My designs** lists them to reopen, **clone**, or delete.
