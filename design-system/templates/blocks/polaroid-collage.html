@@ -29,6 +29,7 @@ RULES:
     below the attribution. The gap between the collage and the pull-quote is fixed design rhythm,
     not a lever — these tokens move the component's outer edges, which is what an author is
     reaching for when they want the block to breathe.
+  - Script line carries padding-bottom:0.65em — clears the Cervanttis descender ink (see README)
 -->
 <tr><td style="padding:0;background:#D8CCBE;">
 <style>
@@ -78,7 +79,7 @@ RULES:
       <!-- Fixed 40px separates the quote from the collage — design rhythm, not a lever. The
            block's own bottom edge is PADDING_BOTTOM on the cell above, so there is none here. -->
       <div class="pc-quote" style="text-align:center;padding:40px 72px 0;">
-        <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:rgba(0,0,0,0.55);line-height:1.0;margin:0 0 12px 0;">{{QUOTE_ACCENT}}</p>
+        <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:26px;color:rgba(0,0,0,0.55);line-height:1.0;padding-bottom:0.65em;margin:0 0 12px 0;">{{QUOTE_ACCENT}}</p>
         <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.4;max-width:430px;margin:0 auto 16px auto;">{{PULL_QUOTE}}</p>
         <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(0,0,0,0.55);margin:0;">{{QUOTE_ATTRIBUTION}}</p>
       </div>
