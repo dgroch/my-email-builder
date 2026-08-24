@@ -236,6 +236,87 @@ if (jt) {
   eq(region2.join(','), 'header,tile-1,tile-2', '2-up marks header + 2 tile regions (tile-3 region dropped)');
 }
 
+// ── Responsive assembly contract: 600px desktop, fluid/stacked mobile structure ───────
+// These are the three Week 1 candidate module families that exposed the shared overflow,
+// assembled through the real renderer with the shared header/footer. This is deliberately a
+// structural (non-browser) gate: runtime 390px measurements belong to the approved renderer lane.
+{
+  const componentNames = [
+    'header',
+    'blocks/image-text',
+    'sections/body-copy-plain',
+    'blocks/designed-product-card',
+    'sections/section-headline',
+    'products/card-horizontal',
+    'products/card-horizontal-reversed',
+    'footer',
+  ];
+  const blocks = componentNames.map((name) => {
+    const component = schema.components.find((c) => c.name === name);
+    ok(component, `responsive fixture component '${name}' exists`);
+    return component ? sampleData.sampleCampaignFor(component).blocks[0] : { component: name, tokens: {} };
+  });
+  const assembled = render.assemble({
+    campaignName: 'Responsive structural fixture',
+    bodyBg: '#2c2825',
+    blocks,
+  }, { assetsBase: '/design-system/assets' });
+  eq(assembled.unfilled.length, 0, 'responsive fixture assembles with no unfilled tokens');
+
+  const markup = render.stripDocComments(assembled.html);
+  const fixedTables = [...markup.matchAll(/<table\b[^>]*\bwidth="600"[^>]*>/gi)].map((m) => m[0]);
+  ok(fixedTables.length > componentNames.length, 'fixture contains nested 600px structural tables');
+  for (const tag of fixedTables) {
+    ok(/\bclass="[^"]*\b(?:ew|f600)\b[^"]*"/i.test(tag),
+      `every 600px structural table opts into the root or nested fluid contract: ${tag.slice(0, 100)}`);
+  }
+  ok(/<table\b[^>]*class="[^"]*\bew\b[^"]*"[^>]*width="600"[^>]*style="[^"]*width:600px;max-width:600px/i.test(markup),
+    'desktop root retains its 600px width attribute, inline width and max-width fallback');
+
+  const fullWidthImages = [...markup.matchAll(/<img\b[^>]*\bwidth="600"[^>]*>/gi)].map((m) => m[0]);
+  ok(fullWidthImages.length > 0, 'fixture contains shared full-width footer images');
+  for (const tag of fullWidthImages) {
+    ok(/\bclass="[^"]*\bfimg\b[^"]*"/i.test(tag) || /\bstyle="[^"]*\bwidth:\s*100%/i.test(tag),
+      `every 600px image has an explicit fluid-image contract: ${tag.slice(0, 100)}`);
+  }
+
+  ok(/<table\b[^>]*class="[^"]*\bfm\b[^"]*"[^>]*width="440"/i.test(markup)
+      || /<table\b[^>]*width="440"[^>]*class="[^"]*\bfm\b/i.test(markup),
+    'the 440px body-copy measure becomes fluid on narrow screens without losing its desktop width');
+  eq((markup.match(/class="[^"]*\bitc\b[^"]*"/g) || []).length, 2,
+    'image-text marks both columns for mobile stacking');
+  ok(/class="[^"]*\biti\b[^"]*"/.test(markup), 'image-text marks its structural image for fluid mobile sizing');
+  eq((markup.match(/class="[^"]*\bdpcc\b[^"]*"/g) || []).length, 2,
+    'designed-product-card marks both columns for mobile stacking');
+  ok(/class="[^"]*\bhi\b[^"]*"/.test(markup) && /class="[^"]*\bhinfo\b[^"]*"/.test(markup),
+    'horizontal product cards preserve their existing mobile stack classes');
+
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const mediaStart = shell.indexOf('@media only screen and (max-width:600px)');
+    const media = mediaStart < 0 ? '' : shell.slice(mediaStart, shell.indexOf('</style>', mediaStart));
+    ok(/\.f600\s*\{[^}]*width:\s*100%\s*!important;[^}]*max-width:\s*100%\s*!important;[^}]*\}/.test(media),
+      `${shellName} makes only opted-in 600px structural tables fluid`);
+    ok(/\.fm\s*\{[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
+      `${shellName} fluidises opted-in fixed text measures`);
+    ok(/\.itc\s*\{[^}]*display:\s*block\s*!important;[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
+      `${shellName} stacks image-text columns`);
+    ok(/\.iti\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*auto\s*!important;[^}]*\}/.test(media),
+      `${shellName} scales the image-text image without clipping`);
+    ok(/\.dpcc\s*\{[^}]*display:\s*block\s*!important;[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
+      `${shellName} stacks designed-product-card columns`);
+    ok(/\.hi\s+img\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*240px\s*!important;[^}]*\}/.test(media),
+      `${shellName} fills the existing 240px stacked product-image cell`);
+    ok(!/(?:^|\n)\s*(?:table|img|a)(?:\b|\[)/m.test(media),
+      `${shellName} does not globally resize semantic tables, images or CTA anchors`);
+  }
+
+  const buttonComponent = schema.components.find((c) => c.name === 'sections/button');
+  const buttonHtml = render.assemble(sampleData.sampleCampaignFor(buttonComponent), { assetsBase: '/a' }).html;
+  ok(/<a\b[^>]*display:inline-block[^>]*>/.test(buttonHtml),
+    'intrinsically sized live CTA remains an inline-block control');
+}
+
 // ── Dark mode: the production shell declares itself light-only ────────────────────────────
 // iOS/Apple Mail and Gmail auto-invert colours in dark mode, but they only invert LIVE HTML —
 // images are never touched. Our push is a mix (designed blocks rasterise to image slices,
