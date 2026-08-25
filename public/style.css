@@ -248,3 +248,6 @@ body.mode-library .campaign-meta,body.mode-library .actions{display:none;}
   margin-top:4px;min-height:1em;
 }
 .clc-detail a{color:var(--ink);}
+
+/* The Studio tab is a link, not a button — it is a separate page. */
+a.seg{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink);}

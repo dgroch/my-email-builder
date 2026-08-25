@@ -14,11 +14,21 @@ const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
 const campaignGenerator = require('./lib/campaignGenerator');
 const liveContext = require('./lib/liveContext');
-// Pick the designs backend: Notion (durable, survives redeploys) when configured,
-// else the local-disk store. Both expose the same list/get/create/update/clone/remove API.
+// ── Studio: the designer-facing authoring surface ────────────────────────────
+const componentStore = require('./lib/componentStore');
+const layoutStore = require('./lib/layoutStore');
+const templateSource = require('./lib/templateSource');
+const brandTokens = require('./lib/brandTokens');
+const { compileComponent } = require('./lib/compileComponent');
+const db = require('./lib/db');
+// Pick the designs backend, most durable first: Notion when configured, then Postgres when
+// DATABASE_URL is set, then the local-disk store. All three expose the same
+// list/get/create/update/clone/remove API.
 const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
   ? require('./lib/notionStore')
-  : require('./lib/designs');
+  : db.enabled
+    ? require('./lib/designsPg')
+    : require('./lib/designs');
 
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
@@ -27,8 +37,19 @@ const DS = render.DS;
 // The schema is derived from the (static at runtime) templates + manifest, so cache it.
 // Used by /api/schema and by the campaign validator. Restart the server to pick up
 // template edits.
+// The schema now folds in components published from the Studio, so it is cached against a
+// fingerprint of the Studio's state rather than forever: publishing a component or editing a
+// brand primitive invalidates it without a server restart.
 let _schema = null;
-function schema() { return _schema || (_schema = buildSchema(DS)); }
+let _schemaRev = null;
+function schema() {
+  const rev = templateSource.revision();
+  if (!_schema || _schemaRev !== rev) {
+    _schema = buildSchema(DS, { extraTemplates: templateSource.publishedForSchema() });
+    _schemaRev = rev;
+  }
+  return _schema;
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -74,8 +95,19 @@ const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://localhost:${PORT}`);
   const p = u.pathname;
   try {
+    // The render path resolves components and brand colours synchronously, so the Studio's
+    // published library is held in memory. Refresh it here — a no-op while warm — so a
+    // publish made by another instance is picked up within the cache TTL rather than
+    // requiring a restart.
+    if (p.startsWith('/api/')) {
+      await Promise.all([componentStore.refreshIfStale(), brandTokens.refreshIfStale()]);
+    }
     if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(res, path.join(ROOT, 'public', 'index.html'));
     if (req.method === 'GET' && (p === '/app.js' || p === '/library.js' || p === '/style.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
+    // The Studio is a separate page: a full-bleed canvas needs the whole viewport, and the
+    // builder's three-pane layout has nothing to offer an authoring surface.
+    if (req.method === 'GET' && (p === '/studio' || p === '/studio.html')) return serveFile(res, path.join(ROOT, 'public', 'studio.html'));
+    if (req.method === 'GET' && (p === '/studio.js' || p === '/studio.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
 
     // serve bundled design-system assets (for live-preview of designed blocks' {{ASSETS_BASE}})
     if (req.method === 'GET' && p.startsWith('/design-system/')) {
@@ -91,9 +123,13 @@ const server = http.createServer(async (req, res) => {
     // of this payload because the preview shell embeds fonts as large base64 blobs.
     if (req.method === 'GET' && p === '/api/gallery') {
       const s = schema();
+      const authoredSamples = templateSource.publishedSamples();
       const components = s.components.map((c) => ({
         name: c.name, group: c.group, designed: !!c.designed, static: !!c.static, draft: !!c.draft,
-        sampleTokens: sampleData.sampleTokensFor(c),
+        authored: !!c.authored, authoredVersion: c.authoredVersion, shadowsShipped: !!c.shadowsShipped,
+        // An authored component's samples are the copy the designer actually laid out on the
+        // canvas, so they beat the generated ones.
+        sampleTokens: { ...sampleData.sampleTokensFor(c), ...(authoredSamples[c.name] || {}) },
         variants: sampleData.variantsFor(c),
       }));
       return json(res, 200, { components });
@@ -434,16 +470,151 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Studio — the designer-facing authoring surface.
+    //
+    // Components authored here compile to ordinary design-system templates, so once a version
+    // is published every other route in this file (assemble / render / slices / klaviyo-draft)
+    // handles it without knowing it was authored rather than shipped.
+    // ══════════════════════════════════════════════════════════════════════════
+
+    // The canvas must render in the real brand faces — a script headline judged in a fallback
+    // serif is not judged at all. The preview shell already carries the four faces base64-embedded,
+    // so serve those @font-face rules rather than depending on the CDN being reachable.
+    if (p === '/api/health' && req.method === 'GET') {
+      return json(res, 200, {
+        ok: true,
+        designs: designs.backend,
+        studioComponents: componentStore.backend,
+        studioLayouts: layoutStore.backend,
+        brand: brandTokens.backend,
+        db: await db.health(),
+      });
+    }
+
+    if (p === '/api/studio/fonts.css' && req.method === 'GET') {
+      const shell = fs.readFileSync(path.join(DS, 'shell', 'shell-preview.html'), 'utf8');
+      const faces = shell.match(/@font-face\s*\{[^}]*\}/g) || [];
+      return send(res, 200, faces.join('\n'), { 'Content-Type': MIME['.css'], 'Cache-Control': 'public, max-age=3600' });
+    }
+
+    if (p === '/api/studio/components' && req.method === 'GET') {
+      // `shipped` lets the Studio offer "upgrade an existing component" alongside "create new".
+      const shipped = buildSchema(DS).components.map(c => ({ name: c.name, group: c.group, designed: !!c.designed, desc: c.desc }));
+      return json(res, 200, { components: await componentStore.list(), shipped });
+    }
+
+    if (p === '/api/studio/components' && req.method === 'POST') {
+      return json(res, 200, await componentStore.create(await readBody(req)));
+    }
+
+    // Compile a working canvas without saving it — powers the live guardrail panel, which has
+    // to react while the designer is still dragging things around.
+    if (p === '/api/studio/compile' && req.method === 'POST') {
+      const { doc, meta } = await readBody(req);
+      const out = compileComponent(doc || {}, meta || {});
+      // The canvas renders this HTML directly rather than through assemble(), so it needs the
+      // same brand-override pass the assembled email gets — otherwise the designer would be
+      // laying out against the baseline palette while the email ships the overridden one.
+      return json(res, 200, { ...out, html: brandTokens.applyOverrides(out.html) });
+    }
+
+    // Assemble the working canvas through the real preview pipeline (shell, embedded fonts,
+    // absolute asset URLs) so the designer is never previewing an approximation.
+    if (p === '/api/studio/preview' && req.method === 'POST') {
+      const { doc, meta, tokens } = await readBody(req);
+      const name = (meta && meta.name) || 'blocks/untitled';
+      const compiled = compileComponent(doc || {}, meta || {});
+      const campaign = { campaignName: (meta && meta.title) || 'Component preview', blocks: [{ component: name, tokens: { ...compiled.sampleTokens, ...(tokens || {}) } }] };
+      const { html, unfilled } = render.assemble(campaign, {
+        assetsBase: assetsBaseFor(req),
+        templateOverrides: { [name]: compiled.html },
+      });
+      return json(res, 200, { html, unfilled, warnings: compiled.warnings, tokens: compiled.tokens, sampleTokens: compiled.sampleTokens, mode: compiled.mode });
+    }
+
+    if (p.startsWith('/api/studio/components/')) {
+      const [id, action] = p.slice('/api/studio/components/'.length).split('/');
+      const rec = await componentStore.get(id);
+      if (!rec) return json(res, 404, { error: 'Component not found.' });
+
+      if (!action && req.method === 'GET') return json(res, 200, rec);
+      if (!action && req.method === 'PUT') return json(res, 200, await componentStore.saveDoc(id, await readBody(req)));
+      if (!action && req.method === 'DELETE') return json(res, 200, { ok: await componentStore.remove(id) });
+
+      // Cut an immutable version from the current document. Refused while the compiler is
+      // reporting errors — a version is meant to be publishable by definition.
+      if (action === 'version' && req.method === 'POST') {
+        const { note } = await readBody(req);
+        const compiled = compileComponent(rec.doc || {}, { name: rec.name, title: rec.title, slug: rec.slug, description: rec.description, author: rec.author, mode: rec.mode, version: (rec.currentVersion || 0) + 1 });
+        if (compiled.errorCount) return json(res, 400, { error: 'This component has unresolved errors.', warnings: compiled.warnings });
+        return json(res, 200, { version: await componentStore.cutVersion(id, compiled, note), warnings: compiled.warnings });
+      }
+
+      if (action === 'submit' && req.method === 'POST') {
+        const { note } = await readBody(req);
+        return json(res, 200, await componentStore.submitForReview(id, note));
+      }
+
+      if (action === 'publish' && req.method === 'POST') {
+        const { version } = await readBody(req);
+        const out = await componentStore.publish(id, version);
+        return out ? json(res, 200, out) : json(res, 400, { error: 'No such version.' });
+      }
+
+      if (action === 'unpublish' && req.method === 'POST') {
+        return json(res, 200, await componentStore.unpublish(id));
+      }
+
+      return json(res, 404, { error: 'Unknown component action.' });
+    }
+
+    // ── brand primitives ────────────────────────────────────────────────────────
+    if (p === '/api/studio/brand' && req.method === 'GET') return json(res, 200, brandTokens.getBrand());
+    if (p === '/api/studio/brand' && req.method === 'PUT') return json(res, 200, await brandTokens.setBrand(await readBody(req)));
+    if (p === '/api/studio/brand/reset' && req.method === 'POST') return json(res, 200, await brandTokens.resetBrand());
+    // "What does changing this swatch touch?" — asked before a brand edit is published, because
+    // one palette change restyles every component that references the colour.
+    if (p === '/api/studio/brand/affected' && req.method === 'GET') {
+      const key = u.searchParams.get('key') || '';
+      return json(res, 200, { key, components: brandTokens.affectedBy(key) });
+    }
+
+    // ── campaign layouts (skeletons) ────────────────────────────────────────────
+    if (p === '/api/studio/layouts' && req.method === 'GET') return json(res, 200, { layouts: await layoutStore.list() });
+    if (p === '/api/studio/layouts' && req.method === 'POST') return json(res, 200, await layoutStore.create(await readBody(req)));
+    if (p.startsWith('/api/studio/layouts/')) {
+      const [id, action] = p.slice('/api/studio/layouts/'.length).split('/');
+      const rec = await layoutStore.get(id);
+      if (!rec) return json(res, 404, { error: 'Layout not found.' });
+      if (action === 'campaign' && req.method === 'GET') return json(res, 200, layoutStore.toCampaign(rec));
+      if (!action && req.method === 'GET') return json(res, 200, rec);
+      if (!action && req.method === 'PUT') return json(res, 200, await layoutStore.update(id, await readBody(req)));
+      if (!action && req.method === 'DELETE') return json(res, 200, { ok: await layoutStore.remove(id) });
+    }
+
     send(res, 404, 'Not found');
   } catch (e) {
     json(res, 500, { error: String((e && e.stack) || e) });
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
-  console.log(`  designs store: ${designs.backend === 'notion' ? 'Notion database' : 'local disk (' + designs.DATA_DIR + ')'}\n`);
-});
+// Load the Studio's published library before the first request, so an authored component
+// resolves on the very first render rather than after the first cache refresh.
+Promise.all([componentStore.refresh(), brandTokens.refresh()])
+  .catch((e) => console.error('[studio] initial load failed:', e.message))
+  .then(() => {
+    server.listen(PORT, () => {
+      const designsWhere = designs.backend === 'notion' ? 'Notion database'
+        : designs.backend === 'postgres' ? 'Postgres (DATABASE_URL)'
+        : 'local disk (' + designs.DATA_DIR + ')';
+      console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
+      console.log(`  designs store: ${designsWhere}`);
+      console.log(`  studio store:  ${componentStore.backend === 'postgres' ? 'Postgres (DATABASE_URL)' : 'local disk — ephemeral on a container with no persistent disk'}\n`);
+    });
+  });
 
-process.on('SIGINT', async () => { await render.closeBrowser(); process.exit(0); });
-process.on('SIGTERM', async () => { await render.closeBrowser(); process.exit(0); });
+async function shutdown() { await render.closeBrowser(); await db.close(); process.exit(0); }
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
