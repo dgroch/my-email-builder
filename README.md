@@ -82,6 +82,7 @@ git push -u origin main
 server.js                 zero-dependency HTTP server (UI + /api/{schema,assemble,render,render-slices,export,klaviyo-draft,designs})
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
+lib/glyphs.js             reads the brand faces' cmaps; reports characters a face cannot actually set
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
 lib/db.js                 Postgres pool + the schema it owns (used when DATABASE_URL is set)
 lib/recordStore.js        one collection API over two drivers (Postgres / local-disk JSON)
@@ -101,13 +102,13 @@ design-system/            bundled copy of the template library, shells, fonts, a
 ## API
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
+| GET  | `/api/schema`   | — | components + tokens (per-token `type`, `font`, `case`, presets, defaults), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
 | GET  | `/api/gallery`  | — | `{components:[{name, group, designed, static, draft, sampleTokens, variants}]}` — every component with a complete set of on-brand **sample tokens** + its variant axes (palette presets + first enum lever). Powers the interactive **component library** |
 | POST | `/api/assemble` | `{campaign, markBlocks?, production?}` | `{html, unfilled, validation}` — assembled preview HTML with **absolute** asset URLs (`markBlocks` adds `data-eb-block` anchors; `production` keeps the real Klaviyo merge tags instead of the readable preview substitutions); `validation` is the structured report (see `/api/validate`) |
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
-| POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
+| POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, missingGlyphs, height}` — `missingGlyphs` names any character the brand face that typesets it cannot actually set (see **Glyph coverage**) |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign}` — **production** HTML: keeps `{{ASSETS_BASE}}` and the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader |
+| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
@@ -160,6 +161,88 @@ Two assertions fail a campaign outright, so nothing depends on a human noticing:
   blank or wrong-cased one. The levers drive CSS class names (`illo-{{ACCENT_ILLO}}`), so an
   off-list value used to match no rule and read as "off" — a silent no-op. Issue type
   `invalid_enum`, carrying `options` and a suggested value.
+- **Duplicate logo bar** — `heroes/hero-b-white|clay|noir` draw their **own** logo bar, tinted to
+  the band colour, so they take the place of `header`. Putting `header` in front of one renders
+  two Fig & Bloom logo bars about 60px apart. Issue type `duplicate_logo_bar`; the fix is to drop
+  the `header` block. This is the one documented exception to "`header` ← always first", and it
+  is recorded in `orderingRules.header_replacing_heroes`. The logo bar is deliberate, not an
+  oversight: every saved design that uses a hero-b variant places it at index 0 with no header
+  and depends on it.
+
+### Per-token font, and why the casing rule follows it
+
+`/api/schema` returns, on every token: `type` (`text` / `url` / `image` / `length` / `palette` /
+`enum`), `font` (`cervanttis` / `lust` / `neuzeitgro`, or absent where the token never reaches
+type), and `case` (`lower` / `sentence` / `any`).
+
+The casing rule follows the **face**, not the token name, and the face is read off the template
+body rather than off prose in the header comment. `HEADLINE` is Cervanttis in the heroes and Lust
+in the products; a flat map keyed by token name cannot say that, which is why the global
+`tokenRules` map is now a deprecated fallback rather than the source of truth. Defaults per face:
+Cervanttis → `lower` (it is a script face, set lowercase throughout the brand), Lust → `sentence`,
+NeuzeitGro → `any` (it carries `text-transform:uppercase` at every size it is used, so the
+authored casing does not reach the reader). A token's own description still wins where it states
+a rule explicitly.
+
+If you are adding a token to a template, note that its description must stay **on its own line**.
+A token documented with no description used to swallow the following line, so `SUPER_LABEL` in
+`heroes/hero-c1` inherited `HEADLINE`'s "MUST be lowercase" — the phantom rule that made
+lowercase-`SUPER_LABEL` discoverable only by submitting and reading the error — and consumed
+`{{HEADLINE}}` on the way, so `HEADLINE` lost its real rule at the same time.
+
+### Glyph coverage: the failure that does not look like one
+
+`POST /api/render` returns `missingGlyphs` alongside `brokenImages`:
+
+```json
+{ "component": "heroes/hero-a", "index": 0, "token": "HEADLINE", "face": "cervanttis",
+  "char": "ø", "codepoint": "U+00F8", "kind": "folded", "rendersAs": "o",
+  "message": "'HEADLINE' contains ø (U+00F8), which cervanttis maps to its base glyph — it renders as o, silently changing the word." }
+```
+
+Two kinds are reported. `missing` is the ordinary case: the codepoint is absent, the client
+substitutes another face, and the mismatch is visible. `folded` is the dangerous one: the cmap
+maps the codepoint to its **unaccented base glyph**, so the mark simply disappears and the text
+sets cleanly as a different word. Nothing errors, `document.fonts.check()` returns true, and no
+fallback face appears — which is how one send spelt a maker's name two different ways, `ØKAR` in
+NeuzeitGro and `Okar` in Cervanttis, and passed review.
+
+**Current state of the three faces** (`node -e "console.log(require('./lib/glyphs').faceCoverage('cervanttis'))"`):
+
+| Face | Folds onto base glyph | Verdict |
+|---|---|---|
+| Lust | — | clean; it renders `Ø` correctly |
+| NeuzeitGro | — | clean |
+| Cervanttis | all 48 accented Latin-1 letters (`Ø ø Ã ã Í í Î î É é Ç Å å Ñ ñ Ö ö …`) | **needs re-cutting** |
+
+The Cervanttis fault is in the font binary, which is hosted outside this repo. Until it is
+re-cut, the guard is what stops it shipping: check `missingGlyphs` before you send, and keep
+accented copy out of Cervanttis tokens. `lib/glyphs.js` reads the cmaps straight out of the
+preview shell's embedded faces, so it audits the exact bytes the renderer rasterises with — and
+`faceCoverage()` re-verifies a replacement font rather than trusting it.
+
+### CSS lengths
+
+`PADDING_TOP`, `PADDING_BOTTOM` and `BTN_WIDTH` are typed `length`. A **bare number** is a unit
+slip with an unambiguous intent, so assembly coerces `"40"` to `"40px"` and `/api/validate`
+reports it as a `coerced_length` **warning** — the value renders correctly either way, so
+rejecting it outright was pointlessly strict. Anything that is not a length at all is still an
+`invalid_length` error.
+
+`BTN_WIDTH` also accepts **`"auto"`**, which sizes the button to its own label. It only ever
+affects Outlook: the Word renderer cannot shrink-wrap a VML roundrect, so `auto` is resolved at
+assembly to a real px width estimated from the label, while every other client shrink-wraps the
+live `<a>` regardless. `auto` is a width keyword and stays rejected on the padding tokens.
+
+### Casing is Unicode-aware
+
+Case checks use `\p{Lu}` / `\p{Ll}` with the `u` flag, not `[A-Z]` / `[a-z]`. `Ø` is an
+uppercase letter, so `"Økar Bitter Aperitivo"` is correct Sentence case and passes; under an
+ASCII test it was read as all-lowercase and rejected, and the repair walked to the first
+`[A-Za-z]`, stepped straight over the `Ø`, and proposed `"ØKar"`. A suggestion now uppercases the
+first **cased** character wherever it sits, and is omitted entirely when the value already opens
+with a capital. The builder's client-side check (`public/app.js`) uses the same rule, so the two
+never disagree.
 
 ### Inline formatting in token values
 
@@ -575,6 +658,41 @@ Not covered by this fix: the script **badges and chips** (`blocks/annotated-prod
 `blocks/designed-product-card`, `blocks/offer-panel`) sit on their own coloured pill, and a
 descender escapes the pill's background by ~5px. Fixing those means changing each pill's shape,
 which is a design call rather than a layout bug.
+
+## The mobile contract (one document, one scale)
+
+An email is a single shrink-to-fit document. A **single** block that cannot go below 600px does
+not just break itself — it holds the whole document at 600px, and a phone then scales *every
+glyph in the email* by `375/600 = 0.625`. That is why 14px body copy arrived at 8.8px, and why
+this is a system-wide contract rather than a per-block nicety.
+
+Three rules, all enforced by `npm test`:
+
+1. **Every 600px structural table carries `.f600`** (or is the root `.ew`). The shell's
+   `@media (max-width:600px)` block makes those, and only those, fluid. Forty-five of the
+   fifty-three components had never opted in, so the media query had nothing to act on.
+2. **Every fixed measure wider than a phone carries `.fm`** — the 552px step rows, the 440px
+   body measure, the 380px opt-out measure.
+3. **Every full-bleed image carries `.fimg` and an inline `width:100%`**, plus either
+   `height:auto` or a **definite** `max-width:600px`.
+
+Rule 3 is the subtle one. An image that has not loaded — a bad URL, or images off, which is how
+a great many people read email — takes its intrinsic size from its `width`/`height` attributes.
+With a definite CSS height, `width:100%` is then resolved back through that aspect ratio to
+600px, which becomes the table's minimum. A **percentage** `max-width` cannot rescue it: against
+a shrink-to-fit table it resolves to `none`. So `.fimg` caps at `100vw` — a definite unit —
+which lets the image shrink while keeping the crop `IMG_HEIGHT` chose. Clients without `vw`
+behave exactly as they did before, so it can only improve on the status quo.
+
+Two-column blocks stack below 600px: `.st-col` (`blocks/story`), `.fl-col`
+(`blocks/feature-list`, which carried no classes at all), `.ap-col`
+(`blocks/annotated-product`), and `.jt-img`/`.jt-txt` (`blocks/journal-tile`).
+
+**Known limit.** `blocks/polaroid-collage` and `blocks/editorial-collage` cannot reflow: their
+cards are absolutely positioned inside a fixed 600px region. On the Klaviyo push they rasterise
+to PNG slices that scale as images, which is the shipping path and is fine. In the live-HTML
+`/api/export` output they still hold the document at 600px. Do not "fix" this by making the
+region fluid — the cards keep their absolute offsets and are simply cropped.
 
 ## Keeping the design system in sync
 `design-system/` is a bundled copy of `creative-email-campaign-builder/references/`

@@ -41,9 +41,9 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   .cvs .cvs-left-img { filter:none; }
   .cvs.treat-grayscale .cvs-left-img { filter:grayscale(100%); }
 </style>
-<table width="600" cellpadding="0" cellspacing="0" border="0" class="cvs treat-{{LEFT_TREATMENT}}">
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="cvs treat-{{LEFT_TREATMENT}} f600">
   <tr>
-    <td style="padding:46px 50px 26px;text-align:center;">
+    <td class="sp" style="padding:46px 50px 26px;text-align:center;">
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{SUPER_LABEL}}</p>
       <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:28px;color:#000000;line-height:1.15;margin:0;">{{HEADLINE}}</h2>
     </td>
@@ -55,12 +55,12 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
         <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
           <td width="50%" align="center" valign="top" style="width:50%;vertical-align:top;padding:0 6px;">
             <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 12px 0;">{{LEFT_LABEL}}</p>
-            <img src="{{LEFT_IMAGE_URL}}" width="210" height="210" alt="{{LEFT_LABEL}}" class="cvs-left-img" style="display:block;width:210px;height:210px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};margin:0 auto;">
+            <img src="{{LEFT_IMAGE_URL}}" width="210" height="210" alt="{{LEFT_LABEL}}" class="cvs-left-img cvs-img" style="display:block;width:210px;max-width:100%;height:210px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};margin:0 auto;">
             <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:{{PANEL_TEXT}};line-height:1.55;margin:14px 4px 0;">{{LEFT_CAPTION}}</p>
           </td>
           <td width="50%" align="center" valign="top" style="width:50%;vertical-align:top;padding:0 6px;">
             <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#000000;margin:0 0 12px 0;">{{RIGHT_LABEL}}</p>
-            <img src="{{RIGHT_IMAGE_URL}}" width="210" height="210" alt="{{RIGHT_LABEL}}" style="display:block;width:210px;height:210px;object-fit:cover;object-position:center;border:1px solid #000000;margin:0 auto;">
+            <img class="cvs-img" src="{{RIGHT_IMAGE_URL}}" width="210" height="210" alt="{{RIGHT_LABEL}}" style="display:block;width:210px;max-width:100%;height:210px;object-fit:cover;object-position:center;border:1px solid #000000;margin:0 auto;">
             <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:12px;color:{{PANEL_TEXT}};line-height:1.55;margin:14px 4px 0;">{{RIGHT_CAPTION}}</p>
           </td>
         </tr></table>
@@ -72,7 +72,7 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
     </td>
   </tr>
   <tr>
-    <td style="padding:0 50px 48px;text-align:center;">
+    <td class="sp" style="padding:0 50px 48px;text-align:center;">
       {{#CTA_TEXT}}<a href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a>{{/CTA_TEXT}}
     </td>
   </tr>

@@ -10,6 +10,7 @@ const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
 const { validateCampaign } = require('./lib/validate');
+const glyphs = require('./lib/glyphs');
 const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
 const campaignGenerator = require('./lib/campaignGenerator');
@@ -244,6 +245,11 @@ const server = http.createServer(async (req, res) => {
       const { buffer, brokenImages, height } = await render.renderToPng(html, client ? { client } : {});
       return json(res, 200, {
         pngBase64: buffer.toString('base64'), brokenImages, height,
+        // brokenImages already sets the expectation that this endpoint names what silently
+        // failed. A glyph the brand face folds onto its base letter belongs in the same
+        // contract: it does not error, does not render tofu, and does not look wrong — it just
+        // spells the word differently. See lib/glyphs.js.
+        missingGlyphs: glyphs.auditCampaign(campaign || {}, schema()),
         ...(client === 'outlook' ? { client, outlookRisks: render.outlookRisks(campaign || {}) } : {}),
       });
     }
@@ -256,9 +262,24 @@ const server = http.createServer(async (req, res) => {
       const { campaign, previewText } = await readBody(req);
       // previewText (optional) is baked into the shell as a hidden preheader so manually
       // pasted exports control their inbox snippet the same way the sliced push does.
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', production: true, previewText });
+      //
+      // assetsBase is the SAME served URL /api/assemble resolves, not the literal
+      // '{{ASSETS_BASE}}'. Re-tokenising is right for /api/render, which swaps the marker for a
+      // file:// path before rasterising; export has no such second pass, so the marker shipped
+      // verbatim and every bundled illustration 404'd in the sent email.
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: assetsBaseFor(req), production: true, previewText });
       const validation = validateCampaign(campaign || {}, schema());
-      return json(res, 200, { html, unfilled, validation, campaign });
+      // Export is the artefact that gets pasted into Klaviyo, so a surviving {{TOKEN}} is a
+      // hole in a sent email, not a note in a report. Fail the request rather than hand back
+      // HTML that looks complete.
+      const unresolved = [...new Set((html.match(/\{\{\s*[A-Z0-9_]+\s*\}\}/g) || []))];
+      if (unresolved.length) {
+        return json(res, 422, {
+          error: `Export aborted: ${unresolved.length} unresolved template token(s) would ship in the HTML.`,
+          code: 'UNRESOLVED_TOKENS', unresolved, unfilled, validation,
+        });
+      }
+      return json(res, 200, { html, unfilled, validation, campaign, missingGlyphs: glyphs.auditCampaign(campaign || {}, schema()) });
     }
 
     // Rasterise every block to its own PNG ("slices"). Also returns each block's default

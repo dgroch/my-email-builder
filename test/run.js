@@ -20,6 +20,7 @@ const { OBJECTIVES, OBJECTIVE_GUIDANCE, COMPONENT_INTENT } = require('../lib/com
 const { validateCampaign } = require('../lib/validate');
 const { loadSeedExamples } = require('../lib/examples');
 const render = require('../lib/render');
+const glyphs = require('../lib/glyphs');
 const sampleData = require('../lib/sampleData');
 
 let passed = 0;
@@ -576,7 +577,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   // Both measures are fixed-width tables now, not max-width caps that Word discards.
   for (const [name, width] of [['opt-out', 380], ['body-copy-plain', 440]]) {
     const t = tpl(name);
-    ok(new RegExp(`<table width="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
+    ok(new RegExp(`<table[^>]*\\bwidth="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
     ok(!/max-width/.test(t.replace(/<!--[\s\S]*?-->/g, '')), `${name} no longer relies on a max-width cap`);
   }
 
@@ -664,13 +665,13 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const imgTag = (html) => (html.match(/<img[^>]*cvs-left-img[^>]*>/) || [])[0] || '';
   const camp = sampleData.sampleCampaignFor(cvs);
   const neutral = render.assemble(camp, { assetsBase: '/a' }).html;
-  ok(/class="cvs treat-none"/.test(neutral), 'default treatment renders treat-none');
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-none\b/.test(neutral), 'default treatment renders treat-none');
   ok(!/grayscale/.test(imgTag(neutral)), 'the left image carries no inline grayscale filter');
 
   // Omitting the token entirely (an existing saved campaign) still assembles at the default.
   const omitted = JSON.parse(JSON.stringify(camp));
   delete omitted.blocks[0].tokens.LEFT_TREATMENT;
-  ok(/class="cvs treat-none"/.test(render.assemble(omitted, { assetsBase: '/a' }).html),
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-none\b/.test(render.assemble(omitted, { assetsBase: '/a' }).html),
     'a campaign predating the token falls back to treat-none');
   eq(validateCampaign(omitted, schema, { requireUnsubscribe: false }).ok, true,
     'a campaign predating the token still validates');
@@ -679,7 +680,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const grey = JSON.parse(JSON.stringify(camp));
   grey.blocks[0].tokens.LEFT_TREATMENT = 'grayscale';
   const greyHtml = render.assemble(grey, { assetsBase: '/a' }).html;
-  ok(/class="cvs treat-grayscale"/.test(greyHtml), 'grayscale treatment renders treat-grayscale');
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-grayscale\b/.test(greyHtml), 'grayscale treatment renders treat-grayscale');
   ok(/\.cvs\.treat-grayscale \.cvs-left-img \{ filter:grayscale\(100%\); \}/.test(greyHtml),
     'the grayscale rule is present for the rasteriser to bake in');
 }
@@ -802,16 +803,51 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   eq(padTokens.length, 2, 'the collage exposes both padding tokens');
   for (const t of padTokens) eq(t.type, 'length', `${t.name} is typed as a CSS length`);
 
+  // A bare number is a UNIT SLIP, not a wrong value: the validator already knew the intended
+  // unit well enough to suggest it, so assembly coerces it to px and the report says so. It is
+  // a warning, and the campaign still validates — rejecting it outright was pointlessly strict.
   const bare = sampleData.sampleCampaignFor(pc);
   bare.blocks[0].tokens.PADDING_TOP = '100';
   const rep = validateCampaign(bare, schema, { requireUnsubscribe: false });
-  const lenIssue = rep.issues.find((i) => i.type === 'invalid_length' && i.token === 'PADDING_TOP');
-  ok(lenIssue, 'a unitless dimension is flagged as invalid_length');
-  eq(lenIssue && lenIssue.severity, 'error', 'invalid_length is an error');
-  eq(lenIssue && lenIssue.value, '100', 'invalid_length reports the offending value');
-  eq(lenIssue && lenIssue.suggestion, '100px', 'invalid_length suggests the value with a unit');
-  eq(rep.ok, false, 'a campaign with a unitless dimension does not validate');
-  eq(rep.blocks[0].valid, false, 'the offending block is marked invalid');
+  const lenIssue = rep.issues.find((i) => i.type === 'coerced_length' && i.token === 'PADDING_TOP');
+  ok(lenIssue, 'a unitless dimension is flagged as coerced_length');
+  eq(lenIssue && lenIssue.severity, 'warning', 'coerced_length is a warning, not an error');
+  eq(lenIssue && lenIssue.value, '100', 'coerced_length reports the offending value');
+  eq(lenIssue && lenIssue.suggestion, '100px', 'coerced_length suggests the value with a unit');
+  eq(rep.ok, true, 'a campaign with a unitless dimension still validates');
+  eq(rep.blocks[0].valid, true, 'a warning does not mark the block invalid');
+  ok(!rep.issues.some((i) => i.type === 'invalid_length'), 'a bare number is no longer an invalid_length error');
+
+  // …and the coercion is real: the assembled CSS carries the unit, so the declaration survives
+  // instead of being dropped whole and rendering as 0.
+  const coerced = render.assemble(bare, { assetsBase: '/a' }).html;
+  ok(/padding:\s*100px\b/.test(coerced), 'assembly coerces a unitless dimension to px');
+  ok(!/padding:\s*100\s/.test(coerced), 'no unitless value survives into the CSS shorthand');
+
+  // BTN_WIDTH accepts `auto` — an Outlook-only VML width, resolved to a real px value sized to
+  // the label, because Word cannot shrink-wrap a roundrect and every other client already does.
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  const autoCamp = sampleData.sampleCampaignFor(btn);
+  autoCamp.blocks[0].tokens.BTN_WIDTH = 'auto';
+  autoCamp.blocks[0].tokens.CTA_TEXT = 'Shop the collection';
+  const autoRep = validateCampaign(autoCamp, schema, { requireUnsubscribe: false });
+  ok(!autoRep.issues.some((i) => i.token === 'BTN_WIDTH'), 'BTN_WIDTH accepts "auto"');
+  const autoHtml = render.assemble(autoCamp, { assetsBase: '/a' }).html;
+  const vmlWidth = (autoHtml.match(/width:(\d+)px;v-text-anchor/) || [])[1];
+  ok(vmlWidth && Number(vmlWidth) > 120, `"auto" resolves the VML width to the label (got ${vmlWidth}px)`);
+  ok(!/width:auto/.test(autoHtml), '"auto" never reaches the VML, which cannot interpret it');
+  // A shorter label gets a narrower button — the point of asking for auto in the first place.
+  const shortCamp = sampleData.sampleCampaignFor(btn);
+  shortCamp.blocks[0].tokens.BTN_WIDTH = 'auto';
+  shortCamp.blocks[0].tokens.CTA_TEXT = 'Shop';
+  const shortWidth = (render.assemble(shortCamp, { assetsBase: '/a' }).html.match(/width:(\d+)px;v-text-anchor/) || [])[1];
+  ok(Number(shortWidth) < Number(vmlWidth), 'a shorter label yields a narrower auto button');
+  // `auto` is a WIDTH keyword; it is meaningless in a padding shorthand and stays rejected there.
+  const badAuto = sampleData.sampleCampaignFor(btn);
+  badAuto.blocks[0].tokens.PADDING_TOP = 'auto';
+  ok(validateCampaign(badAuto, schema, { requireUnsubscribe: false }).issues
+      .some((i) => i.type === 'invalid_length' && i.token === 'PADDING_TOP'),
+    'PADDING_TOP does not accept "auto"');
 
   // Junk that isn't even a number is rejected, with no bogus suggestion.
   const junk = sampleData.sampleCampaignFor(pc);
@@ -829,15 +865,17 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
         .some((i) => i.type === 'invalid_length'), `"${good}" is accepted as a CSS length`);
   }
 
-  // Every length token in the schema enforces units, and no sample trips a false positive.
+  // Every length token in the schema notices a missing unit, and no sample trips a false positive.
   for (const c of schema.components) {
     for (const t of c.tokens) {
       if (t.type !== 'length') continue;
       const camp = sampleData.sampleCampaignFor(c);
       camp.blocks[0].tokens[t.name] = '12';
       ok(validateCampaign(camp, schema, { requireUnsubscribe: false }).issues
-          .some((i) => i.type === 'invalid_length' && i.token === t.name),
-        `'${c.name}'.${t.name} rejects a unitless value`);
+          .some((i) => i.type === 'coerced_length' && i.token === t.name),
+        `'${c.name}'.${t.name} reports a unitless value as coerced`);
+      ok(/:\s*(?:[^;]*\s)?12px\b/.test(render.assemble(camp, { assetsBase: '/a' }).html),
+        `'${c.name}'.${t.name} renders a unitless value as px rather than dropping the rule`);
     }
     const camp = sampleData.sampleCampaignFor(c);
     ok(!validateCampaign(camp, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'invalid_length'),
@@ -1193,6 +1231,408 @@ async function studioSuite() {
     const gone = await db.query('SELECT id FROM studio_components WHERE id = $1', [fresh.id]);
     eq(gone.rows.length, 0, 'deleting a never-published component removes the row');
     await db.query('TRUNCATE studio_components, studio_layouts, studio_brand, designs');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// Defects from the 9 Sep render review. Every one of these shipped past a green
+// /api/validate, an empty `unfilled`, and an empty `brokenImages` — the theme of that report
+// was that the API reported success on emails that were visibly wrong. So each fix below is
+// pinned by a test that would have caught it.
+// ══════════════════════════════════════════════════════════════════════════════════════
+
+// ── Bug 1: heroes/hero-b-* replace the header; pairing them renders two logo bars ──────
+// hero-b-* draw their own logo bar tinted to the band colour. Every saved design that uses one
+// puts it at index 0 with no header at all and depends on that bar, so the bar stays and the
+// PAIRING is the error. The documented order ("header ← always first") had to gain the
+// exception, and /api/validate now enforces it.
+{
+  const LOGO = /F_B_Logo_Horizontal/g;
+  const heroes = schema.components.filter((c) => c.group === 'heroes');
+  ok(heroes.length >= 12, `every hero variant is present (found ${heroes.length})`);
+
+  for (const hero of heroes) {
+    const blocks = [
+      { component: 'header', tokens: {} },
+      sampleData.sampleCampaignFor(hero).blocks[0],
+      { component: 'footer', tokens: {} },
+    ];
+    const html = render.assemble({ campaignName: 'logo probe', blocks }, { assetsBase: '/a' }).html;
+    const bars = (html.match(LOGO) || []).length;
+    const headerReplacing = /^heroes\/hero-b-/.test(hero.name);
+    const report = validateCampaign({ campaignName: 'logo probe', blocks }, schema);
+    const dupe = report.issues.find((i) => i.type === 'duplicate_logo_bar');
+
+    if (headerReplacing) {
+      // The pairing is rejected, and the reason names the second logo bar rather than leaving
+      // the author to spot it in a render.
+      ok(dupe, `'header' + '${hero.name}' is reported as duplicate_logo_bar`);
+      eq(dupe && dupe.severity, 'error', `${hero.name}: the duplicate logo bar is an error`);
+      eq(report.ok, false, `${hero.name}: a campaign with two logo bars does not validate`);
+      ok(dupe && /header/.test(dupe.suggestion || ''), `${hero.name}: the fix suggests dropping the header`);
+      eq(bars, 2, `${hero.name}: the rejected pairing is genuinely two logo bars`);
+      // Without the header — how all four saved hero-b designs are built — exactly one bar.
+      const solo = [blocks[1], blocks[2]];
+      eq((render.assemble({ campaignName: 'x', blocks: solo }, { assetsBase: '/a' }).html.match(LOGO) || []).length, 1,
+        `${hero.name} on its own renders exactly one logo bar`);
+      ok(!validateCampaign({ campaignName: 'x', blocks: solo }, schema).issues.some((i) => i.type === 'duplicate_logo_bar'),
+        `${hero.name} without a header validates — the four saved designs keep working`);
+    } else {
+      eq(bars, 1, `'header' + '${hero.name}' renders exactly one logo bar`);
+      ok(!dupe, `'header' + '${hero.name}' is not flagged`);
+    }
+  }
+
+  // The rule is discoverable without submitting a campaign and reading the error.
+  const ord = schema.orderingRules && schema.orderingRules.header_replacing_heroes;
+  ok(ord && Array.isArray(ord.components) && ord.components.length === 3,
+    'orderingRules documents the three header-replacing heroes');
+  for (const n of (ord ? ord.components : [])) ok(names.has(n), `header_replacing_heroes lists a real component: ${n}`);
+}
+
+// ── Bug 2: a glyph the brand face folds onto its base letter ───────────────────────────
+// Cervanttis maps all 48 accented Latin-1 letters to their unaccented glyph, so "økar" sets as
+// a clean, well-set "okar". It does not render tofu and it does not fall back to another face,
+// so nothing about it looks wrong — the maker's name is just spelt differently from the same
+// word set in NeuzeitGro three blocks further down. brokenImages already promises that /api/render
+// names what silently failed; missingGlyphs puts this in the same contract.
+{
+  const cov = {};
+  for (const face of ['cervanttis', 'lust', 'neuzeitgro']) {
+    cov[face] = glyphs.faceCoverage(face);
+    ok(cov[face], `the ${face} face is readable from the preview shell`);
+  }
+  // The fold is real and specific to Cervanttis. If a re-cut font fixes it, this flips — which
+  // is the point: the guard verifies the font rather than trusting it.
+  ok(cov.cervanttis.folded.includes('Ø') && cov.cervanttis.folded.includes('ø'),
+    'Cervanttis still folds Ø/ø onto O/o (re-cut the face to clear this)');
+  eq(cov.lust.folded.length, 0, 'Lust folds nothing — Ø renders as Ø, contrary to the original report');
+  eq(cov.neuzeitgro.folded.length, 0, 'NeuzeitGro folds nothing');
+
+  // Per-face inspection of the review's own probe string.
+  const PROBE = 'Økar ø Ø Sítio Canaã Cuvée Mörk';
+  eq(glyphs.inspect(PROBE, 'lust').length, 0, 'Lust renders the whole probe string');
+  eq(glyphs.inspect(PROBE, 'neuzeitgro').length, 0, 'NeuzeitGro renders the whole probe string');
+  const cerv = glyphs.inspect(PROBE, 'cervanttis');
+  ok(cerv.length > 0, 'Cervanttis reports the probe string rather than failing open');
+  const slash = cerv.find((h) => h.char === 'Ø');
+  eq(slash && slash.kind, 'folded', 'Ø is reported as folded, not missing');
+  eq(slash && slash.rendersAs, 'O', 'the report says what it actually renders as');
+  eq(slash && slash.codepoint, 'U+00D8', 'the report carries the codepoint');
+
+  // A campaign audit attributes each miss to the block and token that carries it, and checks
+  // each value against the face that TYPESETS it — a Ø in a Lust product name is fine, the same
+  // Ø in a Cervanttis headline is not.
+  const camp = { campaignName: 'Økar', blocks: [
+    { component: 'heroes/hero-a', tokens: { HERO_IMAGE_URL: '', SUPER_LABEL: 'APPLEWOOD',
+      HEADLINE: 'the økar negroni', SUBHEADLINE: 'Økar Bitter Aperitivo', CTA_TEXT: 'Shop the Økar',
+      CTA_URL: 'https://figandbloom.com' } },
+    { component: 'products/card-horizontal', tokens: { PRODUCT_IMAGE_URL: '', PRODUCT_LABEL: 'APPLEWOOD',
+      PRODUCT_NAME: 'Økar Bitter Aperitivo, 700ml', PRODUCT_DESC: 'Sítio Canaã', PRODUCT_PRICE: '$55',
+      CTA_TEXT: 'Add', PRODUCT_URL: 'https://figandbloom.com' } },
+  ] };
+  const misses = glyphs.auditCampaign(camp, schema);
+  eq(misses.length, 1, 'the audit reports exactly the one token whose face cannot set it');
+  eq(misses[0] && misses[0].component, 'heroes/hero-a', 'the miss is attributed to its block');
+  eq(misses[0] && misses[0].token, 'HEADLINE', 'the miss is attributed to its token');
+  eq(misses[0] && misses[0].face, 'cervanttis', 'the miss names the face that folds it');
+  eq(misses[0] && misses[0].index, 0, 'the miss carries the block index');
+  ok(/renders as o/.test(misses[0] && misses[0].message || ''), 'the message says what the reader will see');
+
+  // Copy the brand faces can all set produces no report at all — the guard has to be quiet to
+  // be worth reading.
+  const clean = { campaignName: 'clean', blocks: [
+    { component: 'heroes/hero-a', tokens: { HERO_IMAGE_URL: '', SUPER_LABEL: 'APPLEWOOD',
+      HEADLINE: 'the negroni hour', SUBHEADLINE: 'Sítio Canaã, Mörk and Cuvée', CTA_TEXT: 'Shop',
+      CTA_URL: 'https://figandbloom.com' } },
+  ] };
+  eq(glyphs.auditCampaign(clean, schema).length, 0, 'copy every face can set reports nothing');
+}
+
+// ── Bug 3: the casing rule follows the FONT, and the schema now says which ─────────────
+// tokenRules is a flat map keyed by token name, which cannot express "HEADLINE is Cervanttis
+// here and Lust there". Worse, the TOKENS: parser let a token documented with no description
+// swallow the next line: SUPER_LABEL in hero-c1 inherited HEADLINE's "MUST be lowercase" —
+// the phantom rule the review hit — and consumed {{HEADLINE}} on the way, so HEADLINE lost its
+// real rule at the same time. Both are gone; the font is read off the template body.
+{
+  const c1 = schema.components.find((c) => c.name === 'heroes/hero-c1');
+  const tok = (c, n) => c.tokens.find((t) => t.name === n);
+
+  const sup = tok(c1, 'SUPER_LABEL');
+  eq(sup.font, 'neuzeitgro', 'hero-c1 SUPER_LABEL is NeuzeitGro, as the markup renders it');
+  eq(sup.case, 'any', 'hero-c1 SUPER_LABEL has no casing rule — the lowercase rule was a parser artefact');
+  ok(!/lowercase/i.test(sup.desc || ''), 'SUPER_LABEL no longer inherits the next line’s description');
+
+  const hl = tok(c1, 'HEADLINE');
+  eq(hl.font, 'cervanttis', 'hero-c1 HEADLINE is Cervanttis');
+  eq(hl.case, 'lower', 'hero-c1 HEADLINE recovers its real lowercase rule');
+
+  // Caps in SUPER_LABEL are accepted in every hero, which is what "discoverable only by trial"
+  // was about: the same token behaved differently between variants for no stated reason.
+  for (const c of schema.components.filter((x) => x.group === 'heroes' || x.name === 'blocks/caption-bar-hero')) {
+    const t = tok(c, 'SUPER_LABEL');
+    if (!t) continue;
+    eq(t.case, 'any', `${c.name} SUPER_LABEL accepts caps like every other component`);
+  }
+
+  // Every token that reaches type carries a face, and the face implies the rule.
+  const FACE_CASE = { cervanttis: 'lower', lust: 'sentence', neuzeitgro: 'any' };
+  let typed = 0;
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      ok(['text', 'url', 'image', 'length', 'palette', 'enum'].includes(t.type), `${c.name}.${t.name} has a known type`);
+      if (!t.font) continue;
+      typed++;
+      ok(['cervanttis', 'lust', 'neuzeitgro'].includes(t.font), `${c.name}.${t.name} names a brand face`);
+      ok(['lower', 'sentence', 'any'].includes(t.case), `${c.name}.${t.name} carries a casing rule`);
+      // A description may override the face's default, but never contradict it silently.
+      if (!/lowercase|sentence case/i.test(t.desc || '') && !/lowercase|sentence case/i.test(t.rule || '')) {
+        eq(t.case, FACE_CASE[t.font], `${c.name}.${t.name} defaults its casing from its face`);
+      }
+    }
+  }
+  ok(typed > 60, `most text tokens are attributed to a face (${typed})`);
+  ok(schema.tokenRules && Object.keys(schema.tokenRules).length, 'the global tokenRules map is kept as a deprecated fallback');
+
+  // The description-bleed regression, stated directly: no token's description may be another
+  // token's declaration.
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      ok(!/^\{\{[A-Z0-9_]+\}\}/.test(t.desc || ''),
+        `${c.name}.${t.name} description is its own, not the next token's`);
+    }
+  }
+}
+
+// ── Bug 4: casing is Unicode-aware ─────────────────────────────────────────────────────
+// Ø is an uppercase letter. Under /[A-Z]/ it is not, so "Økar bitter aperitivo" was rejected as
+// all-lowercase — and the repair walked to the first /[A-Za-z]/, stepped over the Ø, and
+// proposed "ØKar".
+{
+  const pc = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const sentenceToken = 'PULL_QUOTE';   // Lust → Sentence case
+  const lowerToken = 'QUOTE_ACCENT';    // Cervanttis → lowercase
+  const issueFor = (token, value) => {
+    const camp = sampleData.sampleCampaignFor(pc);
+    camp.blocks[0].tokens[token] = value;
+    return validateCampaign(camp, schema, { requireUnsubscribe: false })
+      .issues.find((i) => i.type === 'casing' && i.token === token);
+  };
+
+  // Values that OPEN with a non-ASCII capital are correct Sentence case and must pass clean.
+  for (const v of ['Økar Bitter Aperitivo', 'Ærø in the morning', 'Ölund and the others',
+                   'Île de Ré, in a bottle', 'Sítio Canaã, our filter', 'Mörk drinking chocolate']) {
+    ok(!issueFor(sentenceToken, v), `Sentence case accepts ${JSON.stringify(v)}`);
+  }
+
+  // Genuinely all-lowercase is still rejected, and the suggestion capitalises the FIRST CASED
+  // character rather than skipping it.
+  const bad = issueFor(sentenceToken, 'økar bitter aperitivo');
+  ok(bad, 'a genuinely all-lowercase Lust value is still rejected');
+  eq(bad && bad.suggestion, 'Økar bitter aperitivo', 'the suggestion capitalises the first cased character');
+  eq(issueFor(sentenceToken, 'ærø in the morning').suggestion, 'Ærø in the morning', 'and does so for a ligature');
+  eq(issueFor(sentenceToken, 'îles flottantes').suggestion, 'Îles flottantes', 'and for a circumflex');
+  eq(issueFor(sentenceToken, '“økar” bitter').suggestion, '“Økar” bitter', 'skipping leading punctuation, not letters');
+
+  // No suggestion when the value already starts with a capital — the old code offered one anyway.
+  const already = issueFor(sentenceToken, 'Økar');
+  ok(!already, 'a value already in Sentence case raises nothing to suggest');
+
+  // Lowercase tokens see non-ASCII capitals too.
+  const caps = issueFor(lowerToken, 'Ølund in their words');
+  ok(caps, 'a Cervanttis value opening with Ø is caught as containing capitals');
+  eq(caps && caps.suggestion, 'ølund in their words', 'and is lowercased correctly');
+  ok(!issueFor(lowerToken, 'økar, ærø and île'), 'an all-lowercase Cervanttis value with accents passes');
+}
+
+// ── Bug 6: sections/button inherits the panel it sits on ───────────────────────────────
+// The button draws its own full-width band. With PANEL_BG left at the body colour it read as a
+// stray dark stripe between a white section and the black close — two near-but-not-equal darks,
+// which looks like a rendering fault. The right value is almost always "whatever is above me".
+{
+  const btnBlock = (tokens) => ({ component: 'sections/button', tokens: {
+    CTA_TEXT: 'Read the story', CTA_URL: 'https://figandbloom.com', ALIGN: 'center',
+    BTN_BG: '#000000', BTN_TEXT: '#ffffff', ...tokens } });
+  const bgOf = (blocks, bodyBg) => {
+    const meta = render.assembleBlocks({ campaignName: 't', bodyBg, blocks });
+    return meta.blocks.find((b) => b.component === 'sections/button').tokens.PANEL_BG;
+  };
+  const headline = { component: 'sections/section-headline', tokens: { SUPER_LABEL: 'X', HEADLINE: 'Y' } };
+  const noir = sampleData.sampleCampaignFor(schema.components.find((c) => c.name === 'sections/upsell-noir')).blocks[0];
+
+  eq(bgOf([headline, btnBlock({})], '#2c2825'), '#ffffff',
+    'a button after a white section takes the white panel');
+  eq(bgOf([noir, btnBlock({})], '#2c2825'), '#000000',
+    'a button after the noir close takes the black panel');
+  eq(bgOf([btnBlock({})], '#2c2825'), '#2c2825',
+    'a button with nothing above it falls back to the campaign bodyBg');
+  eq(bgOf([headline, btnBlock({ PANEL_BG: '#D8CCBE' })], '#2c2825'), '#D8CCBE',
+    'an explicit PANEL_BG still wins — the default never overrides an author');
+  eq(bgOf([headline, btnBlock({ PANEL_BG: '' })], '#2c2825'), '#ffffff',
+    'a blank PANEL_BG means "inherit", not "no colour"');
+
+  // PANEL_BG carries a manifest default, so it is optional rather than unfilled.
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  const t = btn.tokens.find((x) => x.name === 'PANEL_BG');
+  ok(t && t.default !== undefined, 'PANEL_BG is declared optional in the manifest');
+  ok(!validateCampaign({ campaignName: 't', blocks: [headline, btnBlock({})] }, schema, { requireUnsubscribe: false })
+      .issues.some((i) => i.token === 'PANEL_BG'), 'omitting PANEL_BG is not an unfilled token');
+}
+
+// ── Bug 7: the collages must not paint over their own text ─────────────────────────────
+// Both blocks lay absolutely-positioned rotated cards inside a fixed-height region. In
+// polaroid-collage the centre card is in FRONT and the outer captions sat in the overlapped
+// column, so they were clipped ("fig and olive leaf" → "fig and olive lea"). DENSITY never
+// helped: it changes the region height only, so the horizontal overlap was identical at every
+// setting. In editorial-collage the front frame overhung the region and painted over the
+// SUPER_LABEL below it ("PLANT HOUSE" → "PLA…HOU").
+//
+// The runtime proof is a browser measurement (elementsFromPoint over each caption); this is the
+// arithmetic invariant that keeps it fixed, so an edit to the offsets fails here first.
+{
+  const pc = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'polaroid-collage.html'), 'utf8');
+  const at = (cls) => {
+    const m = pc.match(new RegExp(`class="${cls}"[^>]*style="[^"]*left:(-?\\d+)px;top:(-?\\d+)px`));
+    return m ? { left: +m[1], top: +m[2] } : null;
+  };
+  const left = at('pc-left'), right = at('pc-right'), centre = at('pc-center');
+  ok(left && right && centre, 'the three polaroids declare their offsets');
+
+  // Card heights: 1px border + padding + photo + caption margin + one caption line + tail.
+  const CENTRE_H = 2 + 22 + 176 + 12 + 20 + 4;   // centre card, 176px photo, 20px caption line
+  const OUTER_CAPTION_TOP = 10 + 168 + 12;       // padding + photo + caption margin, from card top
+  const centreBottom = centre.top + CENTRE_H;
+  for (const [name, card] of [['left', left], ['right', right]]) {
+    ok(card.top + OUTER_CAPTION_TOP > centreBottom + 12,
+      `the ${name} polaroid's caption starts below the centre card (${card.top + OUTER_CAPTION_TOP} > ${centreBottom} + rotation slack)`);
+  }
+  // Horizontal overlap is the locked design and must NOT have been traded away for clearance.
+  ok(left.left + 190 > centre.left, 'the left polaroid still overlaps the centre one');
+  ok(right.left < centre.left + 200, 'the right polaroid still overlaps the centre one');
+
+  // Every DENSITY region is tall enough for the lowest card, so no card is cropped by the slicer.
+  const lowest = Math.max(left.top, right.top) + 2 + 20 + 168 + 12 + 20 + 4 + 14; // + rotation slack
+  const heights = [...pc.matchAll(/\.pc\.dens-(\w+) \.pc-region \{ height:(\d+)px; \}/g)].map((m) => [m[1], +m[2]]);
+  eq(heights.length, 3, 'all three DENSITY heights are declared');
+  for (const [d, h] of heights) ok(h >= lowest, `the '${d}' region (${h}px) clears the lowest card (${lowest}px)`);
+
+  // editorial-collage: the region must clear its tallest frame at the steepest rotation.
+  const ec = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'editorial-collage.html'), 'utf8');
+  const regionH = +(ec.match(/position:relative;width:600px;height:(\d+)px/) || [])[1];
+  const frameBottom = 18 + 2 + 22 + 264 + 12;  // front frame: top + border + padding + photo + rotation slack
+  ok(regionH >= frameBottom, `the editorial-collage region (${regionH}px) clears its front frame (${frameBottom}px)`);
+}
+
+// ── Bug 9: nothing may hold the document wider than the viewport ───────────────────────
+// The email is one shrink-to-fit document: a single block that cannot go below 600px scales
+// EVERY glyph in the email, not just its own. That is why 14px body copy arrived at 8.8px —
+// 375/600 = 0.625 — and why this is a whole-system contract rather than a per-block one.
+{
+  const tdir = path.join(DS, 'templates');
+  const walk = (dir, out = []) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fp = path.join(dir, e.name);
+      if (e.isDirectory()) walk(fp, out);
+      else if (e.name.endsWith('.html')) out.push(fp);
+    }
+    return out;
+  };
+  for (const fp of walk(tdir)) {
+    const rel = path.relative(tdir, fp);
+    const markup = render.stripDocComments(fs.readFileSync(fp, 'utf8'));
+    // Every structural 600px table opts into the fluid contract — not just the eight in the
+    // original fixture. Forty-five components had never opted in, so the media query had
+    // nothing to act on and every campaign scaled.
+    for (const tag of markup.match(/<table\b[^>]*\bwidth="600"[^>]*>/gi) || []) {
+      ok(/\bclass="[^"]*\b(?:ew|f600)\b/i.test(tag), `${rel}: every 600px table opts into the fluid contract`);
+    }
+    // Any fixed measure wider than a phone must be able to go fluid too.
+    for (const tag of markup.match(/<table\b[^>]*\bwidth="(\d+)"[^>]*>/gi) || []) {
+      const w = +(tag.match(/width="(\d+)"/) || [])[1];
+      if (w <= 376 || w === 600) continue;
+      ok(/\bclass="[^"]*\b(?:fm|f600)\b/i.test(tag), `${rel}: the ${w}px measure opts into .fm`);
+    }
+    // A full-bleed image must not be able to impose a 600px minimum on the table it sits in.
+    // An image that has not loaded takes its intrinsic size from its width/height attributes,
+    // so `width:100%` is resolved back through that aspect ratio whenever the CSS height is
+    // definite. Two shapes are safe, and one of them has to hold:
+    //   height:auto      — no definite height, so there is no ratio to resolve through; or
+    //   max-width:600px  — a DEFINITE cap, which together with the shell's .fimg vw rule lets
+    //                      the image shrink while keeping the crop the designer chose.
+    // A percentage max-width is not a third option: it resolves to none against a shrink-to-fit
+    // table, which is exactly how the whole document got pinned at 600px.
+    for (const tag of markup.match(/<img\b[^>]*\bwidth="600"[^>]*>/gi) || []) {
+      ok(/\bclass="[^"]*\bfimg\b/i.test(tag), `${rel}: every full-bleed image carries .fimg`);
+      ok(/width:\s*100%/.test(tag), `${rel}: every full-bleed image is inline-fluid`);
+      ok(/height:\s*auto/.test(tag) || /max-width:\s*600px/.test(tag),
+        `${rel}: a full-bleed image is either height:auto or capped at a definite 600px`);
+    }
+  }
+
+  // The three blocks the report named, and the classes their stacking depends on.
+  const fl = fs.readFileSync(path.join(tdir, 'blocks', 'feature-list.html'), 'utf8');
+  for (const cls of ['fl-col-img', 'fl-col-txt', 'fl-img']) {
+    ok(new RegExp(`class="[^"]*\\b${cls}\\b`).test(fl), `blocks/feature-list carries .${cls} (it had no classes at all)`);
+  }
+  const st = fs.readFileSync(path.join(tdir, 'blocks', 'story.html'), 'utf8');
+  for (const cls of ['st-col-img', 'st-col-txt', 'st-img']) {
+    ok(new RegExp(`class="[^"]*\\b${cls}\\b`).test(st), `blocks/story carries .${cls}`);
+  }
+  const jt = fs.readFileSync(path.join(tdir, 'blocks', 'journal-tile.html'), 'utf8');
+  ok(/class="[^"]*\bjt-imgel\b/.test(jt), 'blocks/journal-tile marks its tile images for fluid sizing');
+
+  // Both shells carry the rules, and the vw cap that lets an unloaded image shrink.
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const start = shell.indexOf('@media only screen and (max-width:600px)');
+    const media = start < 0 ? '' : shell.slice(start, shell.indexOf('</style>', start));
+    for (const sel of ['.st-col', '.fl-col', '.ap-col', '.jt-img', '.jt-txt']) {
+      ok(new RegExp(`\\${sel}\\{[^}]*display:\\s*block\\s*!important;[^}]*width:\\s*100%\\s*!important`).test(media),
+        `${shellName} stacks ${sel} on mobile`);
+    }
+    ok(/\.fimg\{[^}]*width:\s*100%\s*!important;[^}]*max-width:\s*100vw\s*!important/.test(media),
+      `${shellName} caps full-bleed images at the viewport, not at a percentage`);
+    ok(!/\.fimg\{[^}]*max-width:\s*100%/.test(media),
+      `${shellName} does not use a percentage cap on .fimg — it resolves to none and re-opens the bug`);
+    for (const sel of ['.st-img', '.fl-img', '.ap-img', '.cvs-img', '.jt-imgel']) {
+      ok(new RegExp(`\\${sel}\\{[^}]*width:\\s*100%\\s*!important`).test(media),
+        `${shellName} makes ${sel} fluid`);
+    }
+  }
+}
+
+// ── Bug 10: an empty PROMO_CODE draws no box ───────────────────────────────────────────
+// Every other block drops its optional furniture on an empty token. offer-panel kept drawing the
+// dashed rectangle, which is exactly the documented giveaway mode — prize in OFFER_VALUE, no code.
+{
+  const op = schema.components.find((c) => c.name === 'blocks/offer-panel');
+  const build = (code) => {
+    const camp = sampleData.sampleCampaignFor(op);
+    camp.blocks[0].tokens.PROMO_CODE = code;
+    camp.blocks[0].tokens.CODE_LABEL = 'USE CODE AT CHECKOUT';
+    return render.stripDocComments(render.assemble(camp, { assetsBase: '/a' }).html);
+  };
+  const withCode = build('BLOOM20'), giveaway = build('');
+  ok(/2px dashed/.test(withCode), 'a real code still draws the dashed box');
+  ok(/BLOOM20/.test(withCode), 'and the code itself');
+  ok(/USE CODE AT CHECKOUT/.test(withCode), 'and its label');
+  ok(!/2px dashed/.test(giveaway), 'GIVEAWAY MODE draws no empty dashed box');
+  ok(!/USE CODE AT CHECKOUT/.test(giveaway), 'and no orphaned "USE CODE" label above it');
+  // Everything else in the block survives — the conditional must not swallow its neighbours.
+  for (const frag of [op.tokens.length && '</table>', 'Free delivery']) {
+    if (frag) ok(giveaway.includes(frag), `GIVEAWAY MODE keeps the rest of the block (${frag})`);
+  }
+  ok(/<a href/.test(giveaway), 'GIVEAWAY MODE keeps the CTA button');
+
+  // The same emptiness contract every other block already honours.
+  for (const name of ['blocks/caption-bar-hero', 'blocks/story', 'blocks/feature-list', 'sections/upsell-noir']) {
+    const c = schema.components.find((x) => x.name === name);
+    if (!c || !c.tokens.some((t) => t.name === 'CTA_TEXT')) continue;
+    const camp = sampleData.sampleCampaignFor(c);
+    camp.blocks[0].tokens.CTA_TEXT = '';
+    ok(!/padding:14px 40px/.test(render.assemble(camp, { assetsBase: '/a' }).html),
+      `${name} still drops its button on an empty CTA_TEXT`);
   }
 }
 

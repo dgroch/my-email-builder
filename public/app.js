@@ -61,15 +61,26 @@ function move(i, d) { const j = i + d; if (j < 0 || j >= campaign.blocks.length)
 function remove(i) { campaign.blocks.splice(i, 1); renderBlocks(); livePreview(); }
 
 // ── case helpers ────────────────────────────────────────────────────────────────
-const violatesLower = v => v && /[A-Z]/.test(v);
-const violatesSentence = v => v && (v === v.toUpperCase() && /[A-Z]/.test(v) || /^[a-z]/.test(v));
+// Unicode-aware, and identical to caseIssue() in lib/validate.js — an /[A-Z]/ test reads Ø as
+// "not a capital", so "Økar Bitter Aperitivo" was marked all-lowercase in the editor and in the
+// validator alike, and the repair skipped the Ø to propose "ØKar".
+const violatesLower = v => !!v && /\p{Lu}/u.test(v);
+const violatesSentence = v => !!v && /\p{Ll}/u.test(v) && !/\p{Lu}/u.test(v);
 // Mirrors LENGTH_RE in lib/validate.js — keep the two in step.
 const violatesLength = {
   ok: v => /^(?:0|\d+(?:\.\d+)?(?:px|em|rem|%))$/.test(String(v).trim()),
   bare: v => /^\d+(?:\.\d+)?$/.test(String(v).trim()),
+  auto: (name, v) => name === 'BTN_WIDTH' && String(v).trim().toLowerCase() === 'auto',
 };
 function fixLower(v) { return v.toLowerCase(); }
-function fixSentence(v) { let s = v; if (s === s.toUpperCase()) s = s.toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
+// Uppercase the first CASED character, wherever it is. Returns the value unchanged when it
+// already opens with a capital, so the editor never offers a "fix" that changes nothing useful.
+function fixSentence(v) {
+  const m = String(v).match(/\p{L}/u);
+  if (!m) return v;
+  const i = m.index, first = v[i];
+  return /\p{Lu}/u.test(first) ? v : v.slice(0, i) + first.toUpperCase() + v.slice(i + first.length);
+}
 
 // ── render block cards & fields ───────────────────────────────────────────────
 function renderBlocks() {
@@ -154,10 +165,17 @@ function fieldFor(t, block) {
     if (t.case === 'sentence' && violatesSentence(v)) { bad = true; msg = 'Should be Sentence case (Lust).'; repair = () => fixSentence(v); }
     // A unitless dimension makes the CSS shorthand invalid, so the browser drops it and the
     // value renders as 0 — silently, and identically to "my edit did nothing".
-    if (t.type === 'length' && v !== '' && !violatesLength.ok(v)) {
+    if (t.type === 'length' && v !== '' && !violatesLength.ok(v) && !violatesLength.auto(t.name, v)) {
       bad = true;
-      msg = 'Needs a unit, e.g. "40px" — without one this renders as 0.';
-      if (violatesLength.bare(v)) repair = () => v.trim() + 'px';
+      if (violatesLength.bare(v)) {
+        // The unit is missing but the intent is not in doubt, and assembly now coerces it —
+        // so this is a nudge with a one-click repair, not a blocking error.
+        msg = `Missing unit — this is read as "${v.trim()}px".`;
+        repair = () => v.trim() + 'px';
+      } else {
+        msg = 'Needs a unit, e.g. "40px"'
+          + (t.name === 'BTN_WIDTH' ? ' — or "auto" to size it to the label.' : ' — without one this renders as 0.');
+      }
     }
     warn.classList.toggle('hidden', !bad);
     if (bad) {

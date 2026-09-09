@@ -33,8 +33,10 @@ RULES:
     piece →" → NeuzeitGro, section label → NeuzeitGro Bold caps, section headline → Lust.
   - TITLE is sentence case. EYEBROW renders uppercase via CSS.
   - Tiles are STACKED vertically: each is a white card with the image on the LEFT and the text on
-    the RIGHT (200×250 image, object-position center top). Fixed 600-wide layout — no mobile
-    collapse; the emitted slices scale as images on mobile like every other block.
+    the RIGHT (200×250 image, object-position center top). On the Klaviyo push each tile is a
+    PNG slice that scales as an image, but /api/export ships this block as LIVE HTML — so below
+    600px the tile's image and text columns stack (.jt-img / .jt-txt) and the image goes fluid,
+    rather than holding the document at 600px and shrinking every glyph in the email.
   - Clay (#D8CCBE) section band so the module CONTRASTS with the dark email body (#2c2825);
     white tile cards with hairline #e8e2da borders; square corners.
   - Tile 3 is wrapped in {{#TILE_3_IMAGE_URL}} … {{/TILE_3_IMAGE_URL}} — the assembler's
@@ -43,7 +45,7 @@ RULES:
     live-HTML build: existing saved designs need no edits.
 -->
 <tr><td style="padding:0;background:#D8CCBE;">
-  <table width="600" cellpadding="0" cellspacing="0" border="0" align="center" class="jt">
+  <table width="600" cellpadding="0" cellspacing="0" border="0" align="center" class="jt f600">
     <tr data-eb-slice="header" data-eb-alt="{{SECTION_HEADLINE}}"><td style="padding:42px 28px 20px;text-align:center;">
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,Arial,sans-serif;font-weight:700;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:#6f6354;margin:0 0 10px;">{{SECTION_LABEL}}</p>
       <p style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-size:26px;color:#2c2825;line-height:1.25;margin:0;">{{SECTION_HEADLINE}}</p>
@@ -53,7 +55,7 @@ RULES:
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e8e2da;"><tr>
         <td class="jt-img" width="200" valign="top" style="width:200px;padding:0;overflow:hidden;vertical-align:top;">
           <a href="{{TILE_1_LINK_URL}}" style="display:block;text-decoration:none;">
-            <img src="{{TILE_1_IMAGE_URL}}" width="200" height="250" alt="{{TILE_1_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
+            <img class="jt-imgel" src="{{TILE_1_IMAGE_URL}}" width="200" height="250" alt="{{TILE_1_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
           </a>
         </td>
         <td class="jt-txt" valign="top" style="padding:0;height:250px;vertical-align:top;">
@@ -71,7 +73,7 @@ RULES:
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e8e2da;"><tr>
         <td class="jt-img" width="200" valign="top" style="width:200px;padding:0;overflow:hidden;vertical-align:top;">
           <a href="{{TILE_2_LINK_URL}}" style="display:block;text-decoration:none;">
-            <img src="{{TILE_2_IMAGE_URL}}" width="200" height="250" alt="{{TILE_2_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
+            <img class="jt-imgel" src="{{TILE_2_IMAGE_URL}}" width="200" height="250" alt="{{TILE_2_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
           </a>
         </td>
         <td class="jt-txt" valign="top" style="padding:0;height:250px;vertical-align:top;">
@@ -90,7 +92,7 @@ RULES:
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border:1px solid #e8e2da;"><tr>
         <td class="jt-img" width="200" valign="top" style="width:200px;padding:0;overflow:hidden;vertical-align:top;">
           <a href="{{TILE_3_LINK_URL}}" style="display:block;text-decoration:none;">
-            <img src="{{TILE_3_IMAGE_URL}}" width="200" height="250" alt="{{TILE_3_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
+            <img class="jt-imgel" src="{{TILE_3_IMAGE_URL}}" width="200" height="250" alt="{{TILE_3_TITLE}}" style="display:block;width:200px;height:250px;object-fit:cover;object-position:center top;border:0;">
           </a>
         </td>
         <td class="jt-txt" valign="top" style="padding:0;height:250px;vertical-align:top;">

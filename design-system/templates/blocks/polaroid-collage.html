@@ -21,6 +21,16 @@ RULES:
   - Clay (#D8CCBE) background, polaroid angles (-7° / +2° / +8°) and overlap — locked defaults.
   - The collage region has a fixed height so the rotated, absolutely-positioned polaroids are
     captured by the slicer (position:absolute does not expand the row).
+  - CAPTION CLEARANCE (locked): the centre polaroid is in FRONT, and the cards overlap, so
+    anything painted in an outer card's overlapped column is hidden behind the centre card. The
+    captions sit at the bottom of each card — squarely in that column — which clipped the outer
+    two ("fig and olive leaf" rendered as "fig and olive lea"). DENSITY never helped: it changes
+    the region height only, so the horizontal overlap, and the clipping, were identical at every
+    setting. The vertical offsets below are the fix: the centre card ends ABOVE the band the
+    outer captions occupy, so no caption is ever inside the overlap no matter how long it is or
+    how far ROTATION tilts it. Verified at every ROTATION x DENSITY with wrapping captions.
+    Changing these offsets, the card heights or the rotations re-opens the bug — re-run the
+    caption-occlusion test.
   - LEVERS are art-direction only: locked enums, no free hex/px. They change spacing, tilt and the
     accent illustration toggle — never colour, font or the core layout.
   - DENSITY governs the COLLAGE region height only, so an author's explicit padding is never
@@ -30,6 +40,12 @@ RULES:
     not a lever — these tokens move the component's outer edges, which is what an author is
     reaching for when they want the block to breathe.
   - Script line carries padding-bottom:0.65em — clears the Cervanttis descender ink (see README)
+  - MOBILE (known limit): this block CANNOT reflow. The cards are absolutely positioned inside a
+    fixed 600px region, so it holds a 600px minimum and, in the live-HTML /api/export output,
+    scales the whole document down on a phone. On the Klaviyo push it is rasterised to a PNG
+    slice, which scales as an image like every other designed block — that is the shipping path,
+    and it is fine there. Do not "fix" this by making the region fluid: the cards would keep
+    their absolute offsets and simply be cropped.
 -->
 <tr><td style="padding:0;background:#D8CCBE;">
 <style>
@@ -45,14 +61,14 @@ RULES:
   .pc.rot-jaunty .pc-left { transform:rotate(-11deg); }
   .pc.rot-jaunty .pc-center { transform:rotate(3deg); }
   .pc.rot-jaunty .pc-right { transform:rotate(11deg); }
-  .pc .pc-region { height:340px; }
-  .pc.dens-tight .pc-region { height:312px; }
-  .pc.dens-regular .pc-region { height:340px; }
-  .pc.dens-airy .pc-region { height:372px; }
+  .pc .pc-region { height:384px; }
+  .pc.dens-tight .pc-region { height:356px; }
+  .pc.dens-regular .pc-region { height:384px; }
+  .pc.dens-airy .pc-region { height:416px; }
   .pc .pc-illo { display:none; }
   .pc.illo-on .pc-illo { display:block; }
 </style>
-<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE" class="pc dens-{{DENSITY}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}}">
+<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#D8CCBE" class="pc dens-{{DENSITY}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}} f600">
   <tr>
     <td style="padding:{{PADDING_TOP}} 0 {{PADDING_BOTTOM}};background:#D8CCBE;">
       <!-- Collage region — fixed height so absolute polaroids are captured -->
@@ -60,17 +76,17 @@ RULES:
         <!-- ACCENT_ILLO: faint brand illustration behind the collage (background-image — never a broken <img>) -->
         <div class="pc-illo" style="position:absolute;left:0;top:0;width:600px;height:100%;background:url('{{ASSETS_BASE}}/BodyFlower_Black_wide.png') no-repeat center/contain;opacity:0.06;"></div>
         <!-- left polaroid -->
-        <div class="pc-left" style="position:absolute;left:50px;top:56px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+        <div class="pc-left" style="position:absolute;left:50px;top:88px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
           <img src="{{PHOTO_1_URL}}" width="168" height="168" alt="{{PHOTO_1_CAPTION}}" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_1_CAPTION}}</p>
         </div>
         <!-- right polaroid -->
-        <div class="pc-right" style="position:absolute;left:386px;top:62px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
+        <div class="pc-right" style="position:absolute;left:386px;top:94px;background:#ffffff;border:1px solid #e8e2da;padding:10px 10px 10px;box-shadow:0 10px 28px rgba(0,0,0,0.16);">
           <img src="{{PHOTO_3_URL}}" width="168" height="168" alt="{{PHOTO_3_CAPTION}}" style="display:block;width:168px;height:168px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:19px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_3_CAPTION}}</p>
         </div>
         <!-- centre polaroid (front) -->
-        <div class="pc-center" style="position:absolute;left:206px;top:32px;background:#ffffff;border:1px solid #e8e2da;padding:11px 11px 11px;box-shadow:0 14px 34px rgba(0,0,0,0.22);z-index:2;">
+        <div class="pc-center" style="position:absolute;left:206px;top:0px;background:#ffffff;border:1px solid #e8e2da;padding:11px 11px 11px;box-shadow:0 14px 34px rgba(0,0,0,0.22);z-index:2;">
           <img src="{{PHOTO_2_URL}}" width="176" height="176" alt="{{PHOTO_2_CAPTION}}" style="display:block;width:176px;height:176px;object-fit:cover;object-position:center;">
           <p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:20px;color:#000000;line-height:1.0;margin:12px 0 4px 0;text-align:center;">{{PHOTO_2_CAPTION}}</p>
         </div>
