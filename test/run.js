@@ -1740,6 +1740,62 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── Exported HTML must be built with the SENDABLE shell ────────────────────────────────
+// `production: true` means "keep the real merge tags". It is not the same question as which
+// shell to wrap in, and the two come apart: the Klaviyo push needs real tags AND the preview
+// shell, because that HTML is rasterised and the preview shell carries the fonts as base64.
+//
+// /api/export is the other case — its HTML is pasted into Klaviyo and sent, so it needs
+// shell-production.html. Built with the preview shell it carries ~263KB of embedded font before
+// a word of copy, which puts it past Gmail's clip threshold inside the <head>, and it declares
+// no color-scheme, so it inverts in dark mode exactly as shell-production.html was added to
+// prevent (see the light-only meta and its comment).
+{
+  const GMAIL_CLIP = 102 * 1024;   // the widely-reported threshold at which Gmail truncates
+  const campaign = (seeds[0] && seeds[0].campaign) || { campaignName: 'T', blocks: [{ component: 'footer', tokens: {} }] };
+  const base = 'https://my-email-builder.onrender.com/design-system/assets';
+
+  const sendable = render.assemble(campaign, { assetsBase: base, production: true, shell: 'production' }).html;
+  const preview = render.assemble(campaign, { assetsBase: base, production: true }).html;
+
+  // The sendable document
+  ok(/name="color-scheme"\s+content="light"/.test(sendable), 'the sendable shell declares the email light-only');
+  ok(/supported-color-schemes/.test(sendable), 'and names the supported schemes, so dark-mode clients do not invert it');
+  eq((sendable.match(/data:font\/[a-z0-9]+;base64/g) || []).length, 0, 'it embeds no base64 fonts');
+  ok(/@font-face\{[^}]*https:\/\/cdn\.shopify\.com/.test(sendable), 'it links the hosted faces instead');
+  ok(sendable.includes('{% unsubscribe %}'), 'and keeps the real Klaviyo unsubscribe tag');
+  ok(sendable.length < GMAIL_CLIP,
+    `a seed campaign exports under Gmail's clip threshold (${sendable.length} < ${GMAIL_CLIP} bytes)`);
+
+  // The preview document, which the rasterising paths depend on
+  ok((preview.match(/data:font\/[a-z0-9]+;base64/g) || []).length >= 3,
+    'the preview shell still embeds the faces — renderToPng draws with those exact bytes');
+  ok(preview.length > sendable.length * 3, 'and is far larger, which is why it must not be sent');
+  ok(!/name="color-scheme"/.test(preview), 'the preview shell carries no color-scheme (it is never sent)');
+
+  // Same blocks either way: this is a shell swap, not a content change.
+  const strip = (h) => h.slice(h.indexOf('<body'));
+  const bodyOf = (h) => strip(h).replace(/\s+/g, ' ');
+  ok(bodyOf(sendable).length > 100, 'the sendable document has a body');
+  eq(render.assemble(campaign, { assetsBase: base, production: true, shell: 'production' }).unfilled.length,
+     render.assemble(campaign, { assetsBase: base, production: true }).unfilled.length,
+     'the shell choice does not change which tokens are unfilled');
+
+  // Wiring: export opts in, rasterising paths out. Getting this backwards is invisible until a
+  // send goes out clipped, or a slice renders in a fallback face.
+  const serverJs = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const handler = (name) => (serverJs.match(new RegExp(`'/api/${name}'\\)\\s*\\{([\\s\\S]*?)\\n    \\}`)) || [])[1] || '';
+  const exportHandler = handler('export');
+  ok(exportHandler, '/api/export handler is present');
+  ok(/shell:\s*'production'/.test(exportHandler), "/api/export assembles with shell: 'production'");
+  for (const name of ['render', 'render-slices', 'klaviyo-draft']) {
+    const h = handler(name);
+    ok(h, `/api/${name} handler is present`);
+    ok(!/shell:\s*'production'/.test(h),
+      `/api/${name} does NOT — it rasterises, and needs the preview shell's embedded fonts`);
+  }
+}
+
 // ── The production shell must declare what it actually serves ──────────────────────────
 // A format() hint that disagrees with the bytes is not cosmetic: a client that takes the hint at
 // face value skips the face, and the stack falls through to a system serif — the same silent
