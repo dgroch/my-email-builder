@@ -25,6 +25,14 @@ services:
         fromDatabase:
           name: email-builder-db
           property: connectionString
+      # Where the bundled design-system images are fetched from by whoever OPENS the email.
+      # Unset, it is derived from the request's Host header — right for the preview, wrong for
+      # an export taken off a laptop, which then bakes in a localhost URL that is a dead image
+      # in every inbox. /api/export refuses (422 UNREACHABLE_ASSET_BASE) rather than ship that.
+      # On Render the derived host is publicly reachable, so this is optional here; set it to
+      # serve the assets from a CDN instead of from this instance.
+      #   PUBLIC_ASSETS_BASE  — e.g. https://cdn.figandbloom.com/email-assets
+      #
       # Storage backends, most durable first. Saved designs go to Notion when it is
       # configured, otherwise to Postgres (DATABASE_URL above), otherwise to local
       # disk at DATA_DIR — which is ephemeral on the free plan. The Studio's own

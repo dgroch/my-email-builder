@@ -11,6 +11,11 @@ const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
 const { validateCampaign } = require('./lib/validate');
 const glyphs = require('./lib/glyphs');
+// Absolute, externally-reachable base for the bundled design-system assets, and the check that
+// says whether a recipient could actually fetch it. The preview used to emit the host-relative
+// '/design-system/assets/…', which reads as a broken image to any consumer of the HTML that
+// isn't the editor's own iframe (QA critics, saved snapshots, other agents).
+const { assetsBaseFor, unreachableAssetBase } = require('./lib/assetBase');
 const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
 const campaignGenerator = require('./lib/campaignGenerator');
@@ -72,16 +77,6 @@ function serveFile(res, filePath) {
 function safeJoin(base, rel) {
   const p = path.normalize(path.join(base, decodeURIComponent(rel)));
   return p.startsWith(base) ? p : null;
-}
-
-// Absolute, externally-reachable base for the bundled design-system assets. The preview used to
-// emit the host-relative '/design-system/assets/…', which reads as a broken image to any consumer
-// of the HTML that isn't the editor's own iframe (QA critics, saved snapshots, other agents).
-// Same derivation the Klaviyo push uses, so every surface agrees on one URL.
-function assetsBaseFor(req) {
-  const proto = (req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
-  const host = req.headers.host;
-  return host ? `${proto}://${host}/design-system/assets` : '/design-system/assets';
 }
 
 function readBody(req) {
@@ -267,7 +262,8 @@ const server = http.createServer(async (req, res) => {
       // '{{ASSETS_BASE}}'. Re-tokenising is right for /api/render, which swaps the marker for a
       // file:// path before rasterising; export has no such second pass, so the marker shipped
       // verbatim and every bundled illustration 404'd in the sent email.
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase: assetsBaseFor(req), production: true, previewText });
+      const assetsBase = assetsBaseFor(req);
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase, production: true, previewText });
       const validation = validateCampaign(campaign || {}, schema());
       // Export is the artefact that gets pasted into Klaviyo, so a surviving {{TOKEN}} is a
       // hole in a sent email, not a note in a report. Fail the request rather than hand back
@@ -277,6 +273,17 @@ const server = http.createServer(async (req, res) => {
         return json(res, 422, {
           error: `Export aborted: ${unresolved.length} unresolved template token(s) would ship in the HTML.`,
           code: 'UNRESOLVED_TOKENS', unresolved, unfilled, validation,
+        });
+      }
+      // A host only this machine can resolve is the same defect as an unfilled token, minus the
+      // evidence: the markup is well-formed, the gate above passes it, and the images are dead
+      // in every inbox. Only worth refusing when the HTML actually cites the base — a campaign
+      // whose imagery is all on the CDN does not care what this instance is called.
+      const baseIssue = html.includes(assetsBase) ? unreachableAssetBase(assetsBase) : null;
+      if (baseIssue) {
+        return json(res, 422, {
+          error: `Export aborted: the asset base ${JSON.stringify(assetsBase)} ${baseIssue}, so every bundled illustration would be a broken image in the sent email. Set PUBLIC_ASSETS_BASE to a publicly reachable URL (your CDN, or the deployed app's own origin) and export again.`,
+          code: 'UNREACHABLE_ASSET_BASE', assetsBase, unfilled, validation,
         });
       }
       return json(res, 200, { html, unfilled, validation, campaign, missingGlyphs: glyphs.auditCampaign(campaign || {}, schema()) });
@@ -510,6 +517,9 @@ const server = http.createServer(async (req, res) => {
         studioComponents: componentStore.backend,
         studioLayouts: layoutStore.backend,
         brand: brandTokens.backend,
+        // Whether the fold check is armed. It degrades to silence by design, so the only way to
+        // know it is off is to ask.
+        glyphGate: glyphs.gateStatus(),
         db: await db.health(),
       });
     }
@@ -632,7 +642,15 @@ Promise.all([componentStore.refresh(), brandTokens.refresh()])
         : 'local disk (' + designs.DATA_DIR + ')';
       console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
       console.log(`  designs store: ${designsWhere}`);
-      console.log(`  studio store:  ${componentStore.backend === 'postgres' ? 'Postgres (DATABASE_URL)' : 'local disk — ephemeral on a container with no persistent disk'}\n`);
+      console.log(`  studio store:  ${componentStore.backend === 'postgres' ? 'Postgres (DATABASE_URL)' : 'local disk — ephemeral on a container with no persistent disk'}`);
+      // The fold check degrades to silence, so its absence has to be announced at the one moment
+      // somebody is reading the output. Nothing is printed on the happy path.
+      const gate = glyphs.gateStatus();
+      if (!gate.ok) {
+        console.warn(`\n  ⚠ glyph check DISARMED: ${gate.reason}`);
+        console.warn(`    Accented copy in ${gate.missing.length > 1 ? 'those faces' : 'that face'} will validate clean without being checked. Run \`npm run check:fonts\`.`);
+      }
+      console.log('');
     });
   });
 

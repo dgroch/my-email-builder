@@ -1737,6 +1737,114 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── An asset base a recipient cannot reach ─────────────────────────────────────────────
+// Export and the Klaviyo push bake this URL into HTML that is opened later, by someone else,
+// somewhere else. Derived from the request's Host header it is right in the editor and wrong
+// off a laptop — and wrong in the quietest way there is: well-formed markup, every token
+// filled, and dead images in every inbox. So the export path has to be able to tell.
+{
+  const { assetsBaseFor, unreachableAssetBase } = require('../lib/assetBase');
+
+  const reachable = [
+    'https://cdn.figandbloom.com/design-system/assets',
+    'https://my-email-builder.onrender.com/design-system/assets',
+    'http://figandbloom.com/a',
+  ];
+  for (const base of reachable) eq(unreachableAssetBase(base), null, `'${base}' is reachable`);
+
+  const unreachable = [
+    'http://localhost:4321/design-system/assets',
+    'http://127.0.0.1:4321/a',
+    'http://[::1]:4321/a',
+    'http://192.168.1.10/a',
+    'http://10.0.0.5/a',
+    'http://172.16.4.2/a',
+    'http://studio.local/a',
+    'http://build-box/a',            // bare hostname, no dot
+    '/design-system/assets',         // host-relative: not absolute at all
+    '{{ASSETS_BASE}}',               // the marker the old export shipped verbatim
+  ];
+  for (const base of unreachable) {
+    ok(unreachableAssetBase(base), `'${base}' is reported unreachable`);
+  }
+
+  // PUBLIC_ASSETS_BASE overrides the header, which is the whole point: the deployment knows
+  // where its assets really live and the request does not.
+  const req = { headers: { host: 'localhost:4321' } };
+  eq(assetsBaseFor(req), 'http://localhost:4321/design-system/assets', 'without the env var, the Host header decides');
+  process.env.PUBLIC_ASSETS_BASE = 'https://cdn.figandbloom.com/email/';
+  eq(assetsBaseFor(req), 'https://cdn.figandbloom.com/email', 'PUBLIC_ASSETS_BASE wins, trailing slash trimmed');
+  eq(unreachableAssetBase(assetsBaseFor(req)), null, 'and the configured base passes the reachability check');
+  delete process.env.PUBLIC_ASSETS_BASE;
+
+  // A proxied deploy must not be told its own assets are unreachable.
+  eq(unreachableAssetBase(assetsBaseFor({ headers: { host: 'my-email-builder.onrender.com', 'x-forwarded-proto': 'https,http' } })),
+    null, 'a proxied production host resolves to a reachable https base');
+
+  const serverJs = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const exportHandler = (serverJs.match(/'\/api\/export'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(exportHandler, '/api/export handler is present');
+  ok(/unreachableAssetBase/.test(exportHandler), '/api/export checks the asset base is reachable');
+  ok(/UNREACHABLE_ASSET_BASE/.test(exportHandler), 'and refuses with a named code rather than a bare 422');
+  // The preview paths must NOT be gated: they are supposed to point at whoever served them.
+  const assembleHandler = (serverJs.match(/'\/api\/assemble'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(assembleHandler && !/unreachableAssetBase/.test(assembleHandler),
+    '/api/assemble is NOT gated — a local preview is supposed to use the local host');
+}
+
+// ── A disarmed glyph check must say so ─────────────────────────────────────────────────
+// Every read path in glyphs.js returns null or empty rather than throwing, which is correct: a
+// malformed subtable must not take down a render. But it means the fold check degrades to
+// "nothing is wrong with any of it" — the exact shape of the fault the module exists to catch.
+// A report that silently omits unsupported_glyph is indistinguishable from a clean one.
+{
+  const gate = glyphs.gateStatus();
+  ok(gate.ok, 'with the shipped shell, the glyph gate is armed');
+  eq(gate.missing.length, 0, 'and no brand face is missing');
+  eq(gate.reason, null, 'so there is nothing to report');
+
+  // Simulate the failure: a shell that carries no readable face at all.
+  const shellPath = path.join(__dirname, '..', 'design-system', 'shell', 'shell-preview.html');
+  const original = fs.readFileSync(shellPath, 'utf8');
+  try {
+    fs.writeFileSync(shellPath, '<html><head><style>/* no faces */</style></head><body>{{COMPONENTS}}</body></html>');
+    delete require.cache[require.resolve('../lib/glyphs')];
+    const cold = require('../lib/glyphs');
+    const down = cold.gateStatus();
+    ok(!down.ok, 'an unreadable shell disarms the gate');
+    eq(down.missing.length, cold.EXPECTED_FACES.length, 'and every face is reported missing');
+    ok(/could not be read/.test(down.reason || ''), 'with a reason naming what failed');
+    eq(cold.inspect('økar', 'cervanttis').length, 0, 'the fold check itself goes quiet, as it always did');
+
+    // The point of the fix: the quiet is now reported to whoever asked for a verdict.
+    delete require.cache[require.resolve('../lib/validate')];
+    const coldValidate = require('../lib/validate').validateCampaign;
+    const rep = coldValidate(
+      { campaignName: 'T', blocks: [{ component: 'blocks/story', tokens: { SIGNATURE: 'økar' } }] },
+      schema, { requireUnsubscribe: false });
+    const warn = rep.issues.filter((i) => i.type === 'glyph_gate_unavailable');
+    eq(warn.length, 1, 'validation reports the gate is unavailable');
+    // Read through a default rather than off warn[0] directly: when the warning is absent this
+    // must report a failed assertion, not throw and abort the whole run.
+    eq((warn[0] || {}).severity, 'warning', 'as a warning — the campaign may be clean, and a font outage must not block every send');
+    ok(/UNVERIFIED/.test((warn[0] || {}).message || ''), 'and says the copy is unverified rather than verified clean');
+    ok(!rep.issues.some((i) => i.type === 'unsupported_glyph'), 'while the fold error genuinely cannot fire');
+  } finally {
+    fs.writeFileSync(shellPath, original);
+    delete require.cache[require.resolve('../lib/glyphs')];
+    delete require.cache[require.resolve('../lib/validate')];
+  }
+
+  // …and with the shell restored, a clean campaign carries no such warning.
+  const clean = require('../lib/validate').validateCampaign(
+    { campaignName: 'T', blocks: [{ component: 'blocks/story', tokens: {} }] }, schema, { requireUnsubscribe: false });
+  ok(!clean.issues.some((i) => i.type === 'glyph_gate_unavailable'), 'an armed gate stays silent');
+
+  const serverJs = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  ok(/glyphGate:\s*glyphs\.gateStatus\(\)/.test(serverJs), '/api/health reports whether the gate is armed');
+  ok(/glyph check DISARMED/.test(serverJs), 'and startup warns when it is not');
+}
+
 // ── The export refusal must reach the author ───────────────────────────────────────────
 // /api/export answers 422 UNRESOLVED_TOKENS rather than hand back holed HTML, and that body
 // carries no `html`. A caller that destructures it anyway downloads a file containing the

@@ -109,7 +109,7 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, missingGlyphs, height}` — `missingGlyphs` names any character the brand face that typesets it cannot actually set (see **Glyph coverage**) |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it |
+| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it, and **422 `UNREACHABLE_ASSET_BASE`** when the asset URLs it would bake in resolve only on this network (see `PUBLIC_ASSETS_BASE`) |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
@@ -439,7 +439,33 @@ histories, campaign layouts, brand overrides — lives in Postgres. See *Storage
 ## Storage
 
 Three backends, selected by environment variable. `GET /api/health` reports which one each
-store resolved to, so a misconfigured deployment is visible without reading logs.
+store resolved to, so a misconfigured deployment is visible without reading logs. It also
+reports `glyphGate` — whether the fold check in `lib/glyphs.js` actually loaded the brand faces.
+That check degrades to silence by design (a malformed font must not take down a render), so a
+disarmed guard is indistinguishable from a clean report unless something asks: the server warns
+about it at startup, `/api/validate` raises a `glyph_gate_unavailable` warning, and this field
+is the machine-readable version.
+
+### Where the images point: `PUBLIC_ASSETS_BASE`
+
+The bundled design-system images need an absolute URL, and the default is derived from the
+request's own `Host` header. That is correct for the preview and the rasteriser, which fetch
+from whichever host just served them, and wrong for **`/api/export`** and the Klaviyo push,
+whose HTML is opened later, by someone else, somewhere else.
+
+Exporting from a local checkout therefore used to bake `http://localhost:4321/…` into the
+production HTML: well-formed markup, every token filled, and a dead image in every inbox. Set
+`PUBLIC_ASSETS_BASE` to the URL a *recipient* can reach (your CDN, or the deployed app's own
+origin) and every surface uses it:
+
+```bash
+PUBLIC_ASSETS_BASE=https://cdn.figandbloom.com/email-assets npm start
+```
+
+Without it, `/api/export` refuses with **422 `UNREACHABLE_ASSET_BASE`** rather than hand back
+HTML whose images only load on the machine that made it — but only when the campaign actually
+cites the base, so a campaign whose imagery is all on the CDN exports fine either way. The
+preview paths are deliberately not gated.
 
 | Store | Notion | Postgres | Local disk |
 |---|---|---|---|
