@@ -17,8 +17,21 @@ RULES:
     position:absolute) and the layered pull-quote do not survive as live email HTML.
   - ACCENT_SCRIPT is Cervanttis → lowercase; PULL_QUOTE is Lust → sentence case.
   - Locked Noir/Clay/White palette + locked fonts. Max one collage block per email.
-  - The collage region is a fixed height so the absolutely-positioned frames are captured.
+  - The collage region is a fixed height so the absolutely-positioned frames are captured. That
+    height must clear the TALLEST frame at the STEEPEST rotation: position:absolute does not
+    expand the row, so a frame taller than the region simply hangs out of the bottom and paints
+    over the SUPER_LABEL beneath it — which is how "PLANT HOUSE" rendered as "PLA...HOU". At 300px
+    the front frame overhung by 6-12px depending on ROTATION, so the label was clipped at
+    "subtle" and "jaunty" and clean at "flat", which is why it read as intermittent. 320px clears
+    the worst case. Changing the frame sizes, offsets or rotations re-opens it — re-run the
+    caption-occlusion test.
   - Script line carries padding-bottom:0.65em — clears the Cervanttis descender ink (see README)
+  - MOBILE (known limit): this block CANNOT reflow. The cards are absolutely positioned inside a
+    fixed 600px region, so it holds a 600px minimum and, in the live-HTML /api/export output,
+    scales the whole document down on a phone. On the Klaviyo push it is rasterised to a PNG
+    slice, which scales as an image like every other designed block — that is the shipping path,
+    and it is fine there. Do not "fix" this by making the region fluid: the cards would keep
+    their absolute offsets and simply be cropped.
 PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   white :  PANEL_BG=#ffffff  PANEL_TEXT=#444444  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
   clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
@@ -41,11 +54,11 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   .ec.rot-jaunty .ec-f2 { transform:rotate(8deg); }
   .ec.rot-jaunty .ec-f3 { transform:rotate(-3deg); }
 </style>
-<table width="600" cellpadding="0" cellspacing="0" border="0" class="ec rot-{{ROTATION}}">
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="ec rot-{{ROTATION}} f600">
   <tr>
     <td style="padding:44px 0 8px;background:{{PANEL_BG}};">
       <!-- Collage region — fixed height so absolute frames are captured -->
-      <div style="position:relative;width:600px;height:300px;">
+      <div style="position:relative;width:600px;height:320px;">
         <!-- back-left frame -->
         <div class="ec-f1" style="position:absolute;left:78px;top:34px;background:#ffffff;border:1px solid #e8e2da;padding:9px;box-shadow:0 10px 26px rgba(0,0,0,0.18);">
           <img src="{{FRAME_1_URL}}" width="196" height="232" alt="{{PULL_QUOTE}}" style="display:block;width:196px;height:232px;object-fit:cover;object-position:center;">

@@ -1,0 +1,121 @@
+#!/usr/bin/env node
+'use strict';
+// check-fonts.js — fetch every web font the PRODUCTION shell links and audit what comes back.
+//
+//   npm run check:fonts
+//
+// This exists because both font faults in this system were silent. The NeuzeitGro and Gill Sans
+// URLs 404'd for months: nothing errored, the stack simply fell through to Calibri, and every
+// send went out in the wrong body face. Cervanttis was worse — it loaded fine and mapped every
+// accented Latin-1 letter onto its unaccented glyph, so "Økar" set cleanly as "Okar".
+//
+// Neither is visible in a render review and neither is catchable offline, so this is a separate
+// networked command rather than part of `npm test` — a test suite that fails when the CDN
+// hiccups is a test suite people learn to ignore. Run it after touching the shell's @font-face
+// block, and on a schedule.
+//
+// Exit code 1 if any face is unreachable or folds glyphs.
+
+const fs = require('fs');
+const path = require('path');
+const glyphs = require('../lib/glyphs');
+
+const SHELL = path.join(__dirname, '..', 'design-system', 'shell', 'shell-production.html');
+
+// Latin-1 plus the letters the brand actually reaches for: maker names, coffee origins, cuvées.
+const REQUIRED = 'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝàáâãäåæçèéêëìíîïñòóôõöøùúûüýÿŒœŠšŽžß';
+
+function facesFromShell(html) {
+  const out = [];
+  for (const m of html.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
+    const body = m[1];
+    const family = (body.match(/font-family:\s*'([^']+)'/) || [])[1];
+    const url = (body.match(/url\(\s*'([^']+)'/) || [])[1];
+    const weight = (body.match(/font-weight:\s*([^;]+)/) || [])[1] || 'normal';
+    // The format() hint, not the filename. A file served from a .ttf URL is fine as long as the
+    // rule says what the bytes actually are — that hint is what a client uses to decide whether
+    // it can render the face at all, and the filename is decoration.
+    const format = (body.match(/format\(\s*'([^']+)'\s*\)/) || [])[1] || null;
+    if (family && url && !url.startsWith('data:')) out.push({ family, url, weight: weight.trim(), format });
+  }
+  return out;
+}
+
+async function main() {
+  const html = fs.readFileSync(SHELL, 'utf8');
+  const faces = facesFromShell(html);
+  if (!faces.length) {
+    console.log('No externally-hosted @font-face rules in the production shell.');
+    return 0;
+  }
+
+  let bad = 0;
+  console.log(`Auditing ${faces.length} web font(s) linked by shell-production.html\n`);
+
+  for (const face of faces) {
+    const label = `${face.family} ${face.weight}`.padEnd(24);
+    let res;
+    try {
+      res = await fetch(face.url);
+    } catch (e) {
+      console.log(`  FAIL     ${label} unreachable — ${e.message}`);
+      console.log(`           ${face.url}`);
+      bad++;
+      continue;
+    }
+    if (!res.ok) {
+      console.log(`  FAIL     ${label} HTTP ${res.status} — this face never loads, so every send`);
+      console.log(`           falls through to the next name in the stack.`);
+      console.log(`           ${face.url}`);
+      bad++;
+      continue;
+    }
+
+    const buf = Buffer.from(await res.arrayBuffer());
+    const type = res.headers.get('content-type') || '';
+    const declared = (face.url.match(/\.(woff2|woff|otf|ttf)(\?|$)/) || [])[1] || '?';
+    const magic = { 'wOF2': 'woff2', 'wOFF': 'woff', 'OTTO': 'otf', '\x00\x01\x00\x00': 'ttf' }[buf.toString('latin1', 0, 4)] || 'unknown';
+
+    const cmap = glyphs.readCmap(buf);
+    if (!cmap) {
+      console.log(`  WARN     ${label} loaded (${buf.length}B, ${type}) but its cmap could not be read`);
+      continue;
+    }
+
+    const folded = [], missing = [];
+    for (const ch of REQUIRED) {
+      const gid = cmap.get(ch.codePointAt(0));
+      const base = glyphs.baseLetter(ch);
+      if (gid === undefined) missing.push(ch);
+      else if (base && cmap.get(base.codePointAt(0)) === gid) folded.push(ch);
+    }
+
+    if (folded.length) {
+      console.log(`  FOLDED   ${label} ${folded.length} letters render as their unaccented base:`);
+      console.log(`           ${folded.join(' ')}`);
+      console.log(`           This does NOT look broken — it sets cleanly as the wrong word. Re-cut the face.`);
+      bad++;
+    } else if (missing.length) {
+      console.log(`  GAPS     ${label} ${missing.length} letters absent (client substitutes another face): ${missing.join(' ')}`);
+    } else {
+      console.log(`  ok       ${label} ${buf.length}B, ${cmap.size} codepoints, full Latin-1`);
+    }
+    // What matters is the format() hint: a client that believes a woff2 is 'truetype' can reject
+    // the face outright, and then the whole stack falls through to a system serif — the same
+    // silent substitution the NeuzeitGro 404 caused. A filename that disagrees with its bytes is
+    // only untidy, so it is said once, quietly, and never counted as a fault.
+    const FORMAT_ALIAS = { truetype: 'ttf', opentype: 'otf', woff2: 'woff2', woff: 'woff' };
+    if (magic !== 'unknown' && face.format && FORMAT_ALIAS[face.format] !== magic) {
+      console.log(`           WRONG format(): the rule says format('${face.format}') but the bytes are ${magic}.`);
+      console.log(`           A client that takes the hint at face value skips this face entirely. Declare format('${magic}').`);
+      bad++;
+    } else if (magic !== 'unknown' && declared !== '?' && magic !== declared) {
+      console.log(`           note: the URL ends .${declared} but the bytes are ${magic}. Harmless — format('${face.format}') is correct — but the name misleads.`);
+    }
+  }
+
+  console.log(bad ? `\n${bad} face(s) need attention.` : '\nEvery linked face loads and sets the brand’s copy correctly.');
+  return bad ? 1 : 0;
+}
+
+main().then((c) => process.exit(c)).catch((e) => { console.error(e); process.exit(2); });

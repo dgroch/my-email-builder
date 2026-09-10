@@ -12,7 +12,7 @@ RULES:
   - Classification: slice-to-PNG (Klaviyo renders as image block; not inline HTML).
 -->
 <tr><td>
-<table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff">
+<table class="f600" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff">
   <tr>
     <td align="center" valign="top" style="padding:0;background:#ffffff;">
       <a href="{{HERO_LINK_URL}}" style="display:block;line-height:0;font-size:0;text-decoration:none;" target="_blank">
@@ -23,12 +23,12 @@ RULES:
           cropbottom="0" cropleft="0" cropright="0" croptop="0"/>
         <![endif]-->
         <!--[if !gte mso 9]><!-->
-        <img src="{{HERO_IMAGE_URL}}"
+        <img class="fimg" src="{{HERO_IMAGE_URL}}"
              alt="{{HERO_IMAGE_ALT}}"
              width="600"
              height="750"
              border="0"
-             style="display:block;width:100%;max-width:600px;height:auto;object-fit:cover;object-position:center;" />
+             style="display:block;width:100%;max-width:100%;max-width:600px;height:auto;object-fit:cover;object-position:center;" />
         <!--<![endif]-->
       </a>
     </td>

@@ -39,12 +39,12 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   .ap.rot-jaunty .ap-chip2 { transform:rotate(7deg); }
   .ap.rot-jaunty .ap-chip3 { transform:rotate(-6deg); }
 </style>
-<table width="600" cellpadding="0" cellspacing="0" border="0" class="ap rot-{{ROTATION}}">
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="ap rot-{{ROTATION}} f600">
   <tr>
     <!-- Product image column with overlapping callout chips -->
-    <td width="340" valign="middle" align="center" style="width:340px;padding:48px 0 48px 36px;vertical-align:middle;">
+    <td class="ap-col ap-col-img" width="340" valign="middle" align="center" style="width:340px;padding:48px 0 48px 36px;vertical-align:middle;">
       <div style="position:relative;display:inline-block;">
-        <img src="{{PRODUCT_IMAGE_URL}}" width="300" height="375" alt="{{PRODUCT_NAME}}" style="display:block;width:300px;height:375px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};">
+        <img class="ap-img" src="{{PRODUCT_IMAGE_URL}}" width="300" height="375" alt="{{PRODUCT_NAME}}" style="display:block;width:300px;max-width:100%;height:375px;object-fit:cover;object-position:center;border:1px solid {{PANEL_BORDER}};">
         <!-- chips: hand-written Cervanttis on a white pill, tilted -->
         <div class="ap-chip1" style="position:absolute;left:-22px;top:40px;background:#ffffff;border:1px solid #000000;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:18px;color:#000000;line-height:1.0;padding:6px 14px;box-shadow:0 6px 14px rgba(0,0,0,0.18);">{{CHIP_1_TEXT}}</div>
         <div class="ap-chip2" style="position:absolute;right:-26px;top:150px;background:#ffffff;border:1px solid #000000;font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:18px;color:#000000;line-height:1.0;padding:6px 14px;box-shadow:0 6px 14px rgba(0,0,0,0.18);">{{CHIP_2_TEXT}}</div>
@@ -52,7 +52,7 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
       </div>
     </td>
     <!-- Detail column -->
-    <td valign="middle" style="padding:48px 36px 48px 24px;vertical-align:middle;">
+    <td class="ap-col ap-col-txt" valign="middle" style="padding:48px 36px 48px 24px;vertical-align:middle;">
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 10px 0;">{{PRODUCT_LABEL}}</p>
       <h2 style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:30px;color:#000000;line-height:1.1;margin:0 0 8px 0;">{{PRODUCT_NAME}}</h2>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:{{PANEL_TEXT}};line-height:1.65;margin:0 0 18px 0;">{{PRODUCT_OCCASION}}</p>

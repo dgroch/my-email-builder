@@ -82,6 +82,8 @@ git push -u origin main
 server.js                 zero-dependency HTTP server (UI + /api/{schema,assemble,render,render-slices,export,klaviyo-draft,designs})
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
+lib/glyphs.js             reads the brand faces' cmaps (sfnt + WOFF2); reports characters a face cannot set
+scripts/check-fonts.js    fetches every production @font-face URL and audits what comes back
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
 lib/db.js                 Postgres pool + the schema it owns (used when DATABASE_URL is set)
 lib/recordStore.js        one collection API over two drivers (Postgres / local-disk JSON)
@@ -101,13 +103,13 @@ design-system/            bundled copy of the template library, shells, fonts, a
 ## API
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET  | `/api/schema`   | — | components + tokens (types, presets, case rules), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
+| GET  | `/api/schema`   | — | components + tokens (per-token `type`, `font`, `case`, presets, defaults), per-component **intent** metadata, a `draft` flag, ordering & token rules, and the campaign **objectives** taxonomy |
 | GET  | `/api/gallery`  | — | `{components:[{name, group, designed, static, draft, sampleTokens, variants}]}` — every component with a complete set of on-brand **sample tokens** + its variant axes (palette presets + first enum lever). Powers the interactive **component library** |
 | POST | `/api/assemble` | `{campaign, markBlocks?, production?}` | `{html, unfilled, validation}` — assembled preview HTML with **absolute** asset URLs (`markBlocks` adds `data-eb-block` anchors; `production` keeps the real Klaviyo merge tags instead of the readable preview substitutions); `validation` is the structured report (see `/api/validate`) |
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
-| POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, height}` |
+| POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, missingGlyphs, height}` — `missingGlyphs` names any character the brand face that typesets it cannot actually set (see **Glyph coverage**) |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign}` — **production** HTML: keeps `{{ASSETS_BASE}}` and the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader |
+| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it, and **422 `UNREACHABLE_ASSET_BASE`** when the asset URLs it would bake in resolve only on this network (see `PUBLIC_ASSETS_BASE`) |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
@@ -160,6 +162,130 @@ Two assertions fail a campaign outright, so nothing depends on a human noticing:
   blank or wrong-cased one. The levers drive CSS class names (`illo-{{ACCENT_ILLO}}`), so an
   off-list value used to match no rule and read as "off" — a silent no-op. Issue type
   `invalid_enum`, carrying `options` and a suggested value.
+- **Unsettable glyphs** — a character the face that typesets the token maps onto a different
+  letter fails the campaign (`unsupported_glyph`). See **Glyph coverage** below: this is the one
+  defect class where the render looks correct and the copy is wrong.
+- **Duplicate logo bar** — `heroes/hero-b-white|clay|noir` draw their **own** logo bar, tinted to
+  the band colour, so they take the place of `header`. Putting `header` in front of one renders
+  two Fig & Bloom logo bars about 60px apart. Issue type `duplicate_logo_bar`; the fix is to drop
+  the `header` block. This is the one documented exception to "`header` ← always first", and it
+  is recorded in `orderingRules.header_replacing_heroes`. The logo bar is deliberate, not an
+  oversight: every saved design that uses a hero-b variant places it at index 0 with no header
+  and depends on it.
+
+### Per-token font, and why the casing rule follows it
+
+`/api/schema` returns, on every token: `type` (`text` / `url` / `image` / `length` / `palette` /
+`enum`), `font` (`cervanttis` / `lust` / `neuzeitgro`, or absent where the token never reaches
+type), and `case` (`lower` / `sentence` / `any`).
+
+The casing rule follows the **face**, not the token name, and the face is read off the template
+body rather than off prose in the header comment. `HEADLINE` is Cervanttis in the heroes and Lust
+in the products; a flat map keyed by token name cannot say that, which is why the global
+`tokenRules` map is now a deprecated fallback rather than the source of truth. Defaults per face:
+Cervanttis → `lower` (it is a script face, set lowercase throughout the brand), Lust → `sentence`,
+NeuzeitGro → `any` (it carries `text-transform:uppercase` at every size it is used, so the
+authored casing does not reach the reader). A token's own description still wins where it states
+a rule explicitly.
+
+If you are adding a token to a template, note that its description must stay **on its own line**.
+A token documented with no description used to swallow the following line, so `SUPER_LABEL` in
+`heroes/hero-c1` inherited `HEADLINE`'s "MUST be lowercase" — the phantom rule that made
+lowercase-`SUPER_LABEL` discoverable only by submitting and reading the error — and consumed
+`{{HEADLINE}}` on the way, so `HEADLINE` lost its real rule at the same time.
+
+### Glyph coverage: the failure that does not look like one
+
+`POST /api/render` returns `missingGlyphs` alongside `brokenImages`:
+
+```json
+{ "component": "heroes/hero-a", "index": 0, "token": "HEADLINE", "face": "cervanttis",
+  "char": "ø", "codepoint": "U+00F8", "kind": "folded", "rendersAs": "o",
+  "message": "'HEADLINE' contains ø (U+00F8), which cervanttis maps to its base glyph — it renders as o, silently changing the word." }
+```
+
+Two kinds are reported. `missing` is the ordinary case: the codepoint is absent, the client
+substitutes another face, and the mismatch is visible. `folded` is the dangerous one: the cmap
+maps the codepoint to its **unaccented base glyph**, so the mark simply disappears and the text
+sets cleanly as a different word. Nothing errors, `document.fonts.check()` returns true, and no
+fallback face appears — which is how one send spelt a maker's name two different ways, `ØKAR` in
+NeuzeitGro and `Okar` in Cervanttis, and passed review.
+
+**Current state of the three faces** — run `npm run check:fonts`:
+
+| Face | Loads? | Folds onto base glyph | Verdict |
+|---|---|---|---|
+| Lust | yes | — | clean; it renders `Ø` correctly |
+| NeuzeitGro | yes | — | clean, full Latin-1 |
+| Cervanttis | yes | all 48 accented Latin-1 letters (`Ø ø Ã ã Í í Î î É é Ç Å å Ñ ñ …`) | **needs re-cutting** |
+
+The Cervanttis fault is in the font binary, which is hosted outside this repo. It is not a
+mapping mistake to be corrected — the face has **123 glyphs and no diacritic marks at all**, so
+there is nothing to compose accented letters from. Someone pointed the accented codepoints at
+the bare letters so they would not render as tofu boxes. Fixing it properly means drawing new
+glyphs, which is type-design work on a licensed face.
+
+**So the rule is: do not set accented copy in Cervanttis, and `/api/validate` enforces it.**
+A folded character is an `unsupported_glyph` **error** — the campaign does not validate, because
+the word would ship misspelt and nothing in a render review would show it. A merely absent
+character is a warning: the client substitutes another face, which is ugly but still says what
+the author wrote. The issue names the character, what it would actually render as, and which
+brand faces do set it; it never offers to "fix" the value by stripping the mark, because that is
+the same misspelling written down deliberately. Move the copy to a Lust or NeuzeitGro token
+instead — both cover Latin-1 in full.
+
+Cervanttis's diaeresis set (`Ä Ë Ï Ö Ü ä ë ï ö ü`) is genuine, so `Mörk`, `Zürich` and `Käse`
+are safe and are not flagged. The acute, grave, circumflex, tilde, ring, cedilla and slash sets
+are not. `/api/schema` publishes the per-face lists as `fontCoverage`, and the builder reads
+them to warn on the field as you type — so the editor and the validator cannot disagree.
+
+`lib/glyphs.js` reads the cmaps straight out of the preview shell's embedded faces, so
+`/api/render` audits the exact bytes the renderer rasterises with. It also parses **WOFF2**,
+which is what the production shell links, so `npm run check:fonts` audits the faces a *sent*
+email will actually load — see below.
+
+### `npm run check:fonts`
+
+Fetches every `@font-face` URL in `shell-production.html` and reports, per face: whether it
+loads at all, whether its cmap folds any accented letter onto its base glyph, and whether the
+bytes match the declared `format()`. It is a separate networked command rather than part of
+`npm test` on purpose — a suite that fails when a CDN hiccups is a suite people learn to ignore.
+
+Run it after touching the shell's font block, and on a schedule. It exists because **both**
+font faults in this system were silent:
+
+- **NeuzeitGro 404'd.** The body face — nearly every word of every send — pointed at
+  `NeuzeitGro-Lig.otf` / `-Bol.otf`, which do not exist on the CDN. Nothing errored; the stack
+  fell through to Gill Sans (also 404) and then to Calibri. Fixed: the faces are hosted as
+  `.woff2` and the shell now points at them.
+- **Gill Sans never existed.** Three more 404s on every open, buying nothing. The `@font-face`
+  rules are gone; `'Gill Sans','Gill Sans MT'` stay in the templates' fallback *stack*, where
+  they are a system face on macOS/iOS and are the part that was doing the work. Re-hosting it is
+  a licensing question (Monotype), not a code change.
+- **Cervanttis loads and lies.** See above.
+
+### CSS lengths
+
+`PADDING_TOP`, `PADDING_BOTTOM` and `BTN_WIDTH` are typed `length`. A **bare number** is a unit
+slip with an unambiguous intent, so assembly coerces `"40"` to `"40px"` and `/api/validate`
+reports it as a `coerced_length` **warning** — the value renders correctly either way, so
+rejecting it outright was pointlessly strict. Anything that is not a length at all is still an
+`invalid_length` error.
+
+`BTN_WIDTH` also accepts **`"auto"`**, which sizes the button to its own label. It only ever
+affects Outlook: the Word renderer cannot shrink-wrap a VML roundrect, so `auto` is resolved at
+assembly to a real px width estimated from the label, while every other client shrink-wraps the
+live `<a>` regardless. `auto` is a width keyword and stays rejected on the padding tokens.
+
+### Casing is Unicode-aware
+
+Case checks use `\p{Lu}` / `\p{Ll}` with the `u` flag, not `[A-Z]` / `[a-z]`. `Ø` is an
+uppercase letter, so `"Økar Bitter Aperitivo"` is correct Sentence case and passes; under an
+ASCII test it was read as all-lowercase and rejected, and the repair walked to the first
+`[A-Za-z]`, stepped straight over the `Ø`, and proposed `"ØKar"`. A suggestion now uppercases the
+first **cased** character wherever it sits, and is omitted entirely when the value already opens
+with a capital. The builder's client-side check (`public/app.js`) uses the same rule, so the two
+never disagree.
 
 ### Inline formatting in token values
 
@@ -313,7 +439,33 @@ histories, campaign layouts, brand overrides — lives in Postgres. See *Storage
 ## Storage
 
 Three backends, selected by environment variable. `GET /api/health` reports which one each
-store resolved to, so a misconfigured deployment is visible without reading logs.
+store resolved to, so a misconfigured deployment is visible without reading logs. It also
+reports `glyphGate` — whether the fold check in `lib/glyphs.js` actually loaded the brand faces.
+That check degrades to silence by design (a malformed font must not take down a render), so a
+disarmed guard is indistinguishable from a clean report unless something asks: the server warns
+about it at startup, `/api/validate` raises a `glyph_gate_unavailable` warning, and this field
+is the machine-readable version.
+
+### Where the images point: `PUBLIC_ASSETS_BASE`
+
+The bundled design-system images need an absolute URL, and the default is derived from the
+request's own `Host` header. That is correct for the preview and the rasteriser, which fetch
+from whichever host just served them, and wrong for **`/api/export`** and the Klaviyo push,
+whose HTML is opened later, by someone else, somewhere else.
+
+Exporting from a local checkout therefore used to bake `http://localhost:4321/…` into the
+production HTML: well-formed markup, every token filled, and a dead image in every inbox. Set
+`PUBLIC_ASSETS_BASE` to the URL a *recipient* can reach (your CDN, or the deployed app's own
+origin) and every surface uses it:
+
+```bash
+PUBLIC_ASSETS_BASE=https://cdn.figandbloom.com/email-assets npm start
+```
+
+Without it, `/api/export` refuses with **422 `UNREACHABLE_ASSET_BASE`** rather than hand back
+HTML whose images only load on the machine that made it — but only when the campaign actually
+cites the base, so a campaign whose imagery is all on the CDN exports fine either way. The
+preview paths are deliberately not gated.
 
 | Store | Notion | Postgres | Local disk |
 |---|---|---|---|
@@ -575,6 +727,41 @@ Not covered by this fix: the script **badges and chips** (`blocks/annotated-prod
 `blocks/designed-product-card`, `blocks/offer-panel`) sit on their own coloured pill, and a
 descender escapes the pill's background by ~5px. Fixing those means changing each pill's shape,
 which is a design call rather than a layout bug.
+
+## The mobile contract (one document, one scale)
+
+An email is a single shrink-to-fit document. A **single** block that cannot go below 600px does
+not just break itself — it holds the whole document at 600px, and a phone then scales *every
+glyph in the email* by `375/600 = 0.625`. That is why 14px body copy arrived at 8.8px, and why
+this is a system-wide contract rather than a per-block nicety.
+
+Three rules, all enforced by `npm test`:
+
+1. **Every 600px structural table carries `.f600`** (or is the root `.ew`). The shell's
+   `@media (max-width:600px)` block makes those, and only those, fluid. Forty-five of the
+   fifty-three components had never opted in, so the media query had nothing to act on.
+2. **Every fixed measure wider than a phone carries `.fm`** — the 552px step rows, the 440px
+   body measure, the 380px opt-out measure.
+3. **Every full-bleed image carries `.fimg` and an inline `width:100%`**, plus either
+   `height:auto` or a **definite** `max-width:600px`.
+
+Rule 3 is the subtle one. An image that has not loaded — a bad URL, or images off, which is how
+a great many people read email — takes its intrinsic size from its `width`/`height` attributes.
+With a definite CSS height, `width:100%` is then resolved back through that aspect ratio to
+600px, which becomes the table's minimum. A **percentage** `max-width` cannot rescue it: against
+a shrink-to-fit table it resolves to `none`. So `.fimg` caps at `100vw` — a definite unit —
+which lets the image shrink while keeping the crop `IMG_HEIGHT` chose. Clients without `vw`
+behave exactly as they did before, so it can only improve on the status quo.
+
+Two-column blocks stack below 600px: `.st-col` (`blocks/story`), `.fl-col`
+(`blocks/feature-list`, which carried no classes at all), `.ap-col`
+(`blocks/annotated-product`), and `.jt-img`/`.jt-txt` (`blocks/journal-tile`).
+
+**Known limit.** `blocks/polaroid-collage` and `blocks/editorial-collage` cannot reflow: their
+cards are absolutely positioned inside a fixed 600px region. On the Klaviyo push they rasterise
+to PNG slices that scale as images, which is the shipping path and is fine. In the live-HTML
+`/api/export` output they still hold the document at 600px. Do not "fix" this by making the
+region fluid — the cards keep their absolute offsets and are simply cropped.
 
 ## Keeping the design system in sync
 `design-system/` is a bundled copy of `creative-email-campaign-builder/references/`

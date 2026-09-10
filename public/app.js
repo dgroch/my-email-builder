@@ -61,15 +61,45 @@ function move(i, d) { const j = i + d; if (j < 0 || j >= campaign.blocks.length)
 function remove(i) { campaign.blocks.splice(i, 1); renderBlocks(); livePreview(); }
 
 // ── case helpers ────────────────────────────────────────────────────────────────
-const violatesLower = v => v && /[A-Z]/.test(v);
-const violatesSentence = v => v && (v === v.toUpperCase() && /[A-Z]/.test(v) || /^[a-z]/.test(v));
+// Unicode-aware, and identical to caseIssue() in lib/validate.js — an /[A-Z]/ test reads Ø as
+// "not a capital", so "Økar Bitter Aperitivo" was marked all-lowercase in the editor and in the
+// validator alike, and the repair skipped the Ø to propose "ØKar".
+const violatesLower = v => !!v && /\p{Lu}/u.test(v);
+const violatesSentence = v => !!v && /\p{Ll}/u.test(v) && !/\p{Lu}/u.test(v);
 // Mirrors LENGTH_RE in lib/validate.js — keep the two in step.
 const violatesLength = {
   ok: v => /^(?:0|\d+(?:\.\d+)?(?:px|em|rem|%))$/.test(String(v).trim()),
   bare: v => /^\d+(?:\.\d+)?$/.test(String(v).trim()),
+  auto: (name, v) => name === 'BTN_WIDTH' && String(v).trim().toLowerCase() === 'auto',
 };
+// Characters the face that typesets this token cannot actually set. Mirrors glyphIssues() in
+// lib/validate.js, reading the same per-face lists the server put on the schema — so the editor
+// flags exactly what the validator rejects.
+//
+// The folded set is the one that matters: those characters ARE in the font's cmap, mapped to the
+// unaccented letter, so "økar" sets as a clean, correctly-kerned "okar". There is nothing to see
+// in the preview. This field warning is the only place a writer finds out.
+function unsettableChars(t, v) {
+  const cov = SCHEMA && SCHEMA.fontCoverage && t.font && SCHEMA.fontCoverage[t.font];
+  if (!cov || !v) return null;
+  const folded = [...new Set([...v].filter(c => cov.folded.includes(c)))];
+  const missing = [...new Set([...v].filter(c => cov.missing.includes(c)))];
+  if (!folded.length && !missing.length) return null;
+  const others = ['cervanttis', 'lust', 'neuzeitgro'].filter(f => {
+    const c = SCHEMA.fontCoverage[f];
+    return f !== t.font && c && ![...folded, ...missing].some(ch => c.folded.includes(ch) || c.missing.includes(ch));
+  });
+  return { folded, missing, others };
+}
 function fixLower(v) { return v.toLowerCase(); }
-function fixSentence(v) { let s = v; if (s === s.toUpperCase()) s = s.toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); }
+// Uppercase the first CASED character, wherever it is. Returns the value unchanged when it
+// already opens with a capital, so the editor never offers a "fix" that changes nothing useful.
+function fixSentence(v) {
+  const m = String(v).match(/\p{L}/u);
+  if (!m) return v;
+  const i = m.index, first = v[i];
+  return /\p{Lu}/u.test(first) ? v : v.slice(0, i) + first.toUpperCase() + v.slice(i + first.length);
+}
 
 // ── render block cards & fields ───────────────────────────────────────────────
 function renderBlocks() {
@@ -154,10 +184,30 @@ function fieldFor(t, block) {
     if (t.case === 'sentence' && violatesSentence(v)) { bad = true; msg = 'Should be Sentence case (Lust).'; repair = () => fixSentence(v); }
     // A unitless dimension makes the CSS shorthand invalid, so the browser drops it and the
     // value renders as 0 — silently, and identically to "my edit did nothing".
-    if (t.type === 'length' && v !== '' && !violatesLength.ok(v)) {
+    if (t.type === 'length' && v !== '' && !violatesLength.ok(v) && !violatesLength.auto(t.name, v)) {
       bad = true;
-      msg = 'Needs a unit, e.g. "40px" — without one this renders as 0.';
-      if (violatesLength.bare(v)) repair = () => v.trim() + 'px';
+      if (violatesLength.bare(v)) {
+        // The unit is missing but the intent is not in doubt, and assembly now coerces it —
+        // so this is a nudge with a one-click repair, not a blocking error.
+        msg = `Missing unit — this is read as "${v.trim()}px".`;
+        repair = () => v.trim() + 'px';
+      } else {
+        msg = 'Needs a unit, e.g. "40px"'
+          + (t.name === 'BTN_WIDTH' ? ' — or "auto" to size it to the label.' : ' — without one this renders as 0.');
+      }
+    }
+    // A glyph the face cannot set outranks a casing nit: casing is a house-style slip, this
+    // one ships the wrong word. Checked last so its message wins the field.
+    const uns = unsettableChars(t, v);
+    if (uns) {
+      bad = true;
+      const where = uns.others.length ? ` Use a ${uns.others.join('/')} token instead.` : '';
+      if (uns.folded.length) {
+        msg = `${t.font} cannot set ${uns.folded.join(' ')} — it renders without the mark, so the word ships misspelt.${where}`;
+        repair = null;   // stripping the mark is the same misspelling, so never offer a one-click "fix"
+      } else {
+        msg = `${t.font} has no ${uns.missing.join(' ')} — those characters fall back to another face.${where}`;
+      }
     }
     warn.classList.toggle('hidden', !bad);
     if (bad) {
@@ -375,8 +425,17 @@ async function exportHtml() {
   // the Klaviyo modal field, else the loaded design's saved preview, else the campaign's own).
   const previewText = $('#kvPreview').value.trim() || currentDesignMeta.previewText || campaign.previewText || '';
   const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign, previewText }) });
-  const { html } = await r.json();
-  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', html, 'text/html');
+  const data = await r.json();
+  // /api/export refuses a campaign that still has unresolved tokens (422 UNRESOLVED_TOKENS),
+  // and that response carries no `html`. Downloading it regardless writes a file containing
+  // the string "undefined" and tells the author nothing — the opposite of what the refusal is
+  // for. Surface the reason and the tokens to go and fill instead.
+  if (!r.ok) {
+    const tokens = (data.unresolved || []).join(', ');
+    alert((data.error || 'Export failed: HTTP ' + r.status) + (tokens ? '\n\nStill unresolved: ' + tokens : ''));
+    return;
+  }
+  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', data.html, 'text/html');
 }
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {

@@ -22,6 +22,11 @@ RULES:
   - LEVERS are art-direction only: locked enums, no free hex/px. They change scale, tilt and the
     accent illustration toggle — never colour, font or the core layout.
   - Script line carries padding-bottom:0.65em — clears the Cervanttis descender ink (see README)
+  - MOBILE: the portrait and narrative columns stack (.st-col) and the polaroid goes fluid
+    (.st-img) below 600px. The block already carried .st/.st-hl/.st-polaroid/.st-illo, but the
+    shell's @media block targeted none of them, so it stayed a fixed 600px two-column table —
+    which forced the whole document to 600px and shrank every glyph in the email. The 9px label
+    landed at 5.6px and the 14px body at 8.8px on a 375px screen.
 PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   white :  PANEL_BG=#ffffff  PANEL_TEXT=#444444  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
   clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
@@ -41,16 +46,16 @@ PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
   .st .st-illo { display:none; }
   .st.illo-on .st-illo { display:block; }
 </style>
-<table width="600" cellpadding="0" cellspacing="0" border="0" class="st ts-{{TYPE_SCALE}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}}">
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="st ts-{{TYPE_SCALE}} rot-{{ROTATION}} illo-{{ACCENT_ILLO}} f600">
   <tr>
     <!-- Portrait column (tilted polaroid) -->
-    <td width="288" valign="middle" align="center" style="width:288px;padding:48px 0 48px 40px;vertical-align:middle;">
+    <td class="st-col st-col-img" width="288" valign="middle" align="center" style="width:288px;padding:48px 0 48px 40px;vertical-align:middle;">
       <div class="st-polaroid" style="display:inline-block;background:#ffffff;border:1px solid #e8e2da;padding:12px 12px 14px;box-shadow:0 12px 28px rgba(0,0,0,0.14);">
-        <img src="{{PORTRAIT_IMAGE_URL}}" width="240" height="300" alt="{{HEADLINE}}" style="display:block;width:240px;height:300px;object-fit:cover;object-position:center;">
+        <img class="st-img" src="{{PORTRAIT_IMAGE_URL}}" width="240" height="300" alt="{{HEADLINE}}" style="display:block;width:240px;height:300px;object-fit:cover;object-position:center;">
       </div>
     </td>
     <!-- Narrative column -->
-    <td valign="middle" style="padding:48px 40px 48px 28px;vertical-align:middle;position:relative;">
+    <td class="st-col st-col-txt" valign="middle" style="padding:48px 40px 48px 28px;vertical-align:middle;position:relative;">
       <!-- ACCENT_ILLO: faint brand illustration in the corner (background-image — never a broken <img>) -->
       <div class="st-illo" style="position:absolute;right:30px;top:18px;width:96px;height:96px;background:url('{{ASSETS_BASE}}/HandFlower_Black.png') no-repeat center/contain;opacity:0.08;"></div>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 12px 0;">{{SUPER_LABEL}}</p>

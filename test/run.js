@@ -20,6 +20,7 @@ const { OBJECTIVES, OBJECTIVE_GUIDANCE, COMPONENT_INTENT } = require('../lib/com
 const { validateCampaign } = require('../lib/validate');
 const { loadSeedExamples } = require('../lib/examples');
 const render = require('../lib/render');
+const glyphs = require('../lib/glyphs');
 const sampleData = require('../lib/sampleData');
 
 let passed = 0;
@@ -576,7 +577,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   // Both measures are fixed-width tables now, not max-width caps that Word discards.
   for (const [name, width] of [['opt-out', 380], ['body-copy-plain', 440]]) {
     const t = tpl(name);
-    ok(new RegExp(`<table width="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
+    ok(new RegExp(`<table[^>]*\\bwidth="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
     ok(!/max-width/.test(t.replace(/<!--[\s\S]*?-->/g, '')), `${name} no longer relies on a max-width cap`);
   }
 
@@ -664,13 +665,13 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const imgTag = (html) => (html.match(/<img[^>]*cvs-left-img[^>]*>/) || [])[0] || '';
   const camp = sampleData.sampleCampaignFor(cvs);
   const neutral = render.assemble(camp, { assetsBase: '/a' }).html;
-  ok(/class="cvs treat-none"/.test(neutral), 'default treatment renders treat-none');
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-none\b/.test(neutral), 'default treatment renders treat-none');
   ok(!/grayscale/.test(imgTag(neutral)), 'the left image carries no inline grayscale filter');
 
   // Omitting the token entirely (an existing saved campaign) still assembles at the default.
   const omitted = JSON.parse(JSON.stringify(camp));
   delete omitted.blocks[0].tokens.LEFT_TREATMENT;
-  ok(/class="cvs treat-none"/.test(render.assemble(omitted, { assetsBase: '/a' }).html),
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-none\b/.test(render.assemble(omitted, { assetsBase: '/a' }).html),
     'a campaign predating the token falls back to treat-none');
   eq(validateCampaign(omitted, schema, { requireUnsubscribe: false }).ok, true,
     'a campaign predating the token still validates');
@@ -679,7 +680,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const grey = JSON.parse(JSON.stringify(camp));
   grey.blocks[0].tokens.LEFT_TREATMENT = 'grayscale';
   const greyHtml = render.assemble(grey, { assetsBase: '/a' }).html;
-  ok(/class="cvs treat-grayscale"/.test(greyHtml), 'grayscale treatment renders treat-grayscale');
+  ok(/class="[^"]*\bcvs\b[^"]*\btreat-grayscale\b/.test(greyHtml), 'grayscale treatment renders treat-grayscale');
   ok(/\.cvs\.treat-grayscale \.cvs-left-img \{ filter:grayscale\(100%\); \}/.test(greyHtml),
     'the grayscale rule is present for the rasteriser to bake in');
 }
@@ -802,16 +803,51 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   eq(padTokens.length, 2, 'the collage exposes both padding tokens');
   for (const t of padTokens) eq(t.type, 'length', `${t.name} is typed as a CSS length`);
 
+  // A bare number is a UNIT SLIP, not a wrong value: the validator already knew the intended
+  // unit well enough to suggest it, so assembly coerces it to px and the report says so. It is
+  // a warning, and the campaign still validates — rejecting it outright was pointlessly strict.
   const bare = sampleData.sampleCampaignFor(pc);
   bare.blocks[0].tokens.PADDING_TOP = '100';
   const rep = validateCampaign(bare, schema, { requireUnsubscribe: false });
-  const lenIssue = rep.issues.find((i) => i.type === 'invalid_length' && i.token === 'PADDING_TOP');
-  ok(lenIssue, 'a unitless dimension is flagged as invalid_length');
-  eq(lenIssue && lenIssue.severity, 'error', 'invalid_length is an error');
-  eq(lenIssue && lenIssue.value, '100', 'invalid_length reports the offending value');
-  eq(lenIssue && lenIssue.suggestion, '100px', 'invalid_length suggests the value with a unit');
-  eq(rep.ok, false, 'a campaign with a unitless dimension does not validate');
-  eq(rep.blocks[0].valid, false, 'the offending block is marked invalid');
+  const lenIssue = rep.issues.find((i) => i.type === 'coerced_length' && i.token === 'PADDING_TOP');
+  ok(lenIssue, 'a unitless dimension is flagged as coerced_length');
+  eq(lenIssue && lenIssue.severity, 'warning', 'coerced_length is a warning, not an error');
+  eq(lenIssue && lenIssue.value, '100', 'coerced_length reports the offending value');
+  eq(lenIssue && lenIssue.suggestion, '100px', 'coerced_length suggests the value with a unit');
+  eq(rep.ok, true, 'a campaign with a unitless dimension still validates');
+  eq(rep.blocks[0].valid, true, 'a warning does not mark the block invalid');
+  ok(!rep.issues.some((i) => i.type === 'invalid_length'), 'a bare number is no longer an invalid_length error');
+
+  // …and the coercion is real: the assembled CSS carries the unit, so the declaration survives
+  // instead of being dropped whole and rendering as 0.
+  const coerced = render.assemble(bare, { assetsBase: '/a' }).html;
+  ok(/padding:\s*100px\b/.test(coerced), 'assembly coerces a unitless dimension to px');
+  ok(!/padding:\s*100\s/.test(coerced), 'no unitless value survives into the CSS shorthand');
+
+  // BTN_WIDTH accepts `auto` — an Outlook-only VML width, resolved to a real px value sized to
+  // the label, because Word cannot shrink-wrap a roundrect and every other client already does.
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  const autoCamp = sampleData.sampleCampaignFor(btn);
+  autoCamp.blocks[0].tokens.BTN_WIDTH = 'auto';
+  autoCamp.blocks[0].tokens.CTA_TEXT = 'Shop the collection';
+  const autoRep = validateCampaign(autoCamp, schema, { requireUnsubscribe: false });
+  ok(!autoRep.issues.some((i) => i.token === 'BTN_WIDTH'), 'BTN_WIDTH accepts "auto"');
+  const autoHtml = render.assemble(autoCamp, { assetsBase: '/a' }).html;
+  const vmlWidth = (autoHtml.match(/width:(\d+)px;v-text-anchor/) || [])[1];
+  ok(vmlWidth && Number(vmlWidth) > 120, `"auto" resolves the VML width to the label (got ${vmlWidth}px)`);
+  ok(!/width:auto/.test(autoHtml), '"auto" never reaches the VML, which cannot interpret it');
+  // A shorter label gets a narrower button — the point of asking for auto in the first place.
+  const shortCamp = sampleData.sampleCampaignFor(btn);
+  shortCamp.blocks[0].tokens.BTN_WIDTH = 'auto';
+  shortCamp.blocks[0].tokens.CTA_TEXT = 'Shop';
+  const shortWidth = (render.assemble(shortCamp, { assetsBase: '/a' }).html.match(/width:(\d+)px;v-text-anchor/) || [])[1];
+  ok(Number(shortWidth) < Number(vmlWidth), 'a shorter label yields a narrower auto button');
+  // `auto` is a WIDTH keyword; it is meaningless in a padding shorthand and stays rejected there.
+  const badAuto = sampleData.sampleCampaignFor(btn);
+  badAuto.blocks[0].tokens.PADDING_TOP = 'auto';
+  ok(validateCampaign(badAuto, schema, { requireUnsubscribe: false }).issues
+      .some((i) => i.type === 'invalid_length' && i.token === 'PADDING_TOP'),
+    'PADDING_TOP does not accept "auto"');
 
   // Junk that isn't even a number is rejected, with no bogus suggestion.
   const junk = sampleData.sampleCampaignFor(pc);
@@ -829,15 +865,17 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
         .some((i) => i.type === 'invalid_length'), `"${good}" is accepted as a CSS length`);
   }
 
-  // Every length token in the schema enforces units, and no sample trips a false positive.
+  // Every length token in the schema notices a missing unit, and no sample trips a false positive.
   for (const c of schema.components) {
     for (const t of c.tokens) {
       if (t.type !== 'length') continue;
       const camp = sampleData.sampleCampaignFor(c);
       camp.blocks[0].tokens[t.name] = '12';
       ok(validateCampaign(camp, schema, { requireUnsubscribe: false }).issues
-          .some((i) => i.type === 'invalid_length' && i.token === t.name),
-        `'${c.name}'.${t.name} rejects a unitless value`);
+          .some((i) => i.type === 'coerced_length' && i.token === t.name),
+        `'${c.name}'.${t.name} reports a unitless value as coerced`);
+      ok(/:\s*(?:[^;]*\s)?12px\b/.test(render.assemble(camp, { assetsBase: '/a' }).html),
+        `'${c.name}'.${t.name} renders a unitless value as px rather than dropping the rule`);
     }
     const camp = sampleData.sampleCampaignFor(c);
     ok(!validateCampaign(camp, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'invalid_length'),
@@ -1194,6 +1232,767 @@ async function studioSuite() {
     eq(gone.rows.length, 0, 'deleting a never-published component removes the row');
     await db.query('TRUNCATE studio_components, studio_layouts, studio_brand, designs');
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════
+// Defects from the 9 Sep render review. Every one of these shipped past a green
+// /api/validate, an empty `unfilled`, and an empty `brokenImages` — the theme of that report
+// was that the API reported success on emails that were visibly wrong. So each fix below is
+// pinned by a test that would have caught it.
+// ══════════════════════════════════════════════════════════════════════════════════════
+
+// ── Bug 1: heroes/hero-b-* replace the header; pairing them renders two logo bars ──────
+// hero-b-* draw their own logo bar tinted to the band colour. Every saved design that uses one
+// puts it at index 0 with no header at all and depends on that bar, so the bar stays and the
+// PAIRING is the error. The documented order ("header ← always first") had to gain the
+// exception, and /api/validate now enforces it.
+{
+  const LOGO = /F_B_Logo_Horizontal/g;
+  const heroes = schema.components.filter((c) => c.group === 'heroes');
+  ok(heroes.length >= 12, `every hero variant is present (found ${heroes.length})`);
+
+  for (const hero of heroes) {
+    const blocks = [
+      { component: 'header', tokens: {} },
+      sampleData.sampleCampaignFor(hero).blocks[0],
+      { component: 'footer', tokens: {} },
+    ];
+    const html = render.assemble({ campaignName: 'logo probe', blocks }, { assetsBase: '/a' }).html;
+    const bars = (html.match(LOGO) || []).length;
+    const headerReplacing = /^heroes\/hero-b-/.test(hero.name);
+    const report = validateCampaign({ campaignName: 'logo probe', blocks }, schema);
+    const dupe = report.issues.find((i) => i.type === 'duplicate_logo_bar');
+
+    if (headerReplacing) {
+      // The pairing is rejected, and the reason names the second logo bar rather than leaving
+      // the author to spot it in a render.
+      ok(dupe, `'header' + '${hero.name}' is reported as duplicate_logo_bar`);
+      eq(dupe && dupe.severity, 'error', `${hero.name}: the duplicate logo bar is an error`);
+      eq(report.ok, false, `${hero.name}: a campaign with two logo bars does not validate`);
+      ok(dupe && /header/.test(dupe.suggestion || ''), `${hero.name}: the fix suggests dropping the header`);
+      eq(bars, 2, `${hero.name}: the rejected pairing is genuinely two logo bars`);
+      // Without the header — how all four saved hero-b designs are built — exactly one bar.
+      const solo = [blocks[1], blocks[2]];
+      eq((render.assemble({ campaignName: 'x', blocks: solo }, { assetsBase: '/a' }).html.match(LOGO) || []).length, 1,
+        `${hero.name} on its own renders exactly one logo bar`);
+      ok(!validateCampaign({ campaignName: 'x', blocks: solo }, schema).issues.some((i) => i.type === 'duplicate_logo_bar'),
+        `${hero.name} without a header validates — the four saved designs keep working`);
+    } else {
+      eq(bars, 1, `'header' + '${hero.name}' renders exactly one logo bar`);
+      ok(!dupe, `'header' + '${hero.name}' is not flagged`);
+    }
+  }
+
+  // The rule is discoverable without submitting a campaign and reading the error.
+  const ord = schema.orderingRules && schema.orderingRules.header_replacing_heroes;
+  ok(ord && Array.isArray(ord.components) && ord.components.length === 3,
+    'orderingRules documents the three header-replacing heroes');
+  for (const n of (ord ? ord.components : [])) ok(names.has(n), `header_replacing_heroes lists a real component: ${n}`);
+}
+
+// ── Bug 2: a glyph the brand face folds onto its base letter ───────────────────────────
+// Cervanttis maps all 48 accented Latin-1 letters to their unaccented glyph, so "økar" sets as
+// a clean, well-set "okar". It does not render tofu and it does not fall back to another face,
+// so nothing about it looks wrong — the maker's name is just spelt differently from the same
+// word set in NeuzeitGro three blocks further down. brokenImages already promises that /api/render
+// names what silently failed; missingGlyphs puts this in the same contract.
+{
+  const cov = {};
+  for (const face of ['cervanttis', 'lust', 'neuzeitgro']) {
+    cov[face] = glyphs.faceCoverage(face);
+    ok(cov[face], `the ${face} face is readable from the preview shell`);
+  }
+  // The fold is real and specific to Cervanttis. If a re-cut font fixes it, this flips — which
+  // is the point: the guard verifies the font rather than trusting it.
+  ok(cov.cervanttis.folded.includes('Ø') && cov.cervanttis.folded.includes('ø'),
+    'Cervanttis still folds Ø/ø onto O/o (re-cut the face to clear this)');
+  eq(cov.lust.folded.length, 0, 'Lust folds nothing — Ø renders as Ø, contrary to the original report');
+  eq(cov.neuzeitgro.folded.length, 0, 'NeuzeitGro folds nothing');
+
+  // Per-face inspection of the review's own probe string.
+  const PROBE = 'Økar ø Ø Sítio Canaã Cuvée Mörk';
+  eq(glyphs.inspect(PROBE, 'lust').length, 0, 'Lust renders the whole probe string');
+  eq(glyphs.inspect(PROBE, 'neuzeitgro').length, 0, 'NeuzeitGro renders the whole probe string');
+  const cerv = glyphs.inspect(PROBE, 'cervanttis');
+  ok(cerv.length > 0, 'Cervanttis reports the probe string rather than failing open');
+  const slash = cerv.find((h) => h.char === 'Ø');
+  eq(slash && slash.kind, 'folded', 'Ø is reported as folded, not missing');
+  eq(slash && slash.rendersAs, 'O', 'the report says what it actually renders as');
+  eq(slash && slash.codepoint, 'U+00D8', 'the report carries the codepoint');
+
+  // A campaign audit attributes each miss to the block and token that carries it, and checks
+  // each value against the face that TYPESETS it — a Ø in a Lust product name is fine, the same
+  // Ø in a Cervanttis headline is not.
+  const camp = { campaignName: 'Økar', blocks: [
+    { component: 'heroes/hero-a', tokens: { HERO_IMAGE_URL: '', SUPER_LABEL: 'APPLEWOOD',
+      HEADLINE: 'the økar negroni', SUBHEADLINE: 'Økar Bitter Aperitivo', CTA_TEXT: 'Shop the Økar',
+      CTA_URL: 'https://figandbloom.com' } },
+    { component: 'products/card-horizontal', tokens: { PRODUCT_IMAGE_URL: '', PRODUCT_LABEL: 'APPLEWOOD',
+      PRODUCT_NAME: 'Økar Bitter Aperitivo, 700ml', PRODUCT_DESC: 'Sítio Canaã', PRODUCT_PRICE: '$55',
+      CTA_TEXT: 'Add', PRODUCT_URL: 'https://figandbloom.com' } },
+  ] };
+  const misses = glyphs.auditCampaign(camp, schema);
+  eq(misses.length, 1, 'the audit reports exactly the one token whose face cannot set it');
+  eq(misses[0] && misses[0].component, 'heroes/hero-a', 'the miss is attributed to its block');
+  eq(misses[0] && misses[0].token, 'HEADLINE', 'the miss is attributed to its token');
+  eq(misses[0] && misses[0].face, 'cervanttis', 'the miss names the face that folds it');
+  eq(misses[0] && misses[0].index, 0, 'the miss carries the block index');
+  ok(/renders as o/.test(misses[0] && misses[0].message || ''), 'the message says what the reader will see');
+
+  // Copy the brand faces can all set produces no report at all — the guard has to be quiet to
+  // be worth reading.
+  const clean = { campaignName: 'clean', blocks: [
+    { component: 'heroes/hero-a', tokens: { HERO_IMAGE_URL: '', SUPER_LABEL: 'APPLEWOOD',
+      HEADLINE: 'the negroni hour', SUBHEADLINE: 'Sítio Canaã, Mörk and Cuvée', CTA_TEXT: 'Shop',
+      CTA_URL: 'https://figandbloom.com' } },
+  ] };
+  eq(glyphs.auditCampaign(clean, schema).length, 0, 'copy every face can set reports nothing');
+}
+
+// ── Bug 3: the casing rule follows the FONT, and the schema now says which ─────────────
+// tokenRules is a flat map keyed by token name, which cannot express "HEADLINE is Cervanttis
+// here and Lust there". Worse, the TOKENS: parser let a token documented with no description
+// swallow the next line: SUPER_LABEL in hero-c1 inherited HEADLINE's "MUST be lowercase" —
+// the phantom rule the review hit — and consumed {{HEADLINE}} on the way, so HEADLINE lost its
+// real rule at the same time. Both are gone; the font is read off the template body.
+{
+  const c1 = schema.components.find((c) => c.name === 'heroes/hero-c1');
+  const tok = (c, n) => c.tokens.find((t) => t.name === n);
+
+  const sup = tok(c1, 'SUPER_LABEL');
+  eq(sup.font, 'neuzeitgro', 'hero-c1 SUPER_LABEL is NeuzeitGro, as the markup renders it');
+  eq(sup.case, 'any', 'hero-c1 SUPER_LABEL has no casing rule — the lowercase rule was a parser artefact');
+  ok(!/lowercase/i.test(sup.desc || ''), 'SUPER_LABEL no longer inherits the next line’s description');
+
+  const hl = tok(c1, 'HEADLINE');
+  eq(hl.font, 'cervanttis', 'hero-c1 HEADLINE is Cervanttis');
+  eq(hl.case, 'lower', 'hero-c1 HEADLINE recovers its real lowercase rule');
+
+  // Caps in SUPER_LABEL are accepted in every hero, which is what "discoverable only by trial"
+  // was about: the same token behaved differently between variants for no stated reason.
+  for (const c of schema.components.filter((x) => x.group === 'heroes' || x.name === 'blocks/caption-bar-hero')) {
+    const t = tok(c, 'SUPER_LABEL');
+    if (!t) continue;
+    eq(t.case, 'any', `${c.name} SUPER_LABEL accepts caps like every other component`);
+  }
+
+  // Every token that reaches type carries a face, and the face implies the rule — where the face
+  // has one to impose. Lust does not: it sets prose and non-prose alike (a pull-quote and a
+  // price are both Lust), so a Lust token says what its case rule is or has none. See FONT_CASE
+  // in lib/parseTemplates.js.
+  const FACE_CASE = { cervanttis: 'lower', lust: null, neuzeitgro: 'any' };
+  let typed = 0;
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      ok(['text', 'url', 'image', 'length', 'palette', 'enum'].includes(t.type), `${c.name}.${t.name} has a known type`);
+      if (!t.font) continue;
+      typed++;
+      ok(['cervanttis', 'lust', 'neuzeitgro'].includes(t.font), `${c.name}.${t.name} names a brand face`);
+      ok(['lower', 'sentence', 'any', null].includes(t.case), `${c.name}.${t.name} carries a known casing rule or none`);
+      // A description may override the face's default, but never contradict it silently.
+      if (!/lowercase|sentence case/i.test(t.desc || '') && !/lowercase|sentence case/i.test(t.rule || '')) {
+        eq(t.case, FACE_CASE[t.font], `${c.name}.${t.name} defaults its casing from its face`);
+      }
+    }
+  }
+  ok(typed > 60, `most text tokens are attributed to a face (${typed})`);
+  ok(schema.tokenRules && Object.keys(schema.tokenRules).length, 'the global tokenRules map is kept as a deprecated fallback');
+
+  // The description-bleed regression, stated directly: no token's description may be another
+  // token's declaration.
+  for (const c of schema.components) {
+    for (const t of c.tokens) {
+      ok(!/^\{\{[A-Z0-9_]+\}\}/.test(t.desc || ''),
+        `${c.name}.${t.name} description is its own, not the next token's`);
+    }
+  }
+}
+
+// ── Bug 4: casing is Unicode-aware ─────────────────────────────────────────────────────
+// Ø is an uppercase letter. Under /[A-Z]/ it is not, so "Økar bitter aperitivo" was rejected as
+// all-lowercase — and the repair walked to the first /[A-Za-z]/, stepped over the Ø, and
+// proposed "ØKar".
+{
+  const pc = schema.components.find((c) => c.name === 'blocks/polaroid-collage');
+  const sentenceToken = 'PULL_QUOTE';   // Lust → Sentence case
+  const lowerToken = 'QUOTE_ACCENT';    // Cervanttis → lowercase
+  const issueFor = (token, value) => {
+    const camp = sampleData.sampleCampaignFor(pc);
+    camp.blocks[0].tokens[token] = value;
+    return validateCampaign(camp, schema, { requireUnsubscribe: false })
+      .issues.find((i) => i.type === 'casing' && i.token === token);
+  };
+
+  // Values that OPEN with a non-ASCII capital are correct Sentence case and must pass clean.
+  for (const v of ['Økar Bitter Aperitivo', 'Ærø in the morning', 'Ölund and the others',
+                   'Île de Ré, in a bottle', 'Sítio Canaã, our filter', 'Mörk drinking chocolate']) {
+    ok(!issueFor(sentenceToken, v), `Sentence case accepts ${JSON.stringify(v)}`);
+  }
+
+  // Genuinely all-lowercase is still rejected, and the suggestion capitalises the FIRST CASED
+  // character rather than skipping it.
+  const bad = issueFor(sentenceToken, 'økar bitter aperitivo');
+  ok(bad, 'a genuinely all-lowercase Lust value is still rejected');
+  eq(bad && bad.suggestion, 'Økar bitter aperitivo', 'the suggestion capitalises the first cased character');
+  eq(issueFor(sentenceToken, 'ærø in the morning').suggestion, 'Ærø in the morning', 'and does so for a ligature');
+  eq(issueFor(sentenceToken, 'îles flottantes').suggestion, 'Îles flottantes', 'and for a circumflex');
+  eq(issueFor(sentenceToken, '“økar” bitter').suggestion, '“Økar” bitter', 'skipping leading punctuation, not letters');
+
+  // No suggestion when the value already starts with a capital — the old code offered one anyway.
+  const already = issueFor(sentenceToken, 'Økar');
+  ok(!already, 'a value already in Sentence case raises nothing to suggest');
+
+  // Lowercase tokens see non-ASCII capitals too.
+  const caps = issueFor(lowerToken, 'Ølund in their words');
+  ok(caps, 'a Cervanttis value opening with Ø is caught as containing capitals');
+  eq(caps && caps.suggestion, 'ølund in their words', 'and is lowercased correctly');
+  ok(!issueFor(lowerToken, 'økar, ærø and île'), 'an all-lowercase Cervanttis value with accents passes');
+}
+
+// ── Bug 6: sections/button inherits the panel it sits on ───────────────────────────────
+// The button draws its own full-width band. With PANEL_BG left at the body colour it read as a
+// stray dark stripe between a white section and the black close — two near-but-not-equal darks,
+// which looks like a rendering fault. The right value is almost always "whatever is above me".
+{
+  const btnBlock = (tokens) => ({ component: 'sections/button', tokens: {
+    CTA_TEXT: 'Read the story', CTA_URL: 'https://figandbloom.com', ALIGN: 'center',
+    BTN_BG: '#000000', BTN_TEXT: '#ffffff', ...tokens } });
+  const bgOf = (blocks, bodyBg) => {
+    const meta = render.assembleBlocks({ campaignName: 't', bodyBg, blocks });
+    return meta.blocks.find((b) => b.component === 'sections/button').tokens.PANEL_BG;
+  };
+  const headline = { component: 'sections/section-headline', tokens: { SUPER_LABEL: 'X', HEADLINE: 'Y' } };
+  const noir = sampleData.sampleCampaignFor(schema.components.find((c) => c.name === 'sections/upsell-noir')).blocks[0];
+
+  eq(bgOf([headline, btnBlock({})], '#2c2825'), '#ffffff',
+    'a button after a white section takes the white panel');
+  eq(bgOf([noir, btnBlock({})], '#2c2825'), '#000000',
+    'a button after the noir close takes the black panel');
+  eq(bgOf([btnBlock({})], '#2c2825'), '#2c2825',
+    'a button with nothing above it falls back to the campaign bodyBg');
+  eq(bgOf([headline, btnBlock({ PANEL_BG: '#D8CCBE' })], '#2c2825'), '#D8CCBE',
+    'an explicit PANEL_BG still wins — the default never overrides an author');
+  eq(bgOf([headline, btnBlock({ PANEL_BG: '' })], '#2c2825'), '#ffffff',
+    'a blank PANEL_BG means "inherit", not "no colour"');
+
+  // PANEL_BG carries a manifest default, so it is optional rather than unfilled.
+  const btn = schema.components.find((c) => c.name === 'sections/button');
+  const t = btn.tokens.find((x) => x.name === 'PANEL_BG');
+  ok(t && t.default !== undefined, 'PANEL_BG is declared optional in the manifest');
+  ok(!validateCampaign({ campaignName: 't', blocks: [headline, btnBlock({})] }, schema, { requireUnsubscribe: false })
+      .issues.some((i) => i.token === 'PANEL_BG'), 'omitting PANEL_BG is not an unfilled token');
+}
+
+// ── Bug 7: the collages must not paint over their own text ─────────────────────────────
+// Both blocks lay absolutely-positioned rotated cards inside a fixed-height region. In
+// polaroid-collage the centre card is in FRONT and the outer captions sat in the overlapped
+// column, so they were clipped ("fig and olive leaf" → "fig and olive lea"). DENSITY never
+// helped: it changes the region height only, so the horizontal overlap was identical at every
+// setting. In editorial-collage the front frame overhung the region and painted over the
+// SUPER_LABEL below it ("PLANT HOUSE" → "PLA…HOU").
+//
+// The runtime proof is a browser measurement (elementsFromPoint over each caption); this is the
+// arithmetic invariant that keeps it fixed, so an edit to the offsets fails here first.
+{
+  const pc = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'polaroid-collage.html'), 'utf8');
+  const at = (cls) => {
+    const m = pc.match(new RegExp(`class="${cls}"[^>]*style="[^"]*left:(-?\\d+)px;top:(-?\\d+)px`));
+    return m ? { left: +m[1], top: +m[2] } : null;
+  };
+  const left = at('pc-left'), right = at('pc-right'), centre = at('pc-center');
+  ok(left && right && centre, 'the three polaroids declare their offsets');
+
+  // Card heights: 1px border + padding + photo + caption margin + one caption line + tail.
+  const CENTRE_H = 2 + 22 + 176 + 12 + 20 + 4;   // centre card, 176px photo, 20px caption line
+  const OUTER_CAPTION_TOP = 10 + 168 + 12;       // padding + photo + caption margin, from card top
+  const centreBottom = centre.top + CENTRE_H;
+  for (const [name, card] of [['left', left], ['right', right]]) {
+    ok(card.top + OUTER_CAPTION_TOP > centreBottom + 12,
+      `the ${name} polaroid's caption starts below the centre card (${card.top + OUTER_CAPTION_TOP} > ${centreBottom} + rotation slack)`);
+  }
+  // Horizontal overlap is the locked design and must NOT have been traded away for clearance.
+  ok(left.left + 190 > centre.left, 'the left polaroid still overlaps the centre one');
+  ok(right.left < centre.left + 200, 'the right polaroid still overlaps the centre one');
+
+  // Every DENSITY region is tall enough for the lowest card, so no card is cropped by the slicer.
+  const lowest = Math.max(left.top, right.top) + 2 + 20 + 168 + 12 + 20 + 4 + 14; // + rotation slack
+  const heights = [...pc.matchAll(/\.pc\.dens-(\w+) \.pc-region \{ height:(\d+)px; \}/g)].map((m) => [m[1], +m[2]]);
+  eq(heights.length, 3, 'all three DENSITY heights are declared');
+  for (const [d, h] of heights) ok(h >= lowest, `the '${d}' region (${h}px) clears the lowest card (${lowest}px)`);
+
+  // editorial-collage: the region must clear its tallest frame at the steepest rotation.
+  const ec = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'editorial-collage.html'), 'utf8');
+  const regionH = +(ec.match(/position:relative;width:600px;height:(\d+)px/) || [])[1];
+  const frameBottom = 18 + 2 + 22 + 264 + 12;  // front frame: top + border + padding + photo + rotation slack
+  ok(regionH >= frameBottom, `the editorial-collage region (${regionH}px) clears its front frame (${frameBottom}px)`);
+}
+
+// ── Bug 9: nothing may hold the document wider than the viewport ───────────────────────
+// The email is one shrink-to-fit document: a single block that cannot go below 600px scales
+// EVERY glyph in the email, not just its own. That is why 14px body copy arrived at 8.8px —
+// 375/600 = 0.625 — and why this is a whole-system contract rather than a per-block one.
+{
+  const tdir = path.join(DS, 'templates');
+  const walk = (dir, out = []) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const fp = path.join(dir, e.name);
+      if (e.isDirectory()) walk(fp, out);
+      else if (e.name.endsWith('.html')) out.push(fp);
+    }
+    return out;
+  };
+  for (const fp of walk(tdir)) {
+    const rel = path.relative(tdir, fp);
+    const markup = render.stripDocComments(fs.readFileSync(fp, 'utf8'));
+    // Every structural 600px table opts into the fluid contract — not just the eight in the
+    // original fixture. Forty-five components had never opted in, so the media query had
+    // nothing to act on and every campaign scaled.
+    for (const tag of markup.match(/<table\b[^>]*\bwidth="600"[^>]*>/gi) || []) {
+      ok(/\bclass="[^"]*\b(?:ew|f600)\b/i.test(tag), `${rel}: every 600px table opts into the fluid contract`);
+    }
+    // Any fixed measure wider than a phone must be able to go fluid too.
+    for (const tag of markup.match(/<table\b[^>]*\bwidth="(\d+)"[^>]*>/gi) || []) {
+      const w = +(tag.match(/width="(\d+)"/) || [])[1];
+      if (w <= 376 || w === 600) continue;
+      ok(/\bclass="[^"]*\b(?:fm|f600)\b/i.test(tag), `${rel}: the ${w}px measure opts into .fm`);
+    }
+    // A full-bleed image must not be able to impose a 600px minimum on the table it sits in.
+    // An image that has not loaded takes its intrinsic size from its width/height attributes,
+    // so `width:100%` is resolved back through that aspect ratio whenever the CSS height is
+    // definite. Two shapes are safe, and one of them has to hold:
+    //   height:auto      — no definite height, so there is no ratio to resolve through; or
+    //   max-width:600px  — a DEFINITE cap, which together with the shell's .fimg vw rule lets
+    //                      the image shrink while keeping the crop the designer chose.
+    // A percentage max-width is not a third option: it resolves to none against a shrink-to-fit
+    // table, which is exactly how the whole document got pinned at 600px.
+    for (const tag of markup.match(/<img\b[^>]*\bwidth="600"[^>]*>/gi) || []) {
+      ok(/\bclass="[^"]*\bfimg\b/i.test(tag), `${rel}: every full-bleed image carries .fimg`);
+      ok(/width:\s*100%/.test(tag), `${rel}: every full-bleed image is inline-fluid`);
+      ok(/height:\s*auto/.test(tag) || /max-width:\s*600px/.test(tag),
+        `${rel}: a full-bleed image is either height:auto or capped at a definite 600px`);
+    }
+  }
+
+  // The three blocks the report named, and the classes their stacking depends on.
+  const fl = fs.readFileSync(path.join(tdir, 'blocks', 'feature-list.html'), 'utf8');
+  for (const cls of ['fl-col-img', 'fl-col-txt', 'fl-img']) {
+    ok(new RegExp(`class="[^"]*\\b${cls}\\b`).test(fl), `blocks/feature-list carries .${cls} (it had no classes at all)`);
+  }
+  const st = fs.readFileSync(path.join(tdir, 'blocks', 'story.html'), 'utf8');
+  for (const cls of ['st-col-img', 'st-col-txt', 'st-img']) {
+    ok(new RegExp(`class="[^"]*\\b${cls}\\b`).test(st), `blocks/story carries .${cls}`);
+  }
+  const jt = fs.readFileSync(path.join(tdir, 'blocks', 'journal-tile.html'), 'utf8');
+  ok(/class="[^"]*\bjt-imgel\b/.test(jt), 'blocks/journal-tile marks its tile images for fluid sizing');
+
+  // Both shells carry the rules, and the vw cap that lets an unloaded image shrink.
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const start = shell.indexOf('@media only screen and (max-width:600px)');
+    const media = start < 0 ? '' : shell.slice(start, shell.indexOf('</style>', start));
+    for (const sel of ['.st-col', '.fl-col', '.ap-col', '.jt-img', '.jt-txt']) {
+      ok(new RegExp(`\\${sel}\\{[^}]*display:\\s*block\\s*!important;[^}]*width:\\s*100%\\s*!important`).test(media),
+        `${shellName} stacks ${sel} on mobile`);
+    }
+    ok(/\.fimg\{[^}]*width:\s*100%\s*!important;[^}]*max-width:\s*100vw\s*!important/.test(media),
+      `${shellName} caps full-bleed images at the viewport, not at a percentage`);
+    ok(!/\.fimg\{[^}]*max-width:\s*100%/.test(media),
+      `${shellName} does not use a percentage cap on .fimg — it resolves to none and re-opens the bug`);
+    for (const sel of ['.st-img', '.fl-img', '.ap-img', '.cvs-img', '.jt-imgel']) {
+      ok(new RegExp(`\\${sel}\\{[^}]*width:\\s*100%\\s*!important`).test(media),
+        `${shellName} makes ${sel} fluid`);
+    }
+  }
+}
+
+// ── Bug 10: an empty PROMO_CODE draws no box ───────────────────────────────────────────
+// Every other block drops its optional furniture on an empty token. offer-panel kept drawing the
+// dashed rectangle, which is exactly the documented giveaway mode — prize in OFFER_VALUE, no code.
+{
+  const op = schema.components.find((c) => c.name === 'blocks/offer-panel');
+  const build = (code) => {
+    const camp = sampleData.sampleCampaignFor(op);
+    camp.blocks[0].tokens.PROMO_CODE = code;
+    camp.blocks[0].tokens.CODE_LABEL = 'USE CODE AT CHECKOUT';
+    return render.stripDocComments(render.assemble(camp, { assetsBase: '/a' }).html);
+  };
+  const withCode = build('BLOOM20'), giveaway = build('');
+  ok(/2px dashed/.test(withCode), 'a real code still draws the dashed box');
+  ok(/BLOOM20/.test(withCode), 'and the code itself');
+  ok(/USE CODE AT CHECKOUT/.test(withCode), 'and its label');
+  ok(!/2px dashed/.test(giveaway), 'GIVEAWAY MODE draws no empty dashed box');
+  ok(!/USE CODE AT CHECKOUT/.test(giveaway), 'and no orphaned "USE CODE" label above it');
+  // Everything else in the block survives — the conditional must not swallow its neighbours.
+  for (const frag of [op.tokens.length && '</table>', 'Free delivery']) {
+    if (frag) ok(giveaway.includes(frag), `GIVEAWAY MODE keeps the rest of the block (${frag})`);
+  }
+  ok(/<a href/.test(giveaway), 'GIVEAWAY MODE keeps the CTA button');
+
+  // The same emptiness contract every other block already honours.
+  for (const name of ['blocks/caption-bar-hero', 'blocks/story', 'blocks/feature-list', 'sections/upsell-noir']) {
+    const c = schema.components.find((x) => x.name === name);
+    if (!c || !c.tokens.some((t) => t.name === 'CTA_TEXT')) continue;
+    const camp = sampleData.sampleCampaignFor(c);
+    camp.blocks[0].tokens.CTA_TEXT = '';
+    ok(!/padding:14px 40px/.test(render.assemble(camp, { assetsBase: '/a' }).html),
+      `${name} still drops its button on an empty CTA_TEXT`);
+  }
+}
+
+// ── The production shell's web fonts ───────────────────────────────────────────────────
+// NeuzeitGro is the body face — nearly every word of every send. Its two @font-face URLs
+// pointed at .otf files that do not exist on the CDN and 404'd silently for months: nothing
+// errored, the stack just fell through to Calibri. Gill Sans pointed at three more that have
+// never existed. Whether a URL RESOLVES needs the network (`npm run check:fonts`), but the
+// shape that made it rot is checkable offline, so it is checked here.
+{
+  const shell = fs.readFileSync(path.join(DS, 'shell', 'shell-production.html'), 'utf8');
+  const faces = [...shell.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
+  ok(faces.length >= 3, 'the production shell declares the brand faces');
+
+  const families = faces.map((f) => (f.match(/font-family:\s*'([^']+)'/) || [])[1]);
+  ok(families.includes('NeuzeitGro'), 'NeuzeitGro is loaded as a web font');
+  ok(families.includes('Lust') && families.includes('Cervanttis'), 'Lust and Cervanttis are loaded');
+  ok(!families.includes('Gill Sans'),
+    'Gill Sans is NOT loaded as a web font — the files do not exist, so those rules were three 404s per open');
+  // It stays in the fallback STACK, which is the part that was doing the work.
+  ok(/'Gill Sans','Gill Sans MT'/.test(fs.readFileSync(path.join(DS, 'templates', 'footer.html'), 'utf8')),
+    "Gill Sans remains in the templates' fallback stack as a system face");
+
+  for (const f of faces) {
+    const family = (f.match(/font-family:\s*'([^']+)'/) || [])[1];
+    const url = (f.match(/url\(\s*'([^']+)'/) || [])[1] || '';
+    if (family !== 'NeuzeitGro') continue;
+    ok(/\.woff2(\?|')/.test(url), `NeuzeitGro is served as .woff2, not the .otf that 404'd (${url.slice(-40)})`);
+    ok(/format\('woff2'\)/.test(f), 'NeuzeitGro declares format(woff2) to match the bytes served');
+  }
+  ok(!/NeuzeitGro-(?:Lig|Bol)\.otf/.test(shell), 'the dead NeuzeitGro .otf URLs are gone');
+  ok(!/Gill%20Sans/.test(shell), 'the dead Gill Sans URLs are gone');
+  ok(/font-display:\s*swap/.test(shell), 'faces still swap rather than blocking the render');
+}
+
+// ── A glyph the face cannot set FAILS the campaign, it does not just get reported ──────
+// This is the only defect in the system where the render looks right and the words are wrong,
+// so reporting it in /api/render's `missingGlyphs` was never going to be enough: the whole
+// nature of the fault is that nobody looks. Cervanttis has no accented Latin-1 outlines at all
+// — 123 glyphs, of which the only accented ones are Ä Ö Ü ä ö ü — so every other accented
+// codepoint is mapped to the bare letter and "økar" sets as a clean, well-kerned "okar".
+{
+  const hero = schema.components.find((c) => c.name === 'heroes/hero-a');
+  const withHeadline = (v) => {
+    const camp = sampleData.sampleCampaignFor(hero);
+    camp.blocks[0].tokens.HEADLINE = v;   // Cervanttis, lowercase
+    return validateCampaign(camp, schema, { requireUnsubscribe: false });
+  };
+
+  const bad = withHeadline('the økar negroni');
+  const issue = bad.issues.find((i) => i.type === 'unsupported_glyph');
+  ok(issue, 'a Cervanttis token carrying ø is reported');
+  eq(issue && issue.severity, 'error', 'a folded glyph is an ERROR — the word would ship misspelt');
+  eq(bad.ok, false, 'the campaign does not validate');
+  eq(bad.blocks[0].valid, false, 'the block carrying it is marked invalid');
+  eq(issue && issue.char, 'ø', 'the issue names the character');
+  eq(issue && issue.rendersAs, 'o', 'and what it would actually render as');
+  eq(issue && issue.face, 'cervanttis', 'and the face that cannot set it');
+  // The advice has to be actionable, and must never be "drop the mark" — that is the same
+  // misspelling, just written down deliberately.
+  ok(issue && issue.alternatives.includes('lust') && issue.alternatives.includes('neuzeitgro'),
+    'the issue names the faces that CAN set it');
+  ok(issue && /Do NOT strip the mark/.test(issue.hint || ''), 'and refuses to suggest stripping the mark');
+  ok(issue && issue.suggestion === undefined, 'no auto-repair is offered — every "fix" here is a misspelling');
+
+  // Cervanttis genuinely HAS the diaeresis set, so the guard must stay quiet on it. A checker
+  // that cried wolf on "Mörk" would be turned off inside a week.
+  for (const v of ['mörk drinking chocolate', 'zürich in the spring', 'käse und brot', 'straße']) {
+    ok(!withHeadline(v).issues.some((i) => i.type === 'unsupported_glyph'),
+      `Cervanttis sets ${JSON.stringify(v)} correctly, so it is not flagged`);
+  }
+  for (const v of ['the negroni hour', 'for the one who does it all']) {
+    ok(!withHeadline(v).issues.some((i) => i.type === 'unsupported_glyph'),
+      `plain English raises nothing (${JSON.stringify(v)})`);
+  }
+
+  // The same characters in a face that CAN set them are fine — the check follows the font, not
+  // the token name. This is the half the original report got backwards.
+  const card = schema.components.find((c) => c.name === 'products/card-horizontal');
+  const lust = sampleData.sampleCampaignFor(card);
+  lust.blocks[0].tokens.PRODUCT_NAME = 'Økar Bitter Aperitivo, 700ml';   // Lust
+  ok(!validateCampaign(lust, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'unsupported_glyph'),
+    'the same Ø in a Lust token is accepted — Lust sets it correctly');
+
+  // Every saved fixture and seed still validates: the gate has to catch the bug without
+  // condemning work that was already correct.
+  for (const ex of loadSeedExamples()) {
+    const rep = validateCampaign(ex.campaign, schema);
+    ok(!rep.issues.some((i) => i.type === 'unsupported_glyph' && i.severity === 'error'),
+      `seed example '${ex.name || ex.objective}' raises no glyph error`);
+  }
+
+  // The editor reads the same lists off the schema, so a writer sees in the field exactly what
+  // the validator would reject.
+  ok(schema.fontCoverage && schema.fontCoverage.cervanttis, 'the schema publishes per-face coverage');
+  ok(schema.fontCoverage.cervanttis.folded.includes('ø'), 'cervanttis coverage lists ø as folded');
+  ok(!schema.fontCoverage.cervanttis.folded.includes('ö'), 'and does NOT list ö, which it really has');
+  eq(schema.fontCoverage.lust.folded, '', 'Lust folds nothing');
+  eq(schema.fontCoverage.neuzeitgro.folded, '', 'NeuzeitGro folds nothing');
+  const appJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  ok(/SCHEMA\.fontCoverage/.test(appJs), 'the builder reads fontCoverage rather than duplicating the list');
+  ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
+}
+
+// ── The production shell must declare what it actually serves ──────────────────────────
+// A format() hint that disagrees with the bytes is not cosmetic: a client that takes the hint at
+// face value skips the face, and the stack falls through to a system serif — the same silent
+// substitution the NeuzeitGro 404 caused for months. cervanttis.ttf is really WOFF2, so the rule
+// has to say woff2 whatever the filename claims.
+{
+  const prodShell = fs.readFileSync(path.join(__dirname, '..', 'design-system', 'shell', 'shell-production.html'), 'utf8');
+  const cervanttis = (prodShell.match(/@font-face\{font-family:'Cervanttis'[^}]*\}/) || [])[0] || '';
+  ok(cervanttis, 'the production shell links Cervanttis');
+  ok(/format\('woff2'\)/.test(cervanttis), "and declares format('woff2') — the file is WOFF2 despite its .ttf name");
+  ok(!/format\('truetype'\)/.test(cervanttis), 'not truetype, which some clients would reject the face over');
+
+  // The checker has to compare the format() hint, not the filename: the filename is decoration
+  // and cannot be changed without re-uploading to the CDN, while the hint is what clients read.
+  const checker = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'check-fonts.js'), 'utf8');
+  ok(/const format = \(body\.match/.test(checker), 'check-fonts.js parses the format() hint off each @font-face rule');
+  ok(/FORMAT_ALIAS\[face\.format\]\s*!==\s*magic/.test(checker), 'and compares that hint against the bytes it fetched');
+  ok(/WRONG format\(\)/.test(checker), 'reporting a genuine mismatch as a fault, not a note');
+
+  // …and the checker itself must stay diffable. The TrueType sfnt magic is four bytes, three of
+  // them NUL; written raw they make git classify the file as binary, so it can never be reviewed
+  // as a diff again. Escapes carry the same value.
+  const checkerBytes = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'check-fonts.js'));
+  eq(checkerBytes.indexOf(0), -1, 'check-fonts.js contains no raw NUL bytes, so git treats it as text');
+  ok(/\\x00\\x01\\x00\\x00/.test(checker), 'the sfnt magic is written with escapes');
+}
+
+// ── A typeface is not a content rule ───────────────────────────────────────────────────
+// Deriving `case` from the face that renders a token is right for Cervanttis (a script accent
+// face the brand always sets lowercase) and moot for NeuzeitGro (text-transform:uppercase, so
+// the authored casing never reaches the render). It is wrong for Lust, which sets headlines and
+// pull-quotes AND the price on a product card, the code in a promo box and the numeral on a
+// step. "Sentence case" is a claim about prose; the typeface cannot make it.
+{
+  const tokensNamed = (name) => {
+    const out = [];
+    for (const c of schema.components) for (const t of c.tokens) if (t.name === name) out.push({ component: c.name, ...t });
+    return out;
+  };
+
+  // Non-prose tokens must never be told they are Sentence case. Where they are set in Lust that
+  // means no rule at all; a few are set in NeuzeitGro, which is uppercased by the template and
+  // so reports 'any'. Either is fine — 'sentence' is the one answer that is wrong.
+  let nonProse = 0;
+  for (const name of ['PRODUCT_PRICE', 'PROMO_CODE', 'OFFER_VALUE', 'STEP_1_NUMBER', 'STEP_2_NUMBER', 'STEP_3_NUMBER']) {
+    const toks = tokensNamed(name);
+    ok(toks.length, `${name} exists in the schema`);
+    for (const t of toks) {
+      nonProse++;
+      ok(t.case !== 'sentence', `${t.component}.${name} is not claimed to be Sentence case (got ${JSON.stringify(t.case)})`);
+      if (t.font === 'lust') eq(t.case, null, `${t.component}.${name} is Lust with no stated rule, so it carries none`);
+    }
+  }
+  ok(nonProse >= 20, `the non-prose set is the whole family, not a sample (${nonProse} tokens)`);
+
+  // …while every Lust token that DOES want Sentence case says so in its own TOKENS line, and
+  // still gets it. Losing these would mean the fallback was carrying real weight.
+  for (const name of ['PRODUCT_NAME', 'PULL_QUOTE', 'SECTION_HEADLINE', 'TILE_1_TITLE', 'TILE_2_TITLE', 'TILE_3_TITLE']) {
+    const toks = tokensNamed(name);
+    ok(toks.length, `${name} exists in the schema`);
+    for (const t of toks) eq(t.case, 'sentence', `${t.component}.${name} is still Sentence case, from its description`);
+  }
+
+  // The Cervanttis rule is the one the face genuinely does impose, and it must survive.
+  const heroC1 = schema.components.find((c) => c.name === 'heroes/hero-c1');
+  const headline = heroC1 && heroC1.tokens.find((t) => t.name === 'HEADLINE');
+  ok(headline, 'heroes/hero-c1 has a HEADLINE token');
+  eq(headline && headline.font, 'cervanttis', 'which is set in Cervanttis');
+  eq(headline && headline.case, 'lower', 'and is still lowercase — the rule the parser fix restored');
+
+  // The values that used to be rejected now validate clean.
+  for (const [component, token, value] of [
+    ['sections/promo-code', 'PROMO_CODE', 'bloom20'],
+    ['blocks/offer-panel', 'OFFER_VALUE', '20% off'],
+    ['blocks/offer-panel', 'OFFER_VALUE', 'free delivery'],
+    ['blocks/annotated-product', 'PRODUCT_PRICE', 'from $85'],
+    ['blocks/howto-steps', 'STEP_1_NUMBER', 'one'],
+  ]) {
+    const rep = validateCampaign({ campaignName: 'T', blocks: [{ component, tokens: { [token]: value } }] },
+      schema, { requireUnsubscribe: false });
+    const casing = rep.issues.filter((i) => i.type === 'casing' && i.token === token);
+    eq(casing.length, 0, `${component}.${token} accepts ${JSON.stringify(value)}`);
+  }
+
+  // A genuine prose token still rejects all-lowercase copy, so this did not just switch the
+  // check off.
+  const proseRep = validateCampaign(
+    { campaignName: 'T', blocks: [{ component: 'products/card-lifestyle-studio', tokens: { SECTION_HEADLINE: 'the studio edit' } }] },
+    schema, { requireUnsubscribe: false });
+  ok(proseRep.issues.some((i) => i.type === 'casing' && i.token === 'SECTION_HEADLINE'),
+    'a Lust headline documented SENTENCE CASE still rejects all-lowercase copy');
+}
+
+// ── An asset base a recipient cannot reach ─────────────────────────────────────────────
+// Export and the Klaviyo push bake this URL into HTML that is opened later, by someone else,
+// somewhere else. Derived from the request's Host header it is right in the editor and wrong
+// off a laptop — and wrong in the quietest way there is: well-formed markup, every token
+// filled, and dead images in every inbox. So the export path has to be able to tell.
+{
+  const { assetsBaseFor, unreachableAssetBase } = require('../lib/assetBase');
+
+  const reachable = [
+    'https://cdn.figandbloom.com/design-system/assets',
+    'https://my-email-builder.onrender.com/design-system/assets',
+    'http://figandbloom.com/a',
+  ];
+  for (const base of reachable) eq(unreachableAssetBase(base), null, `'${base}' is reachable`);
+
+  const unreachable = [
+    'http://localhost:4321/design-system/assets',
+    'http://127.0.0.1:4321/a',
+    'http://[::1]:4321/a',
+    'http://192.168.1.10/a',
+    'http://10.0.0.5/a',
+    'http://172.16.4.2/a',
+    'http://studio.local/a',
+    'http://build-box/a',            // bare hostname, no dot
+    '/design-system/assets',         // host-relative: not absolute at all
+    '{{ASSETS_BASE}}',               // the marker the old export shipped verbatim
+  ];
+  for (const base of unreachable) {
+    ok(unreachableAssetBase(base), `'${base}' is reported unreachable`);
+  }
+
+  // PUBLIC_ASSETS_BASE overrides the header, which is the whole point: the deployment knows
+  // where its assets really live and the request does not.
+  const req = { headers: { host: 'localhost:4321' } };
+  eq(assetsBaseFor(req), 'http://localhost:4321/design-system/assets', 'without the env var, the Host header decides');
+  process.env.PUBLIC_ASSETS_BASE = 'https://cdn.figandbloom.com/email/';
+  eq(assetsBaseFor(req), 'https://cdn.figandbloom.com/email', 'PUBLIC_ASSETS_BASE wins, trailing slash trimmed');
+  eq(unreachableAssetBase(assetsBaseFor(req)), null, 'and the configured base passes the reachability check');
+  delete process.env.PUBLIC_ASSETS_BASE;
+
+  // A proxied deploy must not be told its own assets are unreachable.
+  eq(unreachableAssetBase(assetsBaseFor({ headers: { host: 'my-email-builder.onrender.com', 'x-forwarded-proto': 'https,http' } })),
+    null, 'a proxied production host resolves to a reachable https base');
+
+  const serverJs = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  const exportHandler = (serverJs.match(/'\/api\/export'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(exportHandler, '/api/export handler is present');
+  ok(/unreachableAssetBase/.test(exportHandler), '/api/export checks the asset base is reachable');
+  ok(/UNREACHABLE_ASSET_BASE/.test(exportHandler), 'and refuses with a named code rather than a bare 422');
+  // The preview paths must NOT be gated: they are supposed to point at whoever served them.
+  const assembleHandler = (serverJs.match(/'\/api\/assemble'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(assembleHandler && !/unreachableAssetBase/.test(assembleHandler),
+    '/api/assemble is NOT gated — a local preview is supposed to use the local host');
+
+  // The Klaviyo push lands a draft that is ready to send, so it gets the same refusal — but on
+  // the FINAL document, after rasterising. A fully-sliced campaign carries its pixels to Klaviyo
+  // and never cites the base; only the surviving live HTML (html_only blocks, animated GIFs) can.
+  const draftHandler = (serverJs.match(/'\/api\/klaviyo-draft'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(draftHandler, '/api/klaviyo-draft handler is present');
+  ok(/unreachableAssetBase/.test(draftHandler), '/api/klaviyo-draft checks the asset base too');
+  ok(/fullHtml\.includes\(assetsBase\)/.test(draftHandler),
+    'and checks the assembled draft, not the pre-render HTML, so a sliced campaign is not rejected for a URL it never uses');
+  ok(draftHandler.indexOf('unreachableAssetBase') < draftHandler.indexOf('createDraftCampaign'),
+    'and refuses BEFORE creating the draft in the account');
+}
+
+// ── A disarmed glyph check must say so ─────────────────────────────────────────────────
+// Every read path in glyphs.js returns null or empty rather than throwing, which is correct: a
+// malformed subtable must not take down a render. But it means the fold check degrades to
+// "nothing is wrong with any of it" — the exact shape of the fault the module exists to catch.
+// A report that silently omits unsupported_glyph is indistinguishable from a clean one.
+{
+  const gate = glyphs.gateStatus();
+  ok(gate.ok, 'with the shipped shell, the glyph gate is armed');
+  eq(gate.missing.length, 0, 'and no brand face is missing');
+  eq(gate.reason, null, 'so there is nothing to report');
+
+  // Simulate the failure: a shell that carries no readable face at all.
+  const shellPath = path.join(__dirname, '..', 'design-system', 'shell', 'shell-preview.html');
+  const original = fs.readFileSync(shellPath, 'utf8');
+  try {
+    fs.writeFileSync(shellPath, '<html><head><style>/* no faces */</style></head><body>{{COMPONENTS}}</body></html>');
+    delete require.cache[require.resolve('../lib/glyphs')];
+    const cold = require('../lib/glyphs');
+    const down = cold.gateStatus();
+    ok(!down.ok, 'an unreadable shell disarms the gate');
+    eq(down.missing.length, cold.EXPECTED_FACES.length, 'and every face is reported missing');
+    ok(/could not be read/.test(down.reason || ''), 'with a reason naming what failed');
+    eq(cold.inspect('økar', 'cervanttis').length, 0, 'the fold check itself goes quiet, as it always did');
+
+    // The point of the fix: the quiet is now reported to whoever asked for a verdict.
+    delete require.cache[require.resolve('../lib/validate')];
+    const coldValidate = require('../lib/validate').validateCampaign;
+    const rep = coldValidate(
+      { campaignName: 'T', blocks: [{ component: 'blocks/story', tokens: { SIGNATURE: 'økar' } }] },
+      schema, { requireUnsubscribe: false });
+    const warn = rep.issues.filter((i) => i.type === 'glyph_gate_unavailable');
+    eq(warn.length, 1, 'validation reports the gate is unavailable');
+    // Read through a default rather than off warn[0] directly: when the warning is absent this
+    // must report a failed assertion, not throw and abort the whole run.
+    eq((warn[0] || {}).severity, 'warning', 'as a warning — the campaign may be clean, and a font outage must not block every send');
+    ok(/UNVERIFIED/.test((warn[0] || {}).message || ''), 'and says the copy is unverified rather than verified clean');
+    ok(!rep.issues.some((i) => i.type === 'unsupported_glyph'), 'while the fold error genuinely cannot fire');
+  } finally {
+    fs.writeFileSync(shellPath, original);
+    delete require.cache[require.resolve('../lib/glyphs')];
+    delete require.cache[require.resolve('../lib/validate')];
+  }
+
+  // …and with the shell restored, a clean campaign carries no such warning.
+  const clean = require('../lib/validate').validateCampaign(
+    { campaignName: 'T', blocks: [{ component: 'blocks/story', tokens: {} }] }, schema, { requireUnsubscribe: false });
+  ok(!clean.issues.some((i) => i.type === 'glyph_gate_unavailable'), 'an armed gate stays silent');
+
+  const serverJs = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
+  ok(/glyphGate:\s*glyphs\.gateStatus\(\)/.test(serverJs), '/api/health reports whether the gate is armed');
+  ok(/glyph check DISARMED/.test(serverJs), 'and startup warns when it is not');
+}
+
+// ── The export refusal must reach the author ───────────────────────────────────────────
+// /api/export answers 422 UNRESOLVED_TOKENS rather than hand back holed HTML, and that body
+// carries no `html`. A caller that destructures it anyway downloads a file containing the
+// string "undefined" — a silently corrupt artefact, which is a worse outcome than the holed
+// HTML the refusal exists to prevent. So the refusal is only worth having if the client checks.
+{
+  const appJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const body = (appJs.match(/async function exportHtml\(\)\s*\{([\s\S]*?)\n\}/) || [])[1] || '';
+  ok(body, 'exportHtml() is present in the builder');
+  ok(/if\s*\(!r\.ok\)/.test(body), 'exportHtml() checks the response before downloading it');
+  ok(body.indexOf('!r.ok') < body.indexOf('download('),
+    'and checks it BEFORE the download, not after');
+  ok(/unresolved/.test(body), 'and names the unresolved tokens, so the author knows what to fill');
+}
+
+// ── The font reader must be total ──────────────────────────────────────────────────────
+// Every caller hands readCmap bytes it did not produce: a base64 blob out of a shell, or
+// whatever the CDN returned this morning. The most important caller is scripts/check-fonts.js,
+// which exists FOR the days a font URL stops serving a font — so a parser that threw on an HTML
+// error page would crash the check at exactly the moment it matters.
+{
+  const sfnt = (fn) => { const b = Buffer.alloc(64); b.writeUInt32BE(0x00010000, 0); fn(b); return b; };
+  const woff2 = (fn) => { const b = Buffer.alloc(80); b.writeUInt32BE(0x774f4632, 0); fn(b); return b; };
+  const cases = {
+    'empty buffer': Buffer.alloc(0),
+    'one byte': Buffer.from([0]),
+    'truncated sfnt header': Buffer.from([0, 1, 0, 0, 0, 3]),
+    'sfnt claiming 60000 tables': sfnt((b) => b.writeUInt16BE(60000, 4)),
+    'woff2 with a junk body': woff2((b) => { b.writeUInt16BE(5, 12); b.fill(0xff, 48); }),
+    'woff2 with zero tables': woff2((b) => b.writeUInt16BE(0, 12)),
+    'an HTML error page': Buffer.from('<!DOCTYPE html><html><head><title>404</title></head></html>'),
+    'random bytes': Buffer.from(Array.from({ length: 512 }, (_, i) => (i * 37 + 11) % 256)),
+  };
+  for (const [name, buf] of Object.entries(cases)) {
+    let threw = false, out;
+    try { out = glyphs.readCmap(buf); } catch (_) { threw = true; }
+    ok(!threw, `readCmap does not throw on ${name}`);
+    ok(out === null || out instanceof Map, `readCmap returns null or a Map for ${name}`);
+  }
+  // …and still reads the real thing.
+  ok(glyphs.faces().cervanttis, 'the real embedded faces still parse');
 }
 
 // ── report ────────────────────────────────────────────────────────────────────────────

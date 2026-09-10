@@ -18,6 +18,20 @@ table{border-collapse:collapse;}
   .ew{width:100%!important;}
   .f600{width:100%!important;max-width:100%!important;}
   .fm{width:100%!important;}
+  /* Full-bleed 600px images, paired with the inline `width:100%;max-width:600px` on the tag.
+     The cap has to be a VIEWPORT unit, not a percentage. An image that has not loaded — a bad
+     URL, or images off, which is how a great many people read email — takes its intrinsic size
+     from its width/height attributes, so it has a 600x600 aspect ratio and a definite CSS
+     height. `width:100%` against a shrink-to-fit table is then resolved back through that ratio
+     to 600px, which becomes the table's minimum width. That held the ENTIRE document at 600px
+     on a 375px screen, and everything on it — every block, not just this one — was scaled to
+     0.625, which is how 14px body copy arrived at 8.8px. A percentage max-width cannot fix it
+     (it resolves to none against an indefinite container); 100vw is definite, so it caps the
+     image at the viewport and lets the table shrink. Height is deliberately left as declared:
+     these crop with object-fit, and letting height follow width would throw away the crop the
+     designer chose with IMG_HEIGHT. Clients without vw support simply behave as they did
+     before, so this can only improve on the status quo. */
+  .fimg{width:100%!important;max-width:100vw!important;}
   .hh{font-size:38px!important;line-height:1.0!important;}
   .sh{font-size:22px!important;}
   .pn{font-size:18px!important;}
@@ -40,6 +54,39 @@ table{border-collapse:collapse;}
   .cc{display:block!important;width:100%!important;border-right:none!important;border-bottom:1px solid #e8e2da;padding:16px 0!important;}
   .cc:last-child{border-bottom:none!important;}
   .fi{display:block!important;}
+  /* blocks/story — portrait + narrative stack, portrait goes fluid.
+     The block carried .st* classes but the media block targeted none of them, so it stayed a
+     fixed 600px two-column table and held the whole document at 600px. */
+  .st-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .st-col-img{padding-bottom:0!important;}
+  .st-img{width:100%!important;height:auto!important;}
+  .st-polaroid{display:block!important;transform:none!important;}
+  .st-illo{display:none!important;}
+  /* blocks/feature-list — the block that had no classes at all. Same stack. */
+  .fl-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .fl-col-img{padding-bottom:0!important;}
+  .fl-img{width:100%!important;height:auto!important;}
+  .fl-polaroid{display:block!important;transform:none!important;}
+  .fl-bullet{width:34px!important;}
+  /* blocks/journal-tile — live HTML on export, so its tiles stack too. */
+  .jt-img{display:block!important;width:100%!important;}
+  .jt-imgel{width:100%!important;height:auto!important;}
+  .jt-txt{display:block!important;width:100%!important;height:auto!important;}
+  .jt-txt-link{height:auto!important;padding:20px 24px!important;}
+  /* blocks/annotated-product — image + notes stack, like story and feature-list. */
+  .ap-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .ap-col-img{padding-bottom:0!important;}
+  .ap-img{width:100%!important;height:auto!important;}
+  /* blocks/comparison-vs — the two halves stay side by side (that IS the block); only the
+     images go fluid so the pair fits a phone. */
+  .cvs-img{width:100%!important;height:auto!important;}
+  /* blocks/offer-panel — the 60px display value needs the side padding back. */
+  .op{padding:36px 24px 38px!important;}
+  .op .ov{font-size:44px!important;}
+  /* The rotated "sticker" is offset +150px from centre. position:relative offsets do not
+     resize the parent, but they DO extend the document's scroll width — which is what pushed
+     an offer-panel email past a phone viewport even though nothing in it is 600px wide. */
+  .op-tag{left:64px!important;}
 }
 </style>
 </head>
