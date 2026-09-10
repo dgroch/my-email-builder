@@ -139,7 +139,7 @@ A strong default for emails: open with a **Ziglar** reframe to disarm hesitation
 
 **Preferred alternatives:** beautiful, considered, thoughtful, transform, bring to life, design, select, choose. Keep it simple.
 
-**CTA voice:** 2–3 words max. Active verb first. Uppercase via CSS. *Shop the farewell designs. Find the words. Send birthday flowers.* The CTA in the email JSON should be sentence case; the CSS uppercases it.
+**CTA voice — the invitation rule:** 2–4 words. Uppercase via CSS; write it sentence case in the JSON. A CTA is wayfinding, not a request: it points at something to look at, it never asks for the sale, and it never performs the emotion for the reader. Use *See the farewell designs. Read the notes. Meet the maker. See what's in season. Look closer.* Never *shop now, buy now, gift now, order now, order yours, get yours, grab, snap up, claim, unlock, treat yourself, spoil her, don't miss, last chance, complete your gift*. Also retired: *send love, make a moment, share a smile* (these command an emotional act on the reader's behalf). Functional checkout labels (*Add to cart*, *Choose delivery date*) stay plain and are exempt. Test: could it sit under a museum object label without embarrassment?
 
 ---
 
@@ -190,7 +190,6 @@ When a block is one of the designed set (every `blocks/*` component is rasterise
 | Block | Image tokens to fill (pick the URLs whose description matches the moment) |
 |---|---|
 | `blocks/caption-bar-hero` | `HERO_IMAGE_URL` |
-| `blocks/image-text` | `IMAGE_URL` |
 | `blocks/editorial-hero` | `HERO_IMAGE_URL` |
 | `blocks/feature-list` | `POLAROID_IMAGE_URL` |
 | `blocks/polaroid-collage` | `PHOTO_1_URL`, `PHOTO_2_URL`, `PHOTO_3_URL` |
@@ -200,6 +199,7 @@ When a block is one of the designed set (every `blocks/*` component is rasterise
 | `blocks/editorial-collage` | `PHOTO_1_URL`, `PHOTO_2_URL`, `PHOTO_3_URL` |
 | `blocks/annotated-product` | `PRODUCT_IMAGE_URL` |
 | `blocks/comparison-vs` | `BEFORE_IMAGE_URL`, `AFTER_IMAGE_URL` |
+| `blocks/image-text` | `IMAGE_URL` |
 
 Pick the image whose `description` best matches the campaign's emotional beat. For a sympathy send, prefer a "quiet, white, restrained" image. For a celebration, prefer a "vibrant, joyful recipient" image. Read the descriptions — they're written so you can evaluate fit at a glance. If a needed image isn't in the live context, flag in `notes`; do NOT invent a URL.
 
@@ -211,7 +211,7 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
 
 ```json
 {
-  "campaignName": "2026-06 Farewell Weekend",
+  "campaignName": "RH | 2026-06 Farewell Weekend",
   "subjectLine": "Seven designs, one last weekend",
   "previewText": "Lucerne, Lisbon, Savoie and four more take their final bow.",
   "bodyBg": "#2c2825",
@@ -225,7 +225,7 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
         "SUPER_LABEL": "Friday 5 & Saturday 6 June",
         "HEADLINE": "a fond farewell",
         "SUBHEADLINE": "Seven designs take their final bow this weekend.",
-        "CTA_TEXT": "Shop the farewell designs",
+        "CTA_TEXT": "See the farewell designs",
         "CTA_URL": "https://figandbloom.com/collections/bouquets"
     }},
     { "component": "sections/body-copy-plain", "tokens": {
@@ -255,7 +255,7 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
 
 ### Required fields (per campaign)
 
-- `campaignName` — `YYYY-MM <Name>` (recurring) or `EDM | YYYY-MM <Edition>` (digest) or `Launch | YYYY-MM <Name>` (range launch). Match the user's brief.
+- `campaignName` — `RH | YYYY-MM <Name>` (recurring) or `EDM | YYYY-MM <Edition>` (digest) or `Launch | YYYY-MM <Name>` (range launch). Match the user's brief.
 - `subjectLine` — under 50 chars, on-brand, from the objective's `subjectPatterns` (or write one that holds to the brand voice).
 - `previewText` — second line that extends (never repeats) the subject.
 - `bodyBg` — hex colour, default `#2c2825` (Noir). Light backgrounds work for editorial / digest beats.
@@ -271,21 +271,60 @@ Emit a **single JSON object** that exactly matches the builder's `campaign` shap
 
 ### Token rules (enforced by `/api/validate`)
 
-- **Casing by font:** Cervanttis tokens (`*_CAPTION`, `ACCENT_SCRIPT`, `QUOTE_ACCENT`, `CAPTION`, `SIGNATURE`, `BADGE_TEXT`, plus any token in a Cervanttis template) → **lowercase**. Example: `"a fond farewell"`, `"for the one who does it all"`.
-- **Lust tokens** (`HEADLINE` in body-copy / section-headline / product cards, `PULL_QUOTE`, `PRODUCT_NAME`, `PRODUCT_PRICE`) → **Sentence case**. Example: `"Some gestures speak before words do."`
-- **`HEADLINE` for `heroes/*`** is Cervanttis → lowercase.
-- **`HEADLINE` for `sections/section-headline`** is Lust → Sentence case.
-- **`OPT_OUT_HEADLINE`** → always lowercase (Cervanttis).
-- **`UNSUBSCRIBE_URL`** token value → `{{ unsubscribe_url }}` (single braces, Klaviyo syntax).
+**Casing follows the FONT, and every token in the schema states its own.** `/api/schema` returns
+`font` (`cervanttis` | `lust` | `neuzeitgro`) and `case` (`lower` | `sentence` | `any`) on each
+token. Read those rather than reasoning from the component name:
+
+- **Cervanttis → lowercase.** The script display line: `HEADLINE` in the heroes,
+  `sections/upsell-noir` and `sections/opt-out`; plus `ACCENT_SCRIPT`, `*_CAPTION`,
+  `QUOTE_ACCENT`, `SIGNATURE`, `BADGE_TEXT`. Example: `"a fond farewell"`.
+- **Lust → Sentence case.** `HEADLINE` in body-copy / section-headline / product cards,
+  `PULL_QUOTE`, `PRODUCT_NAME`, `PRODUCT_PRICE`. Example: `"Some gestures speak before words do."`
+- **NeuzeitGro → any.** Everything else, including **every `SUPER_LABEL`**, `SUBHEADLINE` and
+  `CTA_TEXT`. It renders `text-transform:uppercase`, so authored casing never reaches the reader.
+
+> **A component is not a font.** In `heroes/hero-c1` only `HEADLINE` is Cervanttis —
+> `SUPER_LABEL`, `SUBHEADLINE` and `CTA_TEXT` are NeuzeitGro and accept any casing. Do not apply
+> a whole component's "font" to all of its tokens.
+
+Casing checks are Unicode-aware: `"Økar Bitter Aperitivo"` is correct Sentence case and passes.
+
+### Accented characters: Cervanttis cannot set them
+
+Cervanttis has no diacritic marks. Every accented Latin-1 letter **except** `Ä Ë Ï Ö Ü ä ë ï ö ü`
+renders as its unaccented base letter — `"the økar negroni"` typesets as `"the okar negroni"`,
+cleanly and misspelt, with nothing visible in a render review. `/api/validate` rejects it as an
+`unsupported_glyph` error.
+
+**When you write copy containing an accented character:**
+
+- Put it in a **Lust or NeuzeitGro** token — both cover Latin-1 in full. `PRODUCT_NAME: "Økar
+  Bitter Aperitivo"` is fine. The same words as a hero `HEADLINE` are not.
+- **Never drop the accent to make it fit.** Misspelling a maker's name is worse than rephrasing.
+  Reword the Cervanttis line instead — it is a short script accent, so this is nearly always easy.
+- `Mörk`, `Zürich`, `Käse` are safe: the diaeresis set is real.
+
+### Other token values
+
+- **`UNSUBSCRIBE_URL`** → `{{ unsubscribe_url }}` (single braces, Klaviyo syntax).
 - **`REVIEW_STARS`** → Unicode `★★★★★`.
 - **`BODY_P2`** → empty string `""` if only one paragraph.
-- **`HEADLINE` for `sections/upsell-noir`** is Cervanttis → lowercase.
+- **`PROMO_CODE`** → `""` for giveaway mode; the dashed code box and its label both disappear.
+- **`BTN_WIDTH`** (`sections/button`) → `"auto"` sizes the button to its own label. Prefer it to
+  guessing a pixel width.
+- **`PANEL_BG`** (`sections/button`) → omit it. It inherits the panel colour of the block above,
+  which is almost always what you want; set it only to break deliberately from that block.
+- Dimension tokens want a unit (`"40px"`). A bare `"40"` is read as `40px` with a warning.
 
 ### Component-name rules (enforced)
 
 - Always **group-prefixed**: `heroes/hero-d-clay` not `hero-d-clay`. Bare names fail validation with a `suggestion`.
 - `header` and `footer` are top-level (no prefix).
-- Run `/api/validate` mentally before returning: any unknown component, bare name, or casing violation means the JSON will be rejected.
+- **`heroes/hero-b-*` replace the header.** They draw their own logo bar in the band colour, so
+  put one at index 0 with **no** `header` before it — otherwise the email shows two stacked logo
+  bars and validation fails with `duplicate_logo_bar`. Every other hero takes `header` first.
+- Run `/api/validate` mentally before returning: any unknown component, bare name, casing
+  violation, or accented character in a Cervanttis token means the JSON will be rejected.
 
 ---
 
