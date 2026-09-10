@@ -425,8 +425,17 @@ async function exportHtml() {
   // the Klaviyo modal field, else the loaded design's saved preview, else the campaign's own).
   const previewText = $('#kvPreview').value.trim() || currentDesignMeta.previewText || campaign.previewText || '';
   const r = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign, previewText }) });
-  const { html } = await r.json();
-  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', html, 'text/html');
+  const data = await r.json();
+  // /api/export refuses a campaign that still has unresolved tokens (422 UNRESOLVED_TOKENS),
+  // and that response carries no `html`. Downloading it regardless writes a file containing
+  // the string "undefined" and tells the author nothing — the opposite of what the refusal is
+  // for. Surface the reason and the tokens to go and fill instead.
+  if (!r.ok) {
+    const tokens = (data.unresolved || []).join(', ');
+    alert((data.error || 'Export failed: HTTP ' + r.status) + (tokens ? '\n\nStill unresolved: ' + tokens : ''));
+    return;
+  }
+  download((campaign.campaignName || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', data.html, 'text/html');
 }
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {

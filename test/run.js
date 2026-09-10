@@ -1737,6 +1737,21 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── The export refusal must reach the author ───────────────────────────────────────────
+// /api/export answers 422 UNRESOLVED_TOKENS rather than hand back holed HTML, and that body
+// carries no `html`. A caller that destructures it anyway downloads a file containing the
+// string "undefined" — a silently corrupt artefact, which is a worse outcome than the holed
+// HTML the refusal exists to prevent. So the refusal is only worth having if the client checks.
+{
+  const appJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  const body = (appJs.match(/async function exportHtml\(\)\s*\{([\s\S]*?)\n\}/) || [])[1] || '';
+  ok(body, 'exportHtml() is present in the builder');
+  ok(/if\s*\(!r\.ok\)/.test(body), 'exportHtml() checks the response before downloading it');
+  ok(body.indexOf('!r.ok') < body.indexOf('download('),
+    'and checks it BEFORE the download, not after');
+  ok(/unresolved/.test(body), 'and names the unresolved tokens, so the author knows what to fill');
+}
+
 // ── The font reader must be total ──────────────────────────────────────────────────────
 // Every caller hands readCmap bytes it did not produce: a base64 blob out of a shell, or
 // whatever the CDN returned this morning. The most important caller is scripts/check-fonts.js,
