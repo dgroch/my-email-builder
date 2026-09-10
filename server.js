@@ -263,7 +263,13 @@ const server = http.createServer(async (req, res) => {
       // file:// path before rasterising; export has no such second pass, so the marker shipped
       // verbatim and every bundled illustration 404'd in the sent email.
       const assetsBase = assetsBaseFor(req);
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase, production: true, previewText });
+      // `shell: 'production'` is the point of this endpoint: the HTML leaves here to be pasted
+      // into Klaviyo and sent. The preview shell embeds ~263KB of base64 font before any copy,
+      // which puts the document past Gmail's ~102KB clip inside the <head> — the reader gets
+      // "[Message clipped]" and the unsubscribe tag never renders — and it declares no
+      // color-scheme, so the email inverts in dark mode as a patchwork of designed slices and
+      // flipped live HTML. shell-production.html exists for exactly these reasons.
+      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase, production: true, shell: 'production', previewText });
       const validation = validateCampaign(campaign || {}, schema());
       // Export is the artefact that gets pasted into Klaviyo, so a surviving {{TOKEN}} is a
       // hole in a sent email, not a note in a report. Fail the request rather than hand back

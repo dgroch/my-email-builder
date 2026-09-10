@@ -278,14 +278,21 @@ token. Read those rather than reasoning from the component name:
 - **Cervanttis → lowercase.** The script display line: `HEADLINE` in the heroes,
   `sections/upsell-noir` and `sections/opt-out`; plus `ACCENT_SCRIPT`, `*_CAPTION`,
   `QUOTE_ACCENT`, `SIGNATURE`, `BADGE_TEXT`. Example: `"a fond farewell"`.
-- **Lust → Sentence case.** `HEADLINE` in body-copy / section-headline / product cards,
-  `PULL_QUOTE`, `PRODUCT_NAME`, `PRODUCT_PRICE`. Example: `"Some gestures speak before words do."`
+- **Lust → Sentence case, but only where the token says so.** `HEADLINE` in body-copy /
+  section-headline / product cards, `PULL_QUOTE`, `PRODUCT_NAME`, `SECTION_HEADLINE`,
+  `TILE_n_TITLE`. Example: `"Some gestures speak before words do."`
 - **NeuzeitGro → any.** Everything else, including **every `SUPER_LABEL`**, `SUBHEADLINE` and
   `CTA_TEXT`. It renders `text-transform:uppercase`, so authored casing never reaches the reader.
 
 > **A component is not a font.** In `heroes/hero-c1` only `HEADLINE` is Cervanttis —
 > `SUPER_LABEL`, `SUBHEADLINE` and `CTA_TEXT` are NeuzeitGro and accept any casing. Do not apply
 > a whole component's "font" to all of its tokens.
+
+> **Lust is not a casing rule on its own.** Lust also sets the price on a product card, the code
+> in a promo box and the numeral on a step, and those carry `case: null` — no rule at all. Write
+> `"from $85"`, `"20% off"` and `"bloom20"` exactly as they should read. The six are
+> `PRODUCT_PRICE`, `PROMO_CODE`, `OFFER_VALUE` and `STEP_1/2/3_NUMBER`. Never "correct" a promo
+> code's casing: Klaviyo and Shopify decide it, and changing it breaks the code.
 
 Casing checks are Unicode-aware: `"Økar Bitter Aperitivo"` is correct Sentence case and passes.
 
@@ -303,6 +310,25 @@ cleanly and misspelt, with nothing visible in a render review. `/api/validate` r
 - **Never drop the accent to make it fit.** Misspelling a maker's name is worse than rephrasing.
   Reword the Cervanttis line instead — it is a short script accent, so this is nearly always easy.
 - `Mörk`, `Zürich`, `Käse` are safe: the diaeresis set is real.
+
+### Block ordering: `header` never precedes a `hero-b-*`
+
+`heroes/hero-b-white` / `-clay` / `-noir` are **header-replacing** heroes: each renders its own
+logo bar, tinted to the band colour. Putting the shared `header` in front of one stacks two Fig &
+Bloom logo bars about 60px apart. `/api/validate` rejects it as a `duplicate_logo_bar` error.
+
+Use a `hero-b-*` at index 0 with **no** `header`, or keep `header` and pick a different hero
+(`heroes/hero-a`, `hero-c1*`, `hero-c2*`, `hero-d-*`).
+
+### Length tokens
+
+Dimension tokens are CSS lengths — a number **with a unit**: `"40px"`, `"1.5em"`, `"100%"`, or a
+bare `0`. A bare number is accepted and coerced to px, but it returns a `coerced_length` warning,
+so write the unit.
+
+`BTN_WIDTH` also accepts `"auto"`, which sizes the button to its own label. Prefer it over
+guessing a pixel width — it only ever decides the Outlook fallback box; every other client
+shrink-wraps the live button regardless.
 
 ### Other token values
 

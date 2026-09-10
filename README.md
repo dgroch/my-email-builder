@@ -109,7 +109,7 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, missingGlyphs, height}` — `missingGlyphs` names any character the brand face that typesets it cannot actually set (see **Glyph coverage**) |
 | POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
-| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it, and **422 `UNREACHABLE_ASSET_BASE`** when the asset URLs it would bake in resolve only on this network (see `PUBLIC_ASSETS_BASE`) |
+| POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Wrapped in **`shell-production.html`** (CDN fonts, light-only) — not the preview shell, whose base64 fonts push the document past Gmail's clip. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it, and **422 `UNREACHABLE_ASSET_BASE`** when the asset URLs it would bake in resolve only on this network (see `PUBLIC_ASSETS_BASE`) |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
 | POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
@@ -445,6 +445,29 @@ That check degrades to silence by design (a malformed font must not take down a 
 disarmed guard is indistinguishable from a clean report unless something asks: the server warns
 about it at startup, `/api/validate` raises a `glyph_gate_unavailable` warning, and this field
 is the machine-readable version.
+
+### Two shells, and which paths use which
+
+`design-system/shell/` holds both. They are not interchangeable, and the difference is invisible
+until an email goes out wrong:
+
+| | `shell-preview.html` | `shell-production.html` |
+|---|---|---|
+| Fonts | embedded as base64 (~263KB) | linked from the CDN |
+| `color-scheme` | none | `light`, both metas |
+| Size of a typical send | ~300KB | ~45KB |
+| Used by | everything that **rasterises** — `/api/render`, `/api/render-slices`, and the Klaviyo push's slicing pass | `/api/export`, and the Klaviyo push's final document |
+
+The rasterising paths need the base64 faces: those are the exact bytes Puppeteer draws with, so
+a slice cannot come out in a fallback face because a CDN was slow. Anything **sent** needs the
+other one: the preview shell's fonts push the document past Gmail's ~102KB clip *inside the
+`<head>`*, so the reader sees "[Message clipped]" and the unsubscribe tag never renders; and with
+no `color-scheme` the email inverts in dark mode as a patchwork of designed slices and flipped
+live HTML.
+
+`render.assemble()` takes `shell: 'production'` for the second case. It is deliberately separate
+from `production: true`, which only means "keep the real Klaviyo merge tags" — the Klaviyo push
+needs real tags *and* the preview shell, so one flag cannot serve both.
 
 ### Where the images point: `PUBLIC_ASSETS_BASE`
 
