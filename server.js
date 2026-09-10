@@ -453,6 +453,23 @@ const server = http.createServer(async (req, res) => {
         }
         const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase, previewText: preview });
 
+        // Same refusal as /api/export, checked here rather than up front because most of the
+        // email has been rasterised by now: the slices carry their pixels to Klaviyo and no
+        // longer reference the base at all. What survives is the live HTML — html_only blocks
+        // and animated GIFs kept at their hosted URL — so only the FINAL document can say
+        // whether an unreachable base actually ships. Refusing early would reject the ordinary
+        // fully-sliced campaign for a URL it never uses.
+        //
+        // A draft is worse than an export to get wrong: it lands in the account ready to send,
+        // and nothing between here and the recipient looks at the image hosts.
+        const draftBaseIssue = fullHtml.includes(assetsBase) ? unreachableAssetBase(assetsBase) : null;
+        if (draftBaseIssue) {
+          return json(res, 422, {
+            error: `Draft not created: the asset base ${JSON.stringify(assetsBase)} ${draftBaseIssue}, and this campaign keeps live HTML that references it (an html_only block or an animated GIF), so those images would be broken for every recipient. Set PUBLIC_ASSETS_BASE to a publicly reachable URL and push again.`,
+            code: 'UNREACHABLE_ASSET_BASE', assetsBase,
+          });
+        }
+
         // 3. Create the draft (template → campaign → assign template).
         const result = await klaviyo.createDraftCampaign({
           apiKey, listId, fromEmail, fromLabel, replyToEmail, subject: subjectLine, previewText: preview,
