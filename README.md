@@ -162,6 +162,9 @@ Two assertions fail a campaign outright, so nothing depends on a human noticing:
   blank or wrong-cased one. The levers drive CSS class names (`illo-{{ACCENT_ILLO}}`), so an
   off-list value used to match no rule and read as "off" — a silent no-op. Issue type
   `invalid_enum`, carrying `options` and a suggested value.
+- **Unsettable glyphs** — a character the face that typesets the token maps onto a different
+  letter fails the campaign (`unsupported_glyph`). See **Glyph coverage** below: this is the one
+  defect class where the render looks correct and the copy is wrong.
 - **Duplicate logo bar** — `heroes/hero-b-white|clay|noir` draw their **own** logo bar, tinted to
   the band colour, so they take the place of `header`. Putting `header` in front of one renders
   two Fig & Bloom logo bars about 60px apart. Issue type `duplicate_logo_bar`; the fix is to drop
@@ -216,10 +219,25 @@ NeuzeitGro and `Okar` in Cervanttis, and passed review.
 | NeuzeitGro | yes | — | clean, full Latin-1 |
 | Cervanttis | yes | all 48 accented Latin-1 letters (`Ø ø Ã ã Í í Î î É é Ç Å å Ñ ñ …`) | **needs re-cutting** |
 
-The Cervanttis fault is in the font binary, which is hosted outside this repo. Until it is
-re-cut, the guard is what stops it shipping: check `missingGlyphs` before you send, and keep
-accented copy out of Cervanttis tokens (its diaeresis set — `Ä Ë Ï Ö Ü ä ë ï ö ü` — is genuine,
-so `Mörk` is safe; the acute, grave, circumflex, tilde, ring, cedilla and slash sets are not).
+The Cervanttis fault is in the font binary, which is hosted outside this repo. It is not a
+mapping mistake to be corrected — the face has **123 glyphs and no diacritic marks at all**, so
+there is nothing to compose accented letters from. Someone pointed the accented codepoints at
+the bare letters so they would not render as tofu boxes. Fixing it properly means drawing new
+glyphs, which is type-design work on a licensed face.
+
+**So the rule is: do not set accented copy in Cervanttis, and `/api/validate` enforces it.**
+A folded character is an `unsupported_glyph` **error** — the campaign does not validate, because
+the word would ship misspelt and nothing in a render review would show it. A merely absent
+character is a warning: the client substitutes another face, which is ugly but still says what
+the author wrote. The issue names the character, what it would actually render as, and which
+brand faces do set it; it never offers to "fix" the value by stripping the mark, because that is
+the same misspelling written down deliberately. Move the copy to a Lust or NeuzeitGro token
+instead — both cover Latin-1 in full.
+
+Cervanttis's diaeresis set (`Ä Ë Ï Ö Ü ä ë ï ö ü`) is genuine, so `Mörk`, `Zürich` and `Käse`
+are safe and are not flagged. The acute, grave, circumflex, tilde, ring, cedilla and slash sets
+are not. `/api/schema` publishes the per-face lists as `fontCoverage`, and the builder reads
+them to warn on the field as you type — so the editor and the validator cannot disagree.
 
 `lib/glyphs.js` reads the cmaps straight out of the preview shell's embedded faces, so
 `/api/render` audits the exact bytes the renderer rasterises with. It also parses **WOFF2**,

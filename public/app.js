@@ -72,6 +72,25 @@ const violatesLength = {
   bare: v => /^\d+(?:\.\d+)?$/.test(String(v).trim()),
   auto: (name, v) => name === 'BTN_WIDTH' && String(v).trim().toLowerCase() === 'auto',
 };
+// Characters the face that typesets this token cannot actually set. Mirrors glyphIssues() in
+// lib/validate.js, reading the same per-face lists the server put on the schema — so the editor
+// flags exactly what the validator rejects.
+//
+// The folded set is the one that matters: those characters ARE in the font's cmap, mapped to the
+// unaccented letter, so "økar" sets as a clean, correctly-kerned "okar". There is nothing to see
+// in the preview. This field warning is the only place a writer finds out.
+function unsettableChars(t, v) {
+  const cov = SCHEMA && SCHEMA.fontCoverage && t.font && SCHEMA.fontCoverage[t.font];
+  if (!cov || !v) return null;
+  const folded = [...new Set([...v].filter(c => cov.folded.includes(c)))];
+  const missing = [...new Set([...v].filter(c => cov.missing.includes(c)))];
+  if (!folded.length && !missing.length) return null;
+  const others = ['cervanttis', 'lust', 'neuzeitgro'].filter(f => {
+    const c = SCHEMA.fontCoverage[f];
+    return f !== t.font && c && ![...folded, ...missing].some(ch => c.folded.includes(ch) || c.missing.includes(ch));
+  });
+  return { folded, missing, others };
+}
 function fixLower(v) { return v.toLowerCase(); }
 // Uppercase the first CASED character, wherever it is. Returns the value unchanged when it
 // already opens with a capital, so the editor never offers a "fix" that changes nothing useful.
@@ -175,6 +194,19 @@ function fieldFor(t, block) {
       } else {
         msg = 'Needs a unit, e.g. "40px"'
           + (t.name === 'BTN_WIDTH' ? ' — or "auto" to size it to the label.' : ' — without one this renders as 0.');
+      }
+    }
+    // A glyph the face cannot set outranks a casing nit: casing is a house-style slip, this
+    // one ships the wrong word. Checked last so its message wins the field.
+    const uns = unsettableChars(t, v);
+    if (uns) {
+      bad = true;
+      const where = uns.others.length ? ` Use a ${uns.others.join('/')} token instead.` : '';
+      if (uns.folded.length) {
+        msg = `${t.font} cannot set ${uns.folded.join(' ')} — it renders without the mark, so the word ships misspelt.${where}`;
+        repair = null;   // stripping the mark is the same misspelling, so never offer a one-click "fix"
+      } else {
+        msg = `${t.font} has no ${uns.missing.join(' ')} — those characters fall back to another face.${where}`;
       }
     }
     warn.classList.toggle('hidden', !bad);

@@ -1668,6 +1668,75 @@ async function studioSuite() {
   ok(/font-display:\s*swap/.test(shell), 'faces still swap rather than blocking the render');
 }
 
+// ── A glyph the face cannot set FAILS the campaign, it does not just get reported ──────
+// This is the only defect in the system where the render looks right and the words are wrong,
+// so reporting it in /api/render's `missingGlyphs` was never going to be enough: the whole
+// nature of the fault is that nobody looks. Cervanttis has no accented Latin-1 outlines at all
+// — 123 glyphs, of which the only accented ones are Ä Ö Ü ä ö ü — so every other accented
+// codepoint is mapped to the bare letter and "økar" sets as a clean, well-kerned "okar".
+{
+  const hero = schema.components.find((c) => c.name === 'heroes/hero-a');
+  const withHeadline = (v) => {
+    const camp = sampleData.sampleCampaignFor(hero);
+    camp.blocks[0].tokens.HEADLINE = v;   // Cervanttis, lowercase
+    return validateCampaign(camp, schema, { requireUnsubscribe: false });
+  };
+
+  const bad = withHeadline('the økar negroni');
+  const issue = bad.issues.find((i) => i.type === 'unsupported_glyph');
+  ok(issue, 'a Cervanttis token carrying ø is reported');
+  eq(issue && issue.severity, 'error', 'a folded glyph is an ERROR — the word would ship misspelt');
+  eq(bad.ok, false, 'the campaign does not validate');
+  eq(bad.blocks[0].valid, false, 'the block carrying it is marked invalid');
+  eq(issue && issue.char, 'ø', 'the issue names the character');
+  eq(issue && issue.rendersAs, 'o', 'and what it would actually render as');
+  eq(issue && issue.face, 'cervanttis', 'and the face that cannot set it');
+  // The advice has to be actionable, and must never be "drop the mark" — that is the same
+  // misspelling, just written down deliberately.
+  ok(issue && issue.alternatives.includes('lust') && issue.alternatives.includes('neuzeitgro'),
+    'the issue names the faces that CAN set it');
+  ok(issue && /Do NOT strip the mark/.test(issue.hint || ''), 'and refuses to suggest stripping the mark');
+  ok(issue && issue.suggestion === undefined, 'no auto-repair is offered — every "fix" here is a misspelling');
+
+  // Cervanttis genuinely HAS the diaeresis set, so the guard must stay quiet on it. A checker
+  // that cried wolf on "Mörk" would be turned off inside a week.
+  for (const v of ['mörk drinking chocolate', 'zürich in the spring', 'käse und brot', 'straße']) {
+    ok(!withHeadline(v).issues.some((i) => i.type === 'unsupported_glyph'),
+      `Cervanttis sets ${JSON.stringify(v)} correctly, so it is not flagged`);
+  }
+  for (const v of ['the negroni hour', 'for the one who does it all']) {
+    ok(!withHeadline(v).issues.some((i) => i.type === 'unsupported_glyph'),
+      `plain English raises nothing (${JSON.stringify(v)})`);
+  }
+
+  // The same characters in a face that CAN set them are fine — the check follows the font, not
+  // the token name. This is the half the original report got backwards.
+  const card = schema.components.find((c) => c.name === 'products/card-horizontal');
+  const lust = sampleData.sampleCampaignFor(card);
+  lust.blocks[0].tokens.PRODUCT_NAME = 'Økar Bitter Aperitivo, 700ml';   // Lust
+  ok(!validateCampaign(lust, schema, { requireUnsubscribe: false }).issues.some((i) => i.type === 'unsupported_glyph'),
+    'the same Ø in a Lust token is accepted — Lust sets it correctly');
+
+  // Every saved fixture and seed still validates: the gate has to catch the bug without
+  // condemning work that was already correct.
+  for (const ex of loadSeedExamples()) {
+    const rep = validateCampaign(ex.campaign, schema);
+    ok(!rep.issues.some((i) => i.type === 'unsupported_glyph' && i.severity === 'error'),
+      `seed example '${ex.name || ex.objective}' raises no glyph error`);
+  }
+
+  // The editor reads the same lists off the schema, so a writer sees in the field exactly what
+  // the validator would reject.
+  ok(schema.fontCoverage && schema.fontCoverage.cervanttis, 'the schema publishes per-face coverage');
+  ok(schema.fontCoverage.cervanttis.folded.includes('ø'), 'cervanttis coverage lists ø as folded');
+  ok(!schema.fontCoverage.cervanttis.folded.includes('ö'), 'and does NOT list ö, which it really has');
+  eq(schema.fontCoverage.lust.folded, '', 'Lust folds nothing');
+  eq(schema.fontCoverage.neuzeitgro.folded, '', 'NeuzeitGro folds nothing');
+  const appJs = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  ok(/SCHEMA\.fontCoverage/.test(appJs), 'the builder reads fontCoverage rather than duplicating the list');
+  ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
