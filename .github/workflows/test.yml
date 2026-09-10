@@ -1,0 +1,79 @@
+name: test
+
+# Every check in this repo was run by hand until now, which is how a caller that downloaded the
+# string "undefined", an export that Gmail clipped inside its own <head>, and a font that had
+# 404'd for months all reached main. The suite catches each of those; nothing was running it.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A second push supersedes the first: the earlier run's verdict is about code nobody will merge.
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suite:
+    # Both storage drivers, because they are not interchangeable: the Postgres run carries a few
+    # assertions the disk run cannot reach, and a driver-specific fault would otherwise ship.
+    name: suite (${{ matrix.store }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        store: [disk, postgres]
+
+    services:
+      # Started for both jobs — GitHub has no way to attach a service to one matrix leg only.
+      # The disk leg simply never sets DATABASE_URL, so it never connects.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'      # package.json asks for >=18; 20 is the current LTS
+          cache: npm
+
+      # Restore before `npm ci`, so puppeteer's postinstall finds the browser already present
+      # and skips a ~150MB download on every run.
+      - name: Cache the puppeteer browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - run: npm ci
+
+      # lib/render.js launches Chromium from CHROMIUM_PATH, falling back to /usr/bin/chromium —
+      # and a GitHub runner has neither. Point it at the browser puppeteer just installed.
+      # Resolved explicitly rather than inline, because executablePath() THROWS when no browser
+      # was downloaded: unguarded, that leaves CHROMIUM_PATH empty and the failure surfaces much
+      # later as an inscrutable launch error.
+      - name: Locate the browser puppeteer installed
+        run: |
+          BROWSER="$(node -p 'require("puppeteer").executablePath()')"
+          if [ ! -x "$BROWSER" ]; then
+            echo "::error::puppeteer installed no browser at ${BROWSER:-<empty>}"
+            exit 1
+          fi
+          echo "CHROMIUM_PATH=$BROWSER" >> "$GITHUB_ENV"
+
+      - name: Run the suite
+        run: npm run ${{ matrix.store == 'postgres' && 'test:pg' || 'test' }}
+        env:
+          # Only the Postgres leg gets a DATABASE_URL; without it the app and the suite both
+          # fall back to the local-disk store, which is exactly what the other leg exercises.
+          DATABASE_URL: ${{ matrix.store == 'postgres' && 'postgres://postgres:postgres@localhost:5432/postgres' || '' }}

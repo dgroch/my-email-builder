@@ -560,6 +560,21 @@ The disk run is pointed at a scratch `DATA_DIR`; the Postgres run truncates its 
 start and end, so neither ever touches real designs. **Point it at a scratch database, not a
 production one.**
 
+### CI
+
+`.github/workflows/test.yml` runs both drivers on every pull request and every push to `main`.
+It exists because the suite was only ever run by hand, which is how a caller that downloaded the
+string `"undefined"`, an export Gmail clipped inside its own `<head>`, and a font that had 404'd
+for months all reached `main` — the suite catches each of those, and nothing was running it.
+
+The runner has no Chromium, so the workflow points `CHROMIUM_PATH` at the browser puppeteer
+installs (cached between runs) and fails loudly if that browser is missing, rather than letting
+an empty path surface later as a launch error.
+
+`npm run check:fonts` is deliberately **not** in CI: it fetches live CDN URLs, and a suite that
+goes red when a CDN hiccups is one people learn to ignore. Run it by hand when touching the
+shells, or schedule it separately where a failure informs rather than blocks.
+
 ## Saving designs (persistence)
 **Save** stores the current design; **My designs** lists them to reopen, **clone**, or delete.
 Clicking a block in the live preview scrolls to and highlights its card in the builder. There are
