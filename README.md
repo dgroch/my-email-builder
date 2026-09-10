@@ -82,7 +82,8 @@ git push -u origin main
 server.js                 zero-dependency HTTP server (UI + /api/{schema,assemble,render,render-slices,export,klaviyo-draft,designs})
 lib/parseTemplates.js     derives the token schema from templates + manifest
 lib/render.js             assembles the shell and rasterises (full PNG + per-block slices) via Puppeteer
-lib/glyphs.js             reads the brand faces' cmaps; reports characters a face cannot actually set
+lib/glyphs.js             reads the brand faces' cmaps (sfnt + WOFF2); reports characters a face cannot set
+scripts/check-fonts.js    fetches every production @font-face URL and audits what comes back
 lib/klaviyo.js            pushes the assembled HTML to Klaviyo as a draft campaign
 lib/db.js                 Postgres pool + the schema it owns (used when DATABASE_URL is set)
 lib/recordStore.js        one collection API over two drivers (Postgres / local-disk JSON)
@@ -207,19 +208,43 @@ sets cleanly as a different word. Nothing errors, `document.fonts.check()` retur
 fallback face appears — which is how one send spelt a maker's name two different ways, `ØKAR` in
 NeuzeitGro and `Okar` in Cervanttis, and passed review.
 
-**Current state of the three faces** (`node -e "console.log(require('./lib/glyphs').faceCoverage('cervanttis'))"`):
+**Current state of the three faces** — run `npm run check:fonts`:
 
-| Face | Folds onto base glyph | Verdict |
-|---|---|---|
-| Lust | — | clean; it renders `Ø` correctly |
-| NeuzeitGro | — | clean |
-| Cervanttis | all 48 accented Latin-1 letters (`Ø ø Ã ã Í í Î î É é Ç Å å Ñ ñ Ö ö …`) | **needs re-cutting** |
+| Face | Loads? | Folds onto base glyph | Verdict |
+|---|---|---|---|
+| Lust | yes | — | clean; it renders `Ø` correctly |
+| NeuzeitGro | yes | — | clean, full Latin-1 |
+| Cervanttis | yes | all 48 accented Latin-1 letters (`Ø ø Ã ã Í í Î î É é Ç Å å Ñ ñ …`) | **needs re-cutting** |
 
 The Cervanttis fault is in the font binary, which is hosted outside this repo. Until it is
 re-cut, the guard is what stops it shipping: check `missingGlyphs` before you send, and keep
-accented copy out of Cervanttis tokens. `lib/glyphs.js` reads the cmaps straight out of the
-preview shell's embedded faces, so it audits the exact bytes the renderer rasterises with — and
-`faceCoverage()` re-verifies a replacement font rather than trusting it.
+accented copy out of Cervanttis tokens (its diaeresis set — `Ä Ë Ï Ö Ü ä ë ï ö ü` — is genuine,
+so `Mörk` is safe; the acute, grave, circumflex, tilde, ring, cedilla and slash sets are not).
+
+`lib/glyphs.js` reads the cmaps straight out of the preview shell's embedded faces, so
+`/api/render` audits the exact bytes the renderer rasterises with. It also parses **WOFF2**,
+which is what the production shell links, so `npm run check:fonts` audits the faces a *sent*
+email will actually load — see below.
+
+### `npm run check:fonts`
+
+Fetches every `@font-face` URL in `shell-production.html` and reports, per face: whether it
+loads at all, whether its cmap folds any accented letter onto its base glyph, and whether the
+bytes match the declared `format()`. It is a separate networked command rather than part of
+`npm test` on purpose — a suite that fails when a CDN hiccups is a suite people learn to ignore.
+
+Run it after touching the shell's font block, and on a schedule. It exists because **both**
+font faults in this system were silent:
+
+- **NeuzeitGro 404'd.** The body face — nearly every word of every send — pointed at
+  `NeuzeitGro-Lig.otf` / `-Bol.otf`, which do not exist on the CDN. Nothing errored; the stack
+  fell through to Gill Sans (also 404) and then to Calibri. Fixed: the faces are hosted as
+  `.woff2` and the shell now points at them.
+- **Gill Sans never existed.** Three more 404s on every open, buying nothing. The `@font-face`
+  rules are gone; `'Gill Sans','Gill Sans MT'` stay in the templates' fallback *stack*, where
+  they are a system face on macOS/iOS and are the part that was doing the work. Re-hosting it is
+  a licensing question (Monotype), not a code change.
+- **Cervanttis loads and lies.** See above.
 
 ### CSS lengths
 

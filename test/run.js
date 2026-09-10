@@ -1636,6 +1636,38 @@ async function studioSuite() {
   }
 }
 
+// ── The production shell's web fonts ───────────────────────────────────────────────────
+// NeuzeitGro is the body face — nearly every word of every send. Its two @font-face URLs
+// pointed at .otf files that do not exist on the CDN and 404'd silently for months: nothing
+// errored, the stack just fell through to Calibri. Gill Sans pointed at three more that have
+// never existed. Whether a URL RESOLVES needs the network (`npm run check:fonts`), but the
+// shape that made it rot is checkable offline, so it is checked here.
+{
+  const shell = fs.readFileSync(path.join(DS, 'shell', 'shell-production.html'), 'utf8');
+  const faces = [...shell.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
+  ok(faces.length >= 3, 'the production shell declares the brand faces');
+
+  const families = faces.map((f) => (f.match(/font-family:\s*'([^']+)'/) || [])[1]);
+  ok(families.includes('NeuzeitGro'), 'NeuzeitGro is loaded as a web font');
+  ok(families.includes('Lust') && families.includes('Cervanttis'), 'Lust and Cervanttis are loaded');
+  ok(!families.includes('Gill Sans'),
+    'Gill Sans is NOT loaded as a web font — the files do not exist, so those rules were three 404s per open');
+  // It stays in the fallback STACK, which is the part that was doing the work.
+  ok(/'Gill Sans','Gill Sans MT'/.test(fs.readFileSync(path.join(DS, 'templates', 'footer.html'), 'utf8')),
+    "Gill Sans remains in the templates' fallback stack as a system face");
+
+  for (const f of faces) {
+    const family = (f.match(/font-family:\s*'([^']+)'/) || [])[1];
+    const url = (f.match(/url\(\s*'([^']+)'/) || [])[1] || '';
+    if (family !== 'NeuzeitGro') continue;
+    ok(/\.woff2(\?|')/.test(url), `NeuzeitGro is served as .woff2, not the .otf that 404'd (${url.slice(-40)})`);
+    ok(/format\('woff2'\)/.test(f), 'NeuzeitGro declares format(woff2) to match the bytes served');
+  }
+  ok(!/NeuzeitGro-(?:Lig|Bol)\.otf/.test(shell), 'the dead NeuzeitGro .otf URLs are gone');
+  ok(!/Gill%20Sans/.test(shell), 'the dead Gill Sans URLs are gone');
+  ok(/font-display:\s*swap/.test(shell), 'faces still swap rather than blocking the render');
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })

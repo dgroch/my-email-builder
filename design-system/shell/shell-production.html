@@ -16,13 +16,18 @@
 <style>
 @font-face{font-family:'Cervanttis';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cervanttis.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap;}
 @font-face{font-family:'Lust';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lust-Regular.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:swap;}
-@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Lig.otf') format('opentype');font-weight:300;font-style:normal;font-display:swap;}
-@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Bol.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap;}
-/* Gill Sans — loaded as web font so NeuzeitGro fallback renders correctly
-   on Android/Samsung Mail which lack Gill Sans as a system font */
-@font-face{font-family:'Gill Sans';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans%20Light.otf') format('opentype');font-weight:300;font-style:normal;font-display:swap;}
-@font-face{font-family:'Gill Sans';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap;}
-@font-face{font-family:'Gill Sans';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Gill%20Sans%20Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap;}
+/* NeuzeitGro is the BODY face — nearly every word in every send is set in it. These two URLs
+   pointed at .otf files that do not exist on the CDN and returned 404, silently, so every
+   email went out in Calibri or whatever the stack fell through to. The faces are hosted as
+   .woff2; these are the widest-coverage uploads (full Latin-1, no folded glyphs — verified
+   with `npm run check:fonts`, which exists so this cannot rot unnoticed again). */
+@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Lig.woff2?v=1787899592') format('woff2');font-weight:300;font-style:normal;font-display:swap;}
+@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Bol.woff2?v=1787899592') format('woff2');font-weight:700;font-style:normal;font-display:swap;}
+/* Gill Sans is deliberately NOT loaded as a web font. It was, pointing at three .otf files that
+   have never existed on the CDN — three 404s on every open, buying nothing. It stays in the
+   fallback STACK below (a system face on macOS/iOS) but is not something we host: it is a
+   licensed Monotype face and nobody has uploaded it. With NeuzeitGro actually loading again,
+   the stack rarely gets that far anyway. */
 </style>
 <!--<![endif]-->
 <!--<![endif]-->
