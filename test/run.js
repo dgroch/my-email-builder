@@ -1376,8 +1376,11 @@ async function studioSuite() {
     eq(t.case, 'any', `${c.name} SUPER_LABEL accepts caps like every other component`);
   }
 
-  // Every token that reaches type carries a face, and the face implies the rule.
-  const FACE_CASE = { cervanttis: 'lower', lust: 'sentence', neuzeitgro: 'any' };
+  // Every token that reaches type carries a face, and the face implies the rule — where the face
+  // has one to impose. Lust does not: it sets prose and non-prose alike (a pull-quote and a
+  // price are both Lust), so a Lust token says what its case rule is or has none. See FONT_CASE
+  // in lib/parseTemplates.js.
+  const FACE_CASE = { cervanttis: 'lower', lust: null, neuzeitgro: 'any' };
   let typed = 0;
   for (const c of schema.components) {
     for (const t of c.tokens) {
@@ -1385,7 +1388,7 @@ async function studioSuite() {
       if (!t.font) continue;
       typed++;
       ok(['cervanttis', 'lust', 'neuzeitgro'].includes(t.font), `${c.name}.${t.name} names a brand face`);
-      ok(['lower', 'sentence', 'any'].includes(t.case), `${c.name}.${t.name} carries a casing rule`);
+      ok(['lower', 'sentence', 'any', null].includes(t.case), `${c.name}.${t.name} carries a known casing rule or none`);
       // A description may override the face's default, but never contradict it silently.
       if (!/lowercase|sentence case/i.test(t.desc || '') && !/lowercase|sentence case/i.test(t.rule || '')) {
         eq(t.case, FACE_CASE[t.font], `${c.name}.${t.name} defaults its casing from its face`);
@@ -1737,6 +1740,72 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── A typeface is not a content rule ───────────────────────────────────────────────────
+// Deriving `case` from the face that renders a token is right for Cervanttis (a script accent
+// face the brand always sets lowercase) and moot for NeuzeitGro (text-transform:uppercase, so
+// the authored casing never reaches the render). It is wrong for Lust, which sets headlines and
+// pull-quotes AND the price on a product card, the code in a promo box and the numeral on a
+// step. "Sentence case" is a claim about prose; the typeface cannot make it.
+{
+  const tokensNamed = (name) => {
+    const out = [];
+    for (const c of schema.components) for (const t of c.tokens) if (t.name === name) out.push({ component: c.name, ...t });
+    return out;
+  };
+
+  // Non-prose tokens must never be told they are Sentence case. Where they are set in Lust that
+  // means no rule at all; a few are set in NeuzeitGro, which is uppercased by the template and
+  // so reports 'any'. Either is fine — 'sentence' is the one answer that is wrong.
+  let nonProse = 0;
+  for (const name of ['PRODUCT_PRICE', 'PROMO_CODE', 'OFFER_VALUE', 'STEP_1_NUMBER', 'STEP_2_NUMBER', 'STEP_3_NUMBER']) {
+    const toks = tokensNamed(name);
+    ok(toks.length, `${name} exists in the schema`);
+    for (const t of toks) {
+      nonProse++;
+      ok(t.case !== 'sentence', `${t.component}.${name} is not claimed to be Sentence case (got ${JSON.stringify(t.case)})`);
+      if (t.font === 'lust') eq(t.case, null, `${t.component}.${name} is Lust with no stated rule, so it carries none`);
+    }
+  }
+  ok(nonProse >= 20, `the non-prose set is the whole family, not a sample (${nonProse} tokens)`);
+
+  // …while every Lust token that DOES want Sentence case says so in its own TOKENS line, and
+  // still gets it. Losing these would mean the fallback was carrying real weight.
+  for (const name of ['PRODUCT_NAME', 'PULL_QUOTE', 'SECTION_HEADLINE', 'TILE_1_TITLE', 'TILE_2_TITLE', 'TILE_3_TITLE']) {
+    const toks = tokensNamed(name);
+    ok(toks.length, `${name} exists in the schema`);
+    for (const t of toks) eq(t.case, 'sentence', `${t.component}.${name} is still Sentence case, from its description`);
+  }
+
+  // The Cervanttis rule is the one the face genuinely does impose, and it must survive.
+  const heroC1 = schema.components.find((c) => c.name === 'heroes/hero-c1');
+  const headline = heroC1 && heroC1.tokens.find((t) => t.name === 'HEADLINE');
+  ok(headline, 'heroes/hero-c1 has a HEADLINE token');
+  eq(headline && headline.font, 'cervanttis', 'which is set in Cervanttis');
+  eq(headline && headline.case, 'lower', 'and is still lowercase — the rule the parser fix restored');
+
+  // The values that used to be rejected now validate clean.
+  for (const [component, token, value] of [
+    ['sections/promo-code', 'PROMO_CODE', 'bloom20'],
+    ['blocks/offer-panel', 'OFFER_VALUE', '20% off'],
+    ['blocks/offer-panel', 'OFFER_VALUE', 'free delivery'],
+    ['blocks/annotated-product', 'PRODUCT_PRICE', 'from $85'],
+    ['blocks/howto-steps', 'STEP_1_NUMBER', 'one'],
+  ]) {
+    const rep = validateCampaign({ campaignName: 'T', blocks: [{ component, tokens: { [token]: value } }] },
+      schema, { requireUnsubscribe: false });
+    const casing = rep.issues.filter((i) => i.type === 'casing' && i.token === token);
+    eq(casing.length, 0, `${component}.${token} accepts ${JSON.stringify(value)}`);
+  }
+
+  // A genuine prose token still rejects all-lowercase copy, so this did not just switch the
+  // check off.
+  const proseRep = validateCampaign(
+    { campaignName: 'T', blocks: [{ component: 'products/card-lifestyle-studio', tokens: { SECTION_HEADLINE: 'the studio edit' } }] },
+    schema, { requireUnsubscribe: false });
+  ok(proseRep.issues.some((i) => i.type === 'casing' && i.token === 'SECTION_HEADLINE'),
+    'a Lust headline documented SENTENCE CASE still rejects all-lowercase copy');
+}
+
 // ── An asset base a recipient cannot reach ─────────────────────────────────────────────
 // Export and the Klaviyo push bake this URL into HTML that is opened later, by someone else,
 // somewhere else. Derived from the request's Host header it is right in the editor and wrong
@@ -1790,6 +1859,17 @@ async function studioSuite() {
   const assembleHandler = (serverJs.match(/'\/api\/assemble'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
   ok(assembleHandler && !/unreachableAssetBase/.test(assembleHandler),
     '/api/assemble is NOT gated — a local preview is supposed to use the local host');
+
+  // The Klaviyo push lands a draft that is ready to send, so it gets the same refusal — but on
+  // the FINAL document, after rasterising. A fully-sliced campaign carries its pixels to Klaviyo
+  // and never cites the base; only the surviving live HTML (html_only blocks, animated GIFs) can.
+  const draftHandler = (serverJs.match(/'\/api\/klaviyo-draft'\)\s*\{([\s\S]*?)\n    \}/) || [])[1] || '';
+  ok(draftHandler, '/api/klaviyo-draft handler is present');
+  ok(/unreachableAssetBase/.test(draftHandler), '/api/klaviyo-draft checks the asset base too');
+  ok(/fullHtml\.includes\(assetsBase\)/.test(draftHandler),
+    'and checks the assembled draft, not the pre-render HTML, so a sliced campaign is not rejected for a URL it never uses');
+  ok(draftHandler.indexOf('unreachableAssetBase') < draftHandler.indexOf('createDraftCampaign'),
+    'and refuses BEFORE creating the draft in the account');
 }
 
 // ── A disarmed glyph check must say so ─────────────────────────────────────────────────
