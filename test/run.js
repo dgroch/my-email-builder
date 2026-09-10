@@ -1737,6 +1737,34 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── The font reader must be total ──────────────────────────────────────────────────────
+// Every caller hands readCmap bytes it did not produce: a base64 blob out of a shell, or
+// whatever the CDN returned this morning. The most important caller is scripts/check-fonts.js,
+// which exists FOR the days a font URL stops serving a font — so a parser that threw on an HTML
+// error page would crash the check at exactly the moment it matters.
+{
+  const sfnt = (fn) => { const b = Buffer.alloc(64); b.writeUInt32BE(0x00010000, 0); fn(b); return b; };
+  const woff2 = (fn) => { const b = Buffer.alloc(80); b.writeUInt32BE(0x774f4632, 0); fn(b); return b; };
+  const cases = {
+    'empty buffer': Buffer.alloc(0),
+    'one byte': Buffer.from([0]),
+    'truncated sfnt header': Buffer.from([0, 1, 0, 0, 0, 3]),
+    'sfnt claiming 60000 tables': sfnt((b) => b.writeUInt16BE(60000, 4)),
+    'woff2 with a junk body': woff2((b) => { b.writeUInt16BE(5, 12); b.fill(0xff, 48); }),
+    'woff2 with zero tables': woff2((b) => b.writeUInt16BE(0, 12)),
+    'an HTML error page': Buffer.from('<!DOCTYPE html><html><head><title>404</title></head></html>'),
+    'random bytes': Buffer.from(Array.from({ length: 512 }, (_, i) => (i * 37 + 11) % 256)),
+  };
+  for (const [name, buf] of Object.entries(cases)) {
+    let threw = false, out;
+    try { out = glyphs.readCmap(buf); } catch (_) { threw = true; }
+    ok(!threw, `readCmap does not throw on ${name}`);
+    ok(out === null || out instanceof Map, `readCmap returns null or a Map for ${name}`);
+  }
+  // …and still reads the real thing.
+  ok(glyphs.faces().cervanttis, 'the real embedded faces still parse');
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
