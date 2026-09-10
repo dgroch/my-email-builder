@@ -1740,6 +1740,33 @@ async function studioSuite() {
   ok(/repair = null/.test(appJs), 'the builder offers no one-click "fix" for an unsettable glyph');
 }
 
+// ── The production shell must declare what it actually serves ──────────────────────────
+// A format() hint that disagrees with the bytes is not cosmetic: a client that takes the hint at
+// face value skips the face, and the stack falls through to a system serif — the same silent
+// substitution the NeuzeitGro 404 caused for months. cervanttis.ttf is really WOFF2, so the rule
+// has to say woff2 whatever the filename claims.
+{
+  const prodShell = fs.readFileSync(path.join(__dirname, '..', 'design-system', 'shell', 'shell-production.html'), 'utf8');
+  const cervanttis = (prodShell.match(/@font-face\{font-family:'Cervanttis'[^}]*\}/) || [])[0] || '';
+  ok(cervanttis, 'the production shell links Cervanttis');
+  ok(/format\('woff2'\)/.test(cervanttis), "and declares format('woff2') — the file is WOFF2 despite its .ttf name");
+  ok(!/format\('truetype'\)/.test(cervanttis), 'not truetype, which some clients would reject the face over');
+
+  // The checker has to compare the format() hint, not the filename: the filename is decoration
+  // and cannot be changed without re-uploading to the CDN, while the hint is what clients read.
+  const checker = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'check-fonts.js'), 'utf8');
+  ok(/const format = \(body\.match/.test(checker), 'check-fonts.js parses the format() hint off each @font-face rule');
+  ok(/FORMAT_ALIAS\[face\.format\]\s*!==\s*magic/.test(checker), 'and compares that hint against the bytes it fetched');
+  ok(/WRONG format\(\)/.test(checker), 'reporting a genuine mismatch as a fault, not a note');
+
+  // …and the checker itself must stay diffable. The TrueType sfnt magic is four bytes, three of
+  // them NUL; written raw they make git classify the file as binary, so it can never be reviewed
+  // as a diff again. Escapes carry the same value.
+  const checkerBytes = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'check-fonts.js'));
+  eq(checkerBytes.indexOf(0), -1, 'check-fonts.js contains no raw NUL bytes, so git treats it as text');
+  ok(/\\x00\\x01\\x00\\x00/.test(checker), 'the sfnt magic is written with escapes');
+}
+
 // ── A typeface is not a content rule ───────────────────────────────────────────────────
 // Deriving `case` from the face that renders a token is right for Cervanttis (a script accent
 // face the brand always sets lowercase) and moot for NeuzeitGro (text-transform:uppercase, so
