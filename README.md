@@ -108,10 +108,10 @@ design-system/            bundled copy of the template library, shells, fonts, a
 | POST | `/api/assemble` | `{campaign, markBlocks?, production?}` | `{html, unfilled, validation}` — assembled preview HTML with **absolute** asset URLs (`markBlocks` adds `data-eb-block` anchors; `production` keeps the real Klaviyo merge tags instead of the readable preview substitutions); `validation` is the structured report (see `/api/validate`) |
 | POST | `/api/validate` | `{campaign}` | `{ok, errorCount, warningCount, blocks, issues}` — actionable validation **without rendering** (unknown/bare component → group-prefixed suggestion, casing violations, unfilled tokens, off-list **enum** values, and a campaign-level **unsubscribe** assertion) |
 | POST | `/api/render`   | `{campaign}` | `{pngBase64, brokenImages, missingGlyphs, height}` — `missingGlyphs` names any character the brand face that typesets it cannot actually set (see **Glyph coverage**) |
-| POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, link, keepHtml}], brokenImages}` |
+| POST | `/api/render-slices` | `{campaign}` | `{slices:[{index, component, width, height, pngBase64, format, ext, mime, bytes, link, keepHtml}], brokenImages, imageWeight}` — slices arrive **optimised** (JPEG / palette PNG / lossless PNG, see [docs/image-optimisation.md](docs/image-optimisation.md)); `imageWeight` carries the per-image table, the total and the budget verdict |
 | POST | `/api/export`   | `{campaign, previewText?}` | `{html, unfilled, validation, campaign, missingGlyphs}` — **production** HTML: **resolves `{{ASSETS_BASE}}` to the served URL** (same as `/api/assemble`) and keeps the real Klaviyo merge tags, including the footer's literal `{% unsubscribe %}`; `previewText` is baked in as a hidden preheader. Wrapped in **`shell-production.html`** (CDN fonts, light-only) — not the preview shell, whose base64 fonts push the document past Gmail's clip. Returns **422 `UNRESOLVED_TOKENS`** rather than HTML with a hole in it, and **422 `UNREACHABLE_ASSET_BASE`** when the asset URLs it would bake in resolve only on this network (see `PUBLIC_ASSETS_BASE`) |
 | GET  | `/api/klaviyo-audiences` | — | `{lists:[{id,name}], segments:[{id,name}]}` for the audience picker |
-| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates |
+| POST | `/api/klaviyo-draft` | `{campaign, listId, fromEmail, subject, previewText, fromLabel?, replyToEmail?, links?, designId?}` | `{campaignId, messageId, templateId, editUrl, sliceCount, imageWeight}` — draft built from uploaded per-block slices. **`subject` + `previewText` are required** (400 without them; a `designId` whose saved design carries `subjectLine`/`previewText` satisfies them) — the preview text is baked into the HTML preheader, since Klaviyo doesn't inject `preview_text` into CODE templates. **422** if the optimised images exceed the weight budget, with the table attached and nothing created |
 | GET  | `/api/examples` | `?objective=` (optional) | `{examples:[…]}` — approved exemplars (designs flagged `isExample` + committed seeds), each with full `campaign` + metadata |
 | GET  | `/api/designs`        | — | `{designs:[{id, name, createdAt, updatedAt, isExample, objective, approvalStatus, componentsUsed, …}]}` (metadata only) |
 | POST | `/api/designs`        | `{name?, campaign, …metadata}` | the saved design (incl. metadata) |
@@ -610,17 +610,27 @@ lost on redeploy — which is why the Notion backend is preferred.
 Either way, Export/Import JSON remains the portable, storage-independent backup.
 
 ## Production handoff
-The exported HTML keeps `{{ASSETS_BASE}}` and the footer's Klaviyo merge tags. To ship:
-upload the rasterised PNGs of designed blocks to the Klaviyo media library, swap the
-`design-system/assets` line-art for hosted URLs, and use `design-system/shell/shell-production.html`.
+The exported HTML resolves `{{ASSETS_BASE}}` to the served URL and keeps the footer's Klaviyo
+merge tags. To ship:
+run the rasterised slices of designed blocks through the optimisation stage
+([docs/image-optimisation.md](docs/image-optimisation.md)) and upload those bytes to the Klaviyo
+media library, swap the `design-system/assets` line-art for hosted URLs, and use
+`design-system/shell/shell-production.html`.
 
-## Slices (one PNG per block)
-The **Slices** tab rasterises every block to its *own* PNG instead of one tall image. Click
+## Slices (one image per block)
+The **Slices** tab rasterises every block to its *own* image instead of one tall one. Click
 **Render slices** to preview them, then **Download all (.zip)** for a `…-slices.zip` of
-`01-header.png`, `02-blocks-editorial-hero.png`, … (numbered in send order). Drop each PNG into
+`01-header.png`, `02-blocks-editorial-hero.jpg`, … (numbered in send order). Drop each image into
 its own Klaviyo image block so every section keeps its own click-through URL and alt text — the
 classic "sliced email" build, but generated for you. The zip is built in the browser (no extra
-dependency); the PNGs are 2× for retina.
+dependency); the renders are 2× for retina.
+
+Each slice is **optimised before it is shown**: the stage encodes a lossless PNG, a 256-colour
+palette PNG and a JPEG q82, quality-gates them with SSIM against the original render, and keeps the
+smallest that passes — so photographic slices ship as JPEG and flat graphics as palette PNG, at the
+identical pixels. The tab shows the running total and the budget verdict (≤ 600 KB passes, 600 KB –
+1 MB warns, over 1 MB the push is refused), and the same table comes back on the API as
+`imageWeight`. See [docs/image-optimisation.md](docs/image-optimisation.md).
 
 Each slice also shows an editable **Link URL** (pre-filled from the block's tokens). These are the
 same per-block links used by **Push to Klaviyo** below, so set them here once. Blocks that stay
@@ -640,13 +650,16 @@ The **Push to Klaviyo** button creates a **draft** campaign in your Klaviyo acco
 sends. The draft is built from **per-block image slices, not one giant PNG**, so each block is its
 own image with its own click-through link. Under the hood it:
 
-1. rasterises each block to its own PNG (same engine as the **Slices** tab);
-2. uploads each PNG to your Klaviyo **media library** (`POST /api/image-upload`), getting a hosted
-   `image_url`;
-3. assembles a `CODE` template where every block is a `<tr>` with that hosted image wrapped in its
+1. rasterises each block to its own image (same engine as the **Slices** tab);
+2. **optimises every image** — per-image encoder selection + SSIM quality gate (see
+   [docs/image-optimisation.md](docs/image-optimisation.md)) — and refuses the build outright (422)
+   if the optimised images exceed the weight budget;
+3. uploads each optimised file to your Klaviyo **media library** (`POST /api/image-upload`),
+   sending the matching content type and extension, and getting a hosted `image_url`;
+4. assembles a `CODE` template where every block is a `<tr>` with that hosted image wrapped in its
    own `<a href>` link — with the **preview text baked into a hidden preheader** at the top of the
    body (see below);
-4. creates a draft campaign + message and assigns the template.
+5. creates a draft campaign + message and assigns the template.
 
 ### Subject + preview text are required (and why the preheader is baked in)
 

@@ -9,6 +9,8 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true \
 
 # chromium (apt pulls its runtime libs); fonts-liberation covers generic fallbacks.
 # The brand fonts ship embedded in shell-preview.html, so no extra font install is needed.
+# sharp (the image optimisation stage) ships its own prebuilt libvips, so the encoder needs
+# nothing beyond the base image — no extra apt packages to keep in sync here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       chromium ca-certificates fonts-liberation \
  && rm -rf /var/lib/apt/lists/*
