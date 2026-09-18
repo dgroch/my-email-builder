@@ -1,8 +1,12 @@
 # Image optimisation stage
 
-Every rasterised block slice passes through an encode stage on its way to Klaviyo. Only the bytes
-change: the design system, the component templates, the footer markup and every saved campaign
-JSON are untouched, and the rendered pixels are the same.
+Every rasterised block slice passes through an encode stage on its way to Klaviyo. The design
+system, the component templates, the footer markup and every saved campaign JSON are untouched —
+only the exported bytes change. That does not mean the pixels are byte-identical: JPEG and palette
+PNG are lossy, so an encoded slice can differ from the original render. What's guaranteed is a
+floor on how far it may differ — the quality gate (below) rejects any lossy candidate that drops
+below SSIM 0.98 against the render, and the measured results section has the actual numbers this
+produces (visually indistinguishable, not pixel-for-pixel the same).
 
 ## Why per image, never global
 
@@ -90,61 +94,109 @@ the optimised images against the original renders at 600px and 375px. It exits n
 design breaks the weight budget, so it can gate a release.
 
 ```sh
-npm test                                                   # includes the optimiser suite
-node scripts/measure-image-weights.js --assets /path/to/assets
-node scripts/measure-image-weights.js --design examples/farewell_sellthrough.json --visual-diff
+npm test                                                          # includes the optimiser suite
+node scripts/measure-image-weights.js --assets test/fixtures/campaign-assets --visual-diff
+node scripts/measure-image-weights.js --design examples/farewell_sellthrough.json \
+  --assets test/fixtures/campaign-assets --visual-diff
 node scripts/measure-image-weights.js --campaign /tmp/c.json --assets https://cdn.example.com/dir
 ```
 
-The committed seeds point at placeholder filenames that are not in the repo, so a faithful
-measurement needs `--assets` pointed at a directory (or URL) that actually serves them.
+`test/fixtures/campaign-assets/` is committed to the repo — it's what `{{ASSETS_BASE}}` in the
+committed seeds resolves to when you pass it as `--assets`, and is exactly what produced the
+numbers below, so the measured-results section is reproducible from a clean checkout. It holds
+three synthetic photographic images (a gradient-and-noise generator, not real photography — see
+the git history for the generating script), standing in for the seeds' actual hero/portrait/product
+placeholders; the *shape* of the results (which slices land on JPEG vs. palette PNG, roughly how
+much each saves) is representative, but the exact bytes are specific to these fixtures, not to Fig
+& Bloom's real imagery.
 
-### Measured results (19 September 2026)
+Two components in both seeds — `header` (the logo mark) and `sections/trust-bar` (partner badges)
+— reference live `cdn.shopify.com` / CloudFront URLs baked directly into the seed's own tokens,
+independent of `--assets`. They load in the numbers below; behind a restrictive proxy or firewall
+with no route to those hosts they will not, and the harness will report them as broken images and
+fail the run (see "Verification" above) — pass `--allow-broken` to see the (now partial) numbers
+anyway.
 
-Both committed seed designs, rendered with real Fig & Bloom photography supplied for the
-placeholders, measured on this machine:
+### Measured results (18 September 2026)
 
-| Design | Images | Before | After | Saved |
-|---|---|---|---|---|
-| `seed-editorial-digest` (F&B 2026-06 In Bloom) | 12 | 2.55 MB | 455.5 KB | 82.6% |
-| `seed-farewell` (2026-06 Farewell Weekend) | 7 | 1.95 MB | 357.2 KB | 82.1% |
-| **Both** | **19** | **4.50 MB** | **812.7 KB** | **82.4%** |
+Both committed seed designs, run against the committed fixtures above (`--assets
+test/fixtures/campaign-assets --visual-diff --allow-broken`; `--allow-broken` was not needed on a
+machine with ordinary internet access to the two CDN-hosted components described above). Totals
+count only images actually uploaded to Klaviyo — a block that stays live HTML (the unsubscribe
+footer, and any `html_only` component) is rasterised here like everything else so its row still
+prints below, but it is excluded from these totals and from the weight budget, because Klaviyo
+never receives those bytes:
 
-Per image, `seed-farewell` — the photographic slices land on JPEG q82 at 5–9× smaller, the flat
-ones land on palette PNG:
+| Design | Uploaded images | Before | After | Saved | Budget |
+|---|---|---|---|---|---|
+| `seed-editorial-digest` (F&B 2026-06 In Bloom) | 10 (of 12 rasterised) | 2.41 MB | 719.1 KB | 70.9% | WARN |
+| `seed-farewell` (2026-06 Farewell Weekend) | 5 (of 7 rasterised) | 1.53 MB | 357.1 KB | 77.3% | PASS |
+| **Both** | **15 (of 19 rasterised)** | **3.95 MB** | **1.05 MB** | **73.4%** | — |
 
-| Image | Before | After | Format | SSIM |
-|---|---|---|---|---|
-| `02-blocks-editorial-hero` | 979.2 KB | 132.3 KB | JPEG q82 | 0.9963 |
-| `05-blocks-story` | 397.9 KB | 76.6 KB | JPEG q82 | 0.9971 |
-| `04-products-card-horizontal` | 283.6 KB | 32.7 KB | JPEG q82 | 0.9897 |
-| `06-sections-trust-bar` | 185.4 KB | 44.6 KB | JPEG q82 | 0.9988 |
-| `07-footer` | 89.8 KB | 40.8 KB | JPEG q82 | 0.9998 |
-| `03-sections-body-copy-plain` | 53.8 KB | 26.2 KB | PNG 256-colour | lossless |
-| `01-header` | 7.8 KB | 4.0 KB | PNG 256-colour | lossless |
+Per image — the ratio a photographic slice gets from JPEG q82 depends heavily on its own content
+(from 2.5× to nearly 11× here), and several photographic slices in this run — the product card in
+both seeds, all three `journal-tile` regions — failed the SSIM gate as JPEG and fell back to
+palette PNG instead, at a worse ratio than JPEG would have given if it had passed. "Photographic →
+JPEG" is the common case, not a rule; what's guaranteed is only that whatever ships passed the
+gate:
 
-Visual diff of the email rebuilt from the optimised images against the same email rebuilt from the
-original PNG renders (mean absolute channel difference out of 255):
+`seed-editorial-digest`:
+
+| Image | Before | After | Format | SSIM | Uploaded |
+|---|---|---|---|---|---|
+| `01-header` | 5.5 KB | 3.0 KB | png-palette | 1.0000 | yes |
+| `02-blocks-caption-bar-hero` | 791.7 KB | 72.4 KB | jpeg | 0.9801 | yes |
+| `03-blocks-story` | 427.0 KB | 72.3 KB | jpeg | 0.9910 | yes |
+| `04-sections-section-headline` | 17.5 KB | 8.7 KB | png-palette | 1.0000 | no — stays live HTML |
+| `05-products-card-horizontal` | 406.2 KB | 193.6 KB | png-palette | 0.9939 | yes |
+| `06-blocks-journal-tile-header` | 13.8 KB | 6.7 KB | png-palette | 1.0000 | yes |
+| `06-blocks-journal-tile-1` | 240.7 KB | 109.6 KB | png-palette | 0.9951 | yes |
+| `06-blocks-journal-tile-2` | 248.3 KB | 111.7 KB | png-palette | 0.9950 | yes |
+| `06-blocks-journal-tile-3` | 244.4 KB | 112.2 KB | png-palette | 0.9957 | yes |
+| `07-sections-upsell-noir` | 82.1 KB | 33.1 KB | jpeg | 0.9953 | yes |
+| `08-sections-trust-bar` | 9.2 KB | 4.5 KB | png-palette | 0.9999 | yes |
+| `09-footer` | 44.6 KB | 18.9 KB | png-palette | 0.9999 | no — stays live HTML |
+
+`seed-farewell`:
+
+| Image | Before | After | Format | SSIM | Uploaded |
+|---|---|---|---|---|---|
+| `01-header` | 5.5 KB | 3.0 KB | png-palette | 1.0000 | yes |
+| `02-blocks-editorial-hero` | 734.6 KB | 91.6 KB | jpeg | 0.9884 | yes |
+| `03-sections-body-copy-plain` | 58.9 KB | 26.0 KB | png-palette | 1.0000 | no — stays live HTML |
+| `04-products-card-horizontal` | 405.5 KB | 193.9 KB | png-palette | 0.9939 | yes |
+| `05-blocks-story` | 416.6 KB | 64.2 KB | jpeg | 0.9896 | yes |
+| `06-sections-trust-bar` | 9.0 KB | 4.4 KB | png-palette | 0.9999 | yes |
+| `07-footer` | 44.6 KB | 18.9 KB | png-palette | 0.9999 | no — stays live HTML |
+
+Visual diff of the email rebuilt from the optimised (uploaded) images against the same email
+rebuilt from the original PNG renders (mean absolute channel difference out of 255) — this is a
+genuine pixel difference, not zero, because the JPEG and palette-PNG candidates are lossy; the
+quality gate bounds how large it's allowed to get:
 
 | Design | Width | SSIM | Mean channel diff | Channels off by >8 |
 |---|---|---|---|---|
-| `seed-editorial-digest` | 600px | 0.9927 | 0.64 | 1.14% |
-| `seed-editorial-digest` | 375px | 0.9967 | 0.49 | 0.46% |
-| `seed-farewell` | 600px | 0.9933 | 0.63 | 1.11% |
-| `seed-farewell` | 375px | 0.9970 | 0.48 | 0.44% |
+| `seed-editorial-digest` | 600px | 0.9867 | 0.63 | 0.66% |
+| `seed-editorial-digest` | 375px | 0.9924 | 0.49 | 0.45% |
+| `seed-farewell` | 600px | 0.9850 | 0.69 | 0.78% |
+| `seed-farewell` | 375px | 0.9915 | 0.54 | 0.57% |
 
-No perceptible difference at either width. Budget behaviour was confirmed both ways: an email
-between the two thresholds logs the warning and names its three heaviest images, and one over the
-fail threshold returns `422` from `/api/klaviyo-draft` with the table attached and no Klaviyo object
-created.
+Visually indistinguishable at both widths, not pixel-identical. Budget behaviour was confirmed both
+ways: `seed-editorial-digest` lands in the warn band and names its three heaviest images (the
+product card and two of the journal-tile regions); `seed-farewell` passes; and a design pushed
+synthetically past the fail threshold (`IMAGE_WEIGHT_WARN_BYTES` set low) returns `422` from
+`/api/klaviyo-draft` with the table attached and no Klaviyo object created — this exact path also
+has an HTTP-level integration test in `test/run.js`, not just this manual check.
 
-### Still to run with Klaviyo access
+### Still to run with Klaviyo access, and with real photography
 
 The reference measurement for Klaviyo template `WzAesL` (the preference-seed email, 17 images,
 1.60 MB) needs a server with `KLAVIYO_API_KEY` and the saved design, because the assets are hosted
-in that account. The encoder settings above reproduce its shape — photographic slices ~5× smaller
-as JPEG q82, flat graphics smaller as palette PNG — but the exact totals have not been re-measured
-here. Run it once credentials are available:
+in that account. The results above use synthetic fixtures, not Fig & Bloom's real photography —
+real images will compress differently (real photographs typically have more fine detail than a
+smooth synthetic gradient, so expect somewhat less dramatic JPEG savings than the ratios above).
+Re-run against the real assets once they're available, ideally committing them the way
+`test/fixtures/campaign-assets/` is committed here, so the results stay reproducible:
 
 ```sh
 KLAVIYO_API_KEY=… node scripts/measure-image-weights.js --campaign /path/to/wzaesl.json

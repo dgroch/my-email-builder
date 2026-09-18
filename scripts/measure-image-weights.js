@@ -6,18 +6,26 @@
 // Puppeteer path the Klaviyo push uses, runs lib/imageOptimiser over the slices, and reports
 // exactly what would be uploaded.
 //
-//   node scripts/measure-image-weights.js                         # every committed seed design
+//   node scripts/measure-image-weights.js --assets test/fixtures/campaign-assets  # every seed
 //   node scripts/measure-image-weights.js --design examples/farewell_sellthrough.json
 //   node scripts/measure-image-weights.js --campaign /tmp/c.json --assets /tmp/campaign-assets
 //   node scripts/measure-image-weights.js --visual-diff        # also diff the re-rendered email
 //   node scripts/measure-image-weights.js --json > weights.json
+//   node scripts/measure-image-weights.js --allow-broken       # don't fail on unloaded images
 //
 // --assets replaces {{ASSETS_BASE}} in the campaign's tokens with a directory (or URL) whose
 // files the headless browser can actually fetch — the committed seeds point at placeholder
-// filenames that are not in the repo, so a faithful measurement needs them supplied.
+// filenames, which resolve against the small synthetic fixtures committed at
+// test/fixtures/campaign-assets/ (see docs/image-optimisation.md). A campaign of your own
+// naturally needs its own --assets.
 //
 // Exits non-zero when a campaign's optimised images exceed the fail threshold, so it can gate a
-// release the same way the push endpoint refuses to publish an over-budget email.
+// release the same way the push endpoint refuses to publish an over-budget email. Also exits
+// non-zero when any image failed to load in the headless render (e.g. --assets was omitted, or
+// pointed somewhere the browser can't reach): the weights printed for a design with broken
+// images are measured against whatever placeholder rendered instead, not the real artwork, so
+// they are not a result to trust or gate on. Pass --allow-broken to print them anyway without
+// failing the run.
 
 const fs = require('fs');
 const path = require('path');
@@ -145,27 +153,48 @@ async function main() {
   for (const d of designs) {
     const campaign = withAssets(d.campaign || {}, args.assets);
     const { html } = render.assemble(campaign, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
-    const { slices, brokenImages } = await render.renderSlices(html);
+    const { slices, brokenImages } = await render.renderSlices(html, { scale: cfg.scale });
     // Keep the pre-optimisation pixels so the visual diff can rebuild the email both ways.
     for (const s of slices) if (s.buffer) s.original = s.buffer;
-    const { slices: optimised, report } = await images.optimiseSlices(slices, { config: cfg });
+    // A block that stays live HTML on the real push (footer/unsubscribe, html_only components)
+    // is rasterised here like everything else so its row still prints, but it is never
+    // uploaded — mirrors server.js so this harness's totals and budget verdict match the push
+    // endpoint exactly, not a superset of it.
+    const meta = render.assembleBlocks(campaign);
+    const htmlOnly = render.htmlOnlyComponents();
+    const notUploadedIndexes = new Set(meta.blocks
+      .filter((b) => render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly))
+      .map((b) => b.index));
+    const { slices: optimised, report } = await images.optimiseSlices(slices, { config: cfg, notUploadedIndexes });
     // Diff the optimised slices against their own originals (both carry the same geometry).
     const diff = args['visual-diff'] ? await visualDiff(optimised) : null;
-    results.push({ id: d.id, name: d.name, brokenImages: (brokenImages || []).length, report });
+    const brokenCount = (brokenImages || []).length;
+    results.push({ id: d.id, name: d.name, brokenImages: brokenCount, report });
     if (report.budget.status === 'fail') failed++;
+    // A design measured with broken images was measured against whatever placeholder the
+    // browser drew instead of the real artwork — the numbers are not a result to trust, so the
+    // run fails unless the caller explicitly asked to see them anyway.
+    if (brokenCount > 0 && !args['allow-broken']) failed++;
 
     if (!args.json) {
       console.log(`\n${d.name}  (${d.id})`);
-      if (brokenImages && brokenImages.length) console.log(`  ⚠ ${brokenImages.length} image(s) did not load in the headless render`);
+      if (brokenCount) {
+        console.log(`  ⚠ ${brokenCount} image(s) did not load in the headless render — the weights below are ` +
+          `not meaningful${args['allow-broken'] ? '' : ' (failing the run; pass --allow-broken to see them anyway)'}`);
+      }
       console.log('  ' + pad('IMAGE', 34) + padLeft('BEFORE', 10) + padLeft('AFTER', 10) +
         '  ' + pad('FORMAT', 13) + pad('SSIM', 8) + 'SAVED');
       for (const r of report.images) {
         console.log('  ' + pad(r.label, 34) + padLeft(images.human(r.before), 10) + padLeft(images.human(r.after), 10) +
           '  ' + pad(r.passthrough ? 'gif (live)' : r.format, 13) +
           pad(r.passthrough ? '—' : (r.lossless ? 'lossless' : r.ssim.toFixed(4)), 8) +
-          (r.passthrough ? '—' : `${r.savedPct.toFixed(1)}%`));
+          (r.passthrough ? '—' : `${r.savedPct.toFixed(1)}%`) +
+          // Rasterised and optimised for this table, but the block stays live HTML on the real
+          // push (footer/unsubscribe, html_only) — so these bytes are excluded above and never
+          // reach Klaviyo.
+          (r.uploaded ? '' : '  (stays live HTML, not uploaded)'));
       }
-      console.log('  ' + pad('TOTAL (' + report.images.filter((r) => !r.passthrough).length + ' images)', 34) +
+      console.log('  ' + pad('TOTAL (' + report.images.filter((r) => !r.passthrough && r.uploaded).length + ' images)', 34) +
         padLeft(images.human(report.totalBefore), 10) + padLeft(images.human(report.totalAfter), 10) +
         '  ' + pad('', 13) + pad('', 8) + `${report.savedPct.toFixed(1)}%`);
       const b = report.budget;

@@ -2136,8 +2136,44 @@ async function imageSuite() {
   ok(!cleanMeta.exif && !cleanMeta.icc, 'EXIF and the ICC profile are stripped from the uploaded bytes');
   eq(cleanMeta.space, 'srgb', 'the output is sRGB');
 
+  // ── SSIM correctness ──────────────────────────────────────────────────────────────────
+  // Exercise images.ssim() directly, on synthetic fields whose correct answer is known
+  // independently of the implementation — not through optimiseImage()/optimiseSlices(), and not
+  // through a threshold that sits above SSIM's own 1.0 ceiling (see below). Without this, a
+  // broken ssim() — e.g. one that always returns something close to 1 — passes the whole suite:
+  // confirmed by mutating ssim() to `return 1` and finding the 3078 other assertions still green.
+  const ssimW = 40, ssimH = 40, ssimN = ssimW * ssimH;
+  const constantField = (v) => new Float64Array(ssimN).fill(v);
+  const identicalField = constantField(120);
+  eq(+images.ssim(identicalField, identicalField, ssimW, ssimH).toFixed(5), 1,
+    'identical fields score a perfect 1');
+  // Two constant fields have zero variance and covariance everywhere, so the windowed formula
+  // collapses to (2ab+C1)/(a²+b²+C1) regardless of the blur kernel — an exact, hand-computable
+  // golden value (Wang et al. 2004, eq. 13: the C2 term is identical top and bottom and cancels).
+  const ssimGolden = (a, b) => { const C1 = (0.01 * 255) ** 2; return (2 * a * b + C1) / (a * a + b * b + C1); };
+  const offsetSsim = images.ssim(constantField(100), constantField(140), ssimW, ssimH);
+  ok(Math.abs(offsetSsim - ssimGolden(100, 140)) < 1e-6,
+    `a known offset/contrast pair matches the textbook formula (got ${offsetSsim}, expected ${ssimGolden(100, 140)})`);
+  // A linear ramp and its own inversion are perfectly anti-correlated in structure — a constant
+  // field can't show this (its variance is zero everywhere), so this needs a field with texture.
+  const gradientField = new Float64Array(ssimN);
+  for (let y = 0; y < ssimH; y++) for (let x = 0; x < ssimW; x++) gradientField[y * ssimW + x] = (x / (ssimW - 1)) * 255;
+  const invertedField = new Float64Array(ssimN);
+  for (let i = 0; i < ssimN; i++) invertedField[i] = 255 - gradientField[i];
+  ok(images.ssim(gradientField, invertedField, ssimW, ssimH) < 0,
+    'a contrast-inverted field scores negative (perfectly anti-correlated structure)');
+  // Independent noise shares no structure at all, so it must score low — nowhere near 1.
+  const lcg = (seed) => { let s = seed; return () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; };
+  const noiseA = new Float64Array(ssimN), noiseB = new Float64Array(ssimN);
+  const rngA = lcg(1), rngB = lcg(2);
+  for (let i = 0; i < ssimN; i++) { noiseA[i] = rngA() * 255; noiseB[i] = rngB() * 255; }
+  ok(images.ssim(noiseA, noiseB, ssimW, ssimH) < 0.3, 'two independent noise fields score low, not near 1');
+
   // ── quality gate ──────────────────────────────────────────────────────────────────────
-  // A gate nothing lossy can pass must fall back to the lossless PNG, and say so out loud.
+  // A gate nothing lossy can pass must fall back to the lossless PNG, and say so out loud. The
+  // threshold below (1.5) is deliberately above SSIM's own 1.0 ceiling so every lossy candidate
+  // is rejected regardless of its actual score — this exercises the *fallback* behaviour, not
+  // ssim()'s correctness (that's verified directly, above, against known inputs).
   const warnings = [];
   const strict = await images.optimiseImage(photoPng, {
     config: cfg({ ssimThreshold: 1.5, logger: { warn: (m) => warnings.push(m), info: () => {} } }), label: 'strict',
@@ -2169,8 +2205,19 @@ async function imageSuite() {
   ok(report.savedPct > 50, `the report carries the saving (${report.savedPct}%)`);
   eq(report.budget.status, 'pass', 'an email well under the pass threshold passes');
   eq(report.settings.ssimThreshold, 0.98, 'the report records the encoder settings used');
-  eq(slices[0].image.format, report.images[0].format, 'the optimised slice carries its own encoding record');
-  eq(images.fileName(slices[0]), report.images[0].label + '.' + report.images[0].ext, 'the download name follows the chosen encoding');
+  // `slices[0].image` and `report.images[0]` are the very same object (optimiseSlices() builds
+  // one record and shares it both ways), so comparing a field of one against the other proves
+  // nothing — it is `x.format === x.format`. Check the actual returned bytes instead: their own
+  // magic number, read independently of anything the report claims about them.
+  const returnedMagic = slices[0].buffer.slice(0, 3);
+  const looksLikeJpeg = returnedMagic[0] === 0xff && returnedMagic[1] === 0xd8 && returnedMagic[2] === 0xff;
+  const looksLikePng = returnedMagic[0] === 0x89 && returnedMagic[1] === 0x50 && returnedMagic[2] === 0x4e;
+  eq(report.images[0].format === 'jpeg' ? looksLikeJpeg : looksLikePng,
+    true, `the buffer returned to the caller really is encoded as ${report.images[0].format} (checked by its own magic bytes, not the report's say-so)`);
+  eq(slices[0].buffer.length, report.images[0].after, 'the returned buffer is exactly the size the report claims');
+  // A concrete, independently-known expected string — not report.images[0]'s own label/ext
+  // fields recombined, which would just be fileName()'s formula compared against itself.
+  eq(images.fileName(slices[0]), '01-heroes-hero-a.jpg', 'the download name follows the chosen encoding');
 
   const bytes = (n) => ({ after: n, label: 'x' });
   eq(images.assessWeight([bytes(100 * 1024)], cfg()).status, 'pass', 'under 600 KB passes');
@@ -2197,13 +2244,82 @@ async function imageSuite() {
   fs.rmSync(cacheDir, { recursive: true, force: true });
 }
 
+// ── HTTP-level: the 422 budget guard, end to end ───────────────────────────────────────
+// Every assertion above exercises assessWeight()/optimiseSlices() as pure functions. None of
+// them touch the actual refusal a caller sees: the `budget.status === 'fail'` branch in
+// server.js's /api/klaviyo-draft handler, which returns 422 *before* a single image is
+// uploaded. Confirmed by mutation — deleting that branch entirely still leaves the whole suite
+// green, because nothing above it calls through the real HTTP handler. This does: it starts the
+// real server on an ephemeral port, drives it with a real request, and asserts what a caller
+// actually receives plus that Klaviyo was never touched.
+async function integrationSuite() {
+  const http = require('http');
+  const klaviyo = require('../lib/klaviyo');
+  const { server } = require('../server');
+
+  const originalUpload = klaviyo.uploadImage;
+  const originalCreateDraft = klaviyo.createDraftCampaign;
+  let uploadCalls = 0, draftCalls = 0;
+  klaviyo.uploadImage = async (...args) => { uploadCalls++; return originalUpload(...args); };
+  klaviyo.createDraftCampaign = async (...args) => { draftCalls++; return originalCreateDraft(...args); };
+
+  const originalWarnBytes = process.env.IMAGE_WEIGHT_WARN_BYTES;
+  const originalApiKey = process.env.KLAVIYO_API_KEY;
+  // A threshold no real slice can clear, so the budget fails deterministically without having
+  // to engineer a campaign that is genuinely over a megabyte.
+  process.env.IMAGE_WEIGHT_WARN_BYTES = '1';
+  process.env.KLAVIYO_API_KEY = 'test-key';
+
+  try {
+    await new Promise((resolve, reject) => server.listen(0, (e) => (e ? reject(e) : resolve())));
+    const port = server.address().port;
+
+    const campaign = (seeds[0] && seeds[0].campaign) ||
+      { campaignName: 'T', blocks: [{ component: 'header', tokens: {} }, { component: 'footer', tokens: {} }] };
+    const body = JSON.stringify({ campaign, subject: 'Test subject', previewText: 'Test preview' });
+
+    const { status, body: respBody } = await new Promise((resolve, reject) => {
+      const req = http.request({
+        host: '127.0.0.1', port, path: '/api/klaviyo-draft', method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      }, (res) => {
+        let data = '';
+        res.on('data', (c) => { data += c; });
+        res.on('end', () => { try { resolve({ status: res.statusCode, body: JSON.parse(data) }); } catch (e) { reject(e); } });
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
+    });
+
+    eq(status, 422, 'an over-budget campaign is refused with HTTP 422, not just from the pure assessWeight() helper');
+    ok(!!respBody.imageWeight && !!respBody.imageWeight.budget && respBody.imageWeight.budget.status === 'fail',
+      'the 422 body carries the imageWeight table so the caller can see what to trim');
+    eq(uploadCalls, 0, 'no image is uploaded to Klaviyo once the budget guard refuses the draft');
+    eq(draftCalls, 0, 'no draft campaign is created once the budget guard refuses the draft');
+  } finally {
+    klaviyo.uploadImage = originalUpload;
+    klaviyo.createDraftCampaign = originalCreateDraft;
+    if (originalWarnBytes === undefined) delete process.env.IMAGE_WEIGHT_WARN_BYTES;
+    else process.env.IMAGE_WEIGHT_WARN_BYTES = originalWarnBytes;
+    if (originalApiKey === undefined) delete process.env.KLAVIYO_API_KEY;
+    else process.env.KLAVIYO_API_KEY = originalApiKey;
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
   .then(() => imageSuite())
   .catch((e) => { failures.push('image optimisation suite threw: ' + (e && e.stack || e)); })
+  .then(() => integrationSuite())
+  .catch((e) => { failures.push('HTTP integration suite threw: ' + (e && e.stack || e)); })
   .then(async () => {
     try { await require('../lib/db').close(); } catch (_) { /* no pool to close */ }
+    // integrationSuite() is the only suite that launches Puppeteer; close it so the process can
+    // exit instead of hanging on the open DevTools socket.
+    try { await render.closeBrowser(); } catch (_) { /* never opened */ }
     const driver = process.env.DATABASE_URL ? 'postgres' : 'disk';
     if (failures.length) {
       console.error(`\n✗ ${failures.length} failure(s), ${passed} passed (studio driver: ${driver}):\n`);

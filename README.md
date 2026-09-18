@@ -627,8 +627,10 @@ dependency); the renders are 2× for retina.
 
 Each slice is **optimised before it is shown**: the stage encodes a lossless PNG, a 256-colour
 palette PNG and a JPEG q82, quality-gates them with SSIM against the original render, and keeps the
-smallest that passes — so photographic slices ship as JPEG and flat graphics as palette PNG, at the
-identical pixels. The tab shows the running total and the budget verdict (≤ 600 KB passes, 600 KB –
+smallest that passes — so photographic slices ship as JPEG and flat graphics as palette PNG, each
+staying within the same SSIM ≥ 0.98 quality gate as the Klaviyo push (visually indistinguishable
+from the original render, not pixel-identical — see docs/image-optimisation.md for the measured
+diff). The tab shows the running total and the budget verdict (≤ 600 KB passes, 600 KB –
 1 MB warns, over 1 MB the push is refused), and the same table comes back on the API as
 `imageWeight`. See [docs/image-optimisation.md](docs/image-optimisation.md).
 
