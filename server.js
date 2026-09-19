@@ -9,6 +9,7 @@ const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
 const klaviyo = require('./lib/klaviyo');
+const images = require('./lib/imageOptimiser');
 const { validateCampaign } = require('./lib/validate');
 const glyphs = require('./lib/glyphs');
 // Absolute, externally-reachable base for the bundled design-system assets, and the check that
@@ -300,14 +301,27 @@ const server = http.createServer(async (req, res) => {
     // so the UI can show/override per-block links before pushing the sliced draft.
     if (req.method === 'POST' && p === '/api/render-slices') {
       const { campaign } = await readBody(req);
+      const optCfg = images.config();
       const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
-      const { slices, brokenImages } = await render.renderSlices(html);
+      const { slices, brokenImages } = await render.renderSlices(html, { scale: optCfg.scale });
       const meta = render.assembleBlocks(campaign || {});
+      const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
+      // A block that stays live HTML (footer/unsubscribe, html_only components) is still
+      // rasterised here so the preview grid can show it, but it is never uploaded to Klaviyo —
+      // so it must not count toward the weight total the push endpoint budgets against.
+      const notUploadedIndexes = new Set(meta.blocks
+        .filter((b) => render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly))
+        .map((b) => b.index));
+      // The optimisation stage sits between rasterisation and upload: what the UI previews here
+      // is the same bytes the Klaviyo push would send, so the weight shown is the weight
+      // Klaviyo gets. Every rasterised slice goes through it — no per-campaign opt-out.
+      const { slices: optimised, report: imageWeight } = await images.optimiseSlices(slices, { config: optCfg, notUploadedIndexes });
       const byIndex = {};
       for (const b of meta.blocks) byIndex[b.index] = b;
       return json(res, 200, {
         brokenImages,
-        slices: slices.map(s => {
+        imageWeight,
+        slices: optimised.map(s => {
           const b = byIndex[s.index] || {};
           // Region slices (data-eb-slice) carry their own fixed link/alt — the per-block
           // deriveLink override doesn't apply, so surface the region's own href as the link.
@@ -316,13 +330,23 @@ const server = http.createServer(async (req, res) => {
             index: s.index, seg: s.seg, segCount: s.segCount, component: s.component,
             kind: s.kind, width: s.width, height: s.height,
             link: isRegion ? (s.href || '') : render.deriveLink(b.tokens),
-            keepHtml: render.isUnsubscribeBlock(s.component, b.html),
+            // Also true for html_only components, not just the unsubscribe footer — both stay
+            // live HTML on push and are excluded from the upload weight above.
+            keepHtml: notUploadedIndexes.has(s.index),
           };
           if (isRegion) { base.region = true; base.name = s.name; base.alt = s.alt || ''; }
           // Column segments recompose side-by-side on push (not stacked) — surface that.
           if (s.layout) { base.layout = s.layout; base.bg = s.bg || ''; }
-          // GIF segments pass through live (carry the hosted src); PNG segments carry pixels.
-          return s.kind === 'gif' ? { ...base, src: s.src } : { ...base, pngBase64: s.buffer.toString('base64') };
+          // GIF segments pass through live (carry the hosted src); rasterised segments carry
+          // the optimised pixels plus the encoding that was chosen for them.
+          if (s.kind === 'gif') return { ...base, src: s.src };
+          return {
+            ...base,
+            pngBase64: s.buffer.toString('base64'),
+            optimised: true,
+            format: s.image.format, ext: s.image.ext, mime: s.image.mime,
+            bytes: s.image.after, beforeBytes: s.image.before, ssim: s.image.ssim,
+          };
         }),
       });
     }
@@ -381,19 +405,45 @@ const server = http.createServer(async (req, res) => {
       const assetsBase = assetsBaseFor(req);
       const linkOverride = links || {};
       try {
+        const optCfg = images.config();
         // 1. Rasterise each block from the production-shelled, block-marked HTML.
         const { html: markedHtml } = render.assemble(campaign, { assetsBase, production: true, markBlocks: true });
-        const { slices } = await render.renderSlices(markedHtml);
+        const { slices: rendered } = await render.renderSlices(markedHtml, { scale: optCfg.scale });
 
-        // 2. Per block, either keep live HTML (footer/unsubscribe) or emit its image rows.
-        //    Each block yields one or more ordered segments: a PNG slice is uploaded and linked;
-        //    an animated GIF is referenced live at its already-hosted URL so it keeps animating
-        //    (rasterising would freeze it to one frame). Each block keeps its own click-through.
+        // 1a. Work out which blocks stay live HTML (footer/unsubscribe, html_only components —
+        //     see the rows loop below) *before* optimising, so their slices are excluded from
+        //     the weight budget. Every block still gets rasterised (renderSlices doesn't know
+        //     about html_only), but a block that never reaches Klaviyo as an image must not
+        //     count toward, or be able to trip, the budget that gates what does.
         const meta = render.assembleBlocks(campaign, { assetsBase });
         // Blocks declared html_only in the manifest stay LIVE HTML (never sliced), so a
         // multi-link block keeps all its anchors — e.g. blocks/journal-tile's 2–3 per-tile
         // post links. Slicing would flatten the block to one PNG with a single click-through.
         const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
+        const notUploadedIndexes = new Set(meta.blocks
+          .filter((b) => render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly))
+          .map((b) => b.index));
+
+        // 1b. Optimise every rasterised slice and enforce the weight budget against only the
+        //     bytes that will actually reach Klaviyo. Nothing that is uploaded skips this stage
+        //     (no per-campaign opt-out). An email over the fail threshold is refused outright
+        //     rather than published heavy; a mid-range one is published with the warning the
+        //     optimiser logged and the table in the response.
+        const { slices, report: imageWeight } = await images.optimiseSlices(rendered, { config: optCfg, notUploadedIndexes });
+        if (imageWeight.budget.status === 'fail') {
+          return json(res, 422, {
+            error: `Refusing to publish: the optimised images total ${images.human(imageWeight.totalAfter)}, ` +
+              `over the ${images.human(imageWeight.budget.warnBytes)} limit. Heaviest: ` +
+              imageWeight.budget.heaviest.map((h) => `${h.label} (${images.human(h.bytes)})`).join(', ') +
+              '. Drop or resize an image, or add an image block that compresses better, then retry.',
+            imageWeight,
+          });
+        }
+
+        // 2. Per block, either keep live HTML (footer/unsubscribe) or emit its image rows.
+        //    Each block yields one or more ordered segments: a PNG slice is uploaded and linked;
+        //    an animated GIF is referenced live at its already-hosted URL so it keeps animating
+        //    (rasterising would freeze it to one frame). Each block keeps its own click-through.
         // Fail loud if the slice stage silently produced nothing for blocks that should have
         // rasterised (e.g. a headless-browser OOM/launch failure on the render instance).
         // Without this, the handler would build an empty template and return 200 — the worst
@@ -422,7 +472,6 @@ const server = http.createServer(async (req, res) => {
           // internal identifier in the first slice's alt is what the Gmail snippet scraper
           // leads with when it walks the body.
           const alt = render.deriveAlt(b.tokens);
-          const compBase = b.component.replace(/[\/]+/g, '-');
           // A column-split block (one partial-width GIF with content beside it, e.g.
           // blocks/image-text with an animated image) recomposes into ONE row of side-by-side
           // cells: PNG column(s) uploaded as usual, the GIF column referenced live so it keeps
@@ -432,8 +481,11 @@ const server = http.createServer(async (req, res) => {
             const totalW = segs.reduce((n, s) => n + s.width, 0) || 1;
             const cells = [];
             for (const s of segs) {
+              // Each media name comes from the optimiser's own naming, so the weight table and
+              // the Klaviyo library agree on what each file is.
+              const mediaName = images.sliceBaseName(s);
               const url = s.kind === 'gif' ? s.src
-                : await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${compBase}-${s.seg + 1}`);
+                : await klaviyo.uploadImage(apiKey, s.buffer, mediaName, { ext: s.image.ext, mime: s.image.mime });
               cells.push({ url, widthPx: s.width, pct: +(100 * s.width / totalW).toFixed(2), bg: s.bg });
             }
             rows.push(klaviyo.columnRow(cells, { href, alt }));
@@ -452,8 +504,8 @@ const server = http.createServer(async (req, res) => {
             }
             // Region slices upload as <component>-<region> (journal-tile-header, journal-tile-1 …);
             // other multi-segment slices keep their -N ordinal suffix.
-            const suffix = isRegion ? `-${s.name.replace(/^tile-/, '')}` : (s.segCount > 1 ? `-${s.seg + 1}` : '');
-            const imageUrl = await klaviyo.uploadImage(apiKey, s.buffer, `${String(b.index + 1).padStart(2, '0')}-${compBase}${suffix}`);
+            const imageUrl = await klaviyo.uploadImage(apiKey, s.buffer, images.sliceBaseName(s),
+              { ext: s.image.ext, mime: s.image.mime });
             rows.push(klaviyo.imageRow(imageUrl, { href: rowHref, alt: rowAlt }));
           }
         }
@@ -481,7 +533,7 @@ const server = http.createServer(async (req, res) => {
           apiKey, listId, fromEmail, fromLabel, replyToEmail, subject: subjectLine, previewText: preview,
           name: meta.campaignName, html: fullHtml,
         });
-        return json(res, 200, { ...result, sliceCount: slices.length });
+        return json(res, 200, { ...result, sliceCount: slices.length, imageWeight });
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
       }
@@ -654,29 +706,38 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Load the Studio's published library before the first request, so an authored component
-// resolves on the very first render rather than after the first cache refresh.
-Promise.all([componentStore.refresh(), brandTokens.refresh()])
-  .catch((e) => console.error('[studio] initial load failed:', e.message))
-  .then(() => {
-    server.listen(PORT, () => {
-      const designsWhere = designs.backend === 'notion' ? 'Notion database'
-        : designs.backend === 'postgres' ? 'Postgres (DATABASE_URL)'
-        : 'local disk (' + designs.DATA_DIR + ')';
-      console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
-      console.log(`  designs store: ${designsWhere}`);
-      console.log(`  studio store:  ${componentStore.backend === 'postgres' ? 'Postgres (DATABASE_URL)' : 'local disk — ephemeral on a container with no persistent disk'}`);
-      // The fold check degrades to silence, so its absence has to be announced at the one moment
-      // somebody is reading the output. Nothing is printed on the happy path.
-      const gate = glyphs.gateStatus();
-      if (!gate.ok) {
-        console.warn(`\n  ⚠ glyph check DISARMED: ${gate.reason}`);
-        console.warn(`    Accented copy in ${gate.missing.length > 1 ? 'those faces' : 'that face'} will validate clean without being checked. Run \`npm run check:fonts\`.`);
-      }
-      console.log('');
-    });
-  });
+// `server` is exported so an integration test can `.listen(0)` it on an ephemeral port and
+// drive it with real HTTP requests, without triggering the process-wide side effects below
+// (binding the configured PORT, loading the Studio library, installing signal handlers).
+// server.js is never `require()`d anywhere else in this codebase — only run directly (`npm
+// start` / `node server.js`) — so those side effects are gated on that being how it was loaded.
+module.exports = { server };
 
-async function shutdown() { await render.closeBrowser(); await db.close(); process.exit(0); }
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+if (require.main === module) {
+  // Load the Studio's published library before the first request, so an authored component
+  // resolves on the very first render rather than after the first cache refresh.
+  Promise.all([componentStore.refresh(), brandTokens.refresh()])
+    .catch((e) => console.error('[studio] initial load failed:', e.message))
+    .then(() => {
+      server.listen(PORT, () => {
+        const designsWhere = designs.backend === 'notion' ? 'Notion database'
+          : designs.backend === 'postgres' ? 'Postgres (DATABASE_URL)'
+          : 'local disk (' + designs.DATA_DIR + ')';
+        console.log(`\n  Fig & Bloom email builder → http://localhost:${PORT}`);
+        console.log(`  designs store: ${designsWhere}`);
+        console.log(`  studio store:  ${componentStore.backend === 'postgres' ? 'Postgres (DATABASE_URL)' : 'local disk — ephemeral on a container with no persistent disk'}`);
+        // The fold check degrades to silence, so its absence has to be announced at the one moment
+        // somebody is reading the output. Nothing is printed on the happy path.
+        const gate = glyphs.gateStatus();
+        if (!gate.ok) {
+          console.warn(`\n  ⚠ glyph check DISARMED: ${gate.reason}`);
+          console.warn(`    Accented copy in ${gate.missing.length > 1 ? 'those faces' : 'that face'} will validate clean without being checked. Run \`npm run check:fonts\`.`);
+        }
+        console.log('');
+      });
+    });
+
+  const shutdown = async () => { await render.closeBrowser(); await db.close(); process.exit(0); };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}

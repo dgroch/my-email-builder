@@ -330,14 +330,17 @@ async function renderSlices() {
   try {
     const at = campaignKey();
     const r = await fetch('/api/render-slices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign }) });
-    const { slices, brokenImages } = await r.json();
+    const { slices, brokenImages, imageWeight } = await r.json();
     SLICES = slices || [];
     slicesKey = at; refreshStaleBadges();
     const wrap = $('#slices'); wrap.innerHTML = '';
     SLICES.forEach((s) => {
       const name = sliceName(s);
       const isGif = s.kind === 'gif';
-      const src = isGif ? s.src : 'data:image/png;base64,' + s.pngBase64;
+      // Rasterised slices arrive already optimised (JPEG / palette PNG / lossless PNG), so the
+      // preview and the download carry the exact bytes the push would upload — the data URL
+      // has to use the chosen encoding's MIME type, not a hard-coded image/png.
+      const src = isGif ? s.src : 'data:' + (s.mime || 'image/png') + ';base64,' + s.pngBase64;
       // Per-block link: editable for image blocks; the unsubscribe footer stays live HTML;
       // region slices (multi-link blocks like journal-tile) carry a fixed per-region link.
       let linkRow;
@@ -355,7 +358,11 @@ async function renderSlices() {
         ? { class: 'slice-dl', text: 'open GIF', href: src, target: '_blank' }
         : { class: 'slice-dl', text: 'download', download: name, href: src };
       const kids = [
-        el('div', { class: 'slice-head' }, [el('span', { class: 'slice-name', text: name }), el('a', dlProps)]),
+        el('div', { class: 'slice-head' }, [
+          el('span', { class: 'slice-name', text: name }),
+          ...(s.bytes ? [el('span', { class: 'slice-size', text: `${fmtBytes(s.bytes)}${s.beforeBytes ? ` · ${Math.round(100 - (s.bytes / s.beforeBytes) * 100)}% smaller` : ''}` })] : []),
+          el('a', dlProps),
+        ]),
         el('img', { class: 'slice-img', src, alt: s.component }),
       ];
       if (isGif) kids.push(el('div', { class: 'slice-link note', text: 'Animated GIF — passed through live (kept as <img>, not flattened to PNG).' }));
@@ -364,15 +371,32 @@ async function renderSlices() {
       wrap.append(el('div', { class: 'slice' }, kids));
     });
     $('#btnDownloadSlices').disabled = !SLICES.length;
+    // Surface the weight before the push, not after: this is the same total the Klaviyo draft
+    // endpoint budgets against, and an over-budget email is refused there.
+    const w = imageWeight;
+    if (w) {
+      const mark = w.budget.status === 'pass' ? '✓' : w.budget.status === 'warn' ? '⚠' : '✕';
+      $('#slicesHint').textContent = `${fmtBytes(w.totalAfter)} of images ` +
+        `(was ${fmtBytes(w.totalBefore)}, ${w.savedPct}% smaller) ${mark}` +
+        (w.budget.status === 'warn' ? ` over the ${fmtBytes(w.budget.passBytes)} target — heaviest: ` +
+          w.budget.heaviest.map(h => `${h.label} ${fmtBytes(h.bytes)}`).join(', ') : '');
+      $('#slicesHint').className = 'slices-hint' + (w.budget.status === 'fail' ? ' err' : w.budget.status === 'warn' ? ' warn' : '');
+    }
     if (brokenImages && brokenImages.length) setStatus(`${SLICES.length} slices · ${brokenImages.length} broken image(s)`, 'warn');
-    else setStatus(`${SLICES.length} slices ✓`, 'ok');
+    else setStatus(`${SLICES.length} slices${w ? ' · ' + fmtBytes(w.totalAfter) : ''} ✓`, 'ok');
   } catch (e) { setStatus('slicing failed', 'warn'); }
+}
+function fmtBytes(n) {
+  if (n == null) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1024 / 1024).toFixed(2) + ' MB';
 }
 function sliceName(s) {
   const n = String(s.index + 1).padStart(2, '0');
   // Region slices name by region (…-header, …-1); others keep their -N ordinal.
   const suffix = s.region ? '-' + String(s.name).replace(/^tile-/, '') : (s.segCount > 1 ? '-' + (s.seg + 1) : '');
-  const ext = s.kind === 'gif' ? '.gif' : '.png';
+  const ext = s.kind === 'gif' ? '.gif' : '.' + (s.ext || 'png');
   return `${n}-${s.component.replace(/[\/]+/g, '-')}${suffix}${ext}`;
 }
 async function downloadSlices() {
@@ -792,10 +816,14 @@ async function submitKlaviyo() {
       }),
     });
     const data = await r.json();
-    if (!r.ok) { showKvResult('Klaviyo error: ' + (data.error || r.status), true); return; }
+    // A 422 here is the weight budget refusing the build, not a Klaviyo failure — say so plainly
+    // and leave the optimised table visible in the Slices tab to show what to trim.
+    if (!r.ok) { showKvResult((data.imageWeight ? '' : 'Klaviyo error: ') + (data.error || r.status), true); return; }
     result.innerHTML = '';
     result.append(
       el('p', { text: `✓ Draft created from ${data.sliceCount || 0} block image${data.sliceCount === 1 ? '' : 's'} (each linkable).` }),
+      ...(data.imageWeight ? [el('p', { class: 'note', text: `Images total ${fmtBytes(data.imageWeight.totalAfter)} ` +
+        `(was ${fmtBytes(data.imageWeight.totalBefore)}, ${data.imageWeight.savedPct}% smaller).` })] : []),
       el('a', { href: data.editUrl, target: '_blank', text: 'Open the draft in Klaviyo →' }),
     );
     result.classList.remove('hidden', 'err');

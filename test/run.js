@@ -2051,11 +2051,275 @@ async function studioSuite() {
   ok(glyphs.faces().cervanttis, 'the real embedded faces still parse');
 }
 
+// ── Image optimisation stage ──────────────────────────────────────────────────────────
+// The encode stage between slice rasterisation and the Klaviyo upload. These assertions are
+// what stops an unoptimised (or over-budget) slice reaching a real send. The stage needs
+// `sharp`; a missing encoder is an unoptimised pipeline, so it fails rather than skips.
+async function imageSuite() {
+  const images = require('../lib/imageOptimiser');
+  let sharp = null;
+  try { sharp = require('sharp'); } catch (_) { /* reported below */ }
+  if (!sharp) { ok(false, 'the "sharp" image encoder is installed (the optimisation stage needs it)'); return; }
+  const cfg = (over) => images.config({ logger: null, cache: false, cacheDir: null, ...over });
+
+  // A synthetic photograph — smooth gradients and soft blobs, the shape JPEG is built for.
+  function photoPixels(W, H) {
+    const buf = Buffer.alloc(W * H * 3);
+    const blob = (x, y, cx, cy, r, amp) => amp * Math.exp(-(((x - cx) ** 2 + (y - cy) ** 2) / (2 * r * r)));
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 3;
+        buf[i] = 40 + 0.06 * x + blob(x, y, W * 0.3, H * 0.4, W * 0.25, 120) + blob(x, y, W * 0.8, H * 0.7, W * 0.2, 80);
+        buf[i + 1] = 30 + 0.05 * y + blob(x, y, W * 0.3, H * 0.4, W * 0.25, 90) + blob(x, y, W * 0.8, H * 0.7, W * 0.2, 110);
+        buf[i + 2] = 60 + 0.02 * x + blob(x, y, W * 0.3, H * 0.4, W * 0.25, 60) + blob(x, y, W * 0.8, H * 0.7, W * 0.2, 40);
+      }
+    }
+    for (let i = 0; i < buf.length; i++) buf[i] = Math.max(0, Math.min(255, Math.round(buf[i])));
+    return buf;
+  }
+  const toPng = (buf, w, h) => sharp(buf, { raw: { width: w, height: h, channels: 3 } }).png().toBuffer();
+  const photoPng = await toPng(photoPixels(600, 400), 600, 400);
+  const flatPng = await sharp(Buffer.from('<svg width="600" height="220">' +
+    '<rect width="600" height="220" fill="#f6f1ea"/><rect x="40" y="40" width="300" height="12" fill="#2c2825"/>' +
+    '<circle cx="480" cy="110" r="52" fill="#c9a227"/></svg>')).png().toBuffer();
+  const alphaPng = await sharp({ create: { width: 300, height: 200, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: Buffer.from('<svg width="300" height="200"><circle cx="150" cy="100" r="80" fill="#e4002b"/></svg>'), top: 0, left: 0 }])
+    .png().toBuffer();
+
+  // ── the defaults the build brief pins ─────────────────────────────────────────────────
+  const defaults = images.config();
+  eq(defaults.maxWidth, 1200, 'the render cap is 1200px (2x the 600px display width)');
+  eq(defaults.scale, 2, 'slices are targeted at 2x the display width');
+  eq(defaults.ssimThreshold, 0.98, 'the quality gate defaults to 0.98 SSIM');
+  eq(defaults.jpegQuality, 82, 'JPEG defaults to quality 82');
+  eq(defaults.pngColours, 256, 'palette PNG defaults to 256 colours');
+  eq(defaults.webp, false, 'WebP is off by default (Outlook on Windows will not render it)');
+  eq(defaults.budgetPassBytes, 600 * 1024, 'the pass budget defaults to 600 KB');
+  eq(defaults.budgetWarnBytes, 1024 * 1024, 'the fail budget defaults to 1 MB');
+  process.env.IMAGE_OPT_SSIM = '0.99';
+  eq(images.config().ssimThreshold, 0.99, 'the quality gate is configurable through the environment');
+  delete process.env.IMAGE_OPT_SSIM;
+
+  // ── per-image encoder selection ───────────────────────────────────────────────────────
+  const photo = await images.optimiseImage(photoPng, { config: cfg(), label: 'photo' });
+  eq(photo.format, 'jpeg', 'a photographic slice is encoded as JPEG, not truecolour PNG');
+  ok(photo.after < photo.before / 2, `a photographic slice more than halves (${images.human(photo.before)} → ${images.human(photo.after)})`);
+  ok(photo.ssim >= defaults.ssimThreshold, `the chosen JPEG passes the quality gate (SSIM ${photo.ssim})`);
+  ok(photo.candidates.some((c) => c.format === 'jpeg' && c.accepted), 'the JPEG candidate cleared the gate');
+
+  const flat = await images.optimiseImage(flatPng, { config: cfg(), label: 'flat' });
+  eq(flat.format, 'png-palette', 'a flat graphic is encoded as a 256-colour palette PNG');
+  ok(flat.after < flat.candidates.find((c) => c.format === 'png').bytes,
+    'the palette PNG beats the losslessly optimised PNG on a flat graphic');
+
+  const again = await images.optimiseImage(photoPng, { config: cfg(), label: 'photo' });
+  ok(again.buffer.equals(photo.buffer), 'a re-encode of the same bytes produces the same bytes');
+
+  // ── alpha ─────────────────────────────────────────────────────────────────────────────
+  const alpha = await images.optimiseImage(alphaPng, { config: cfg(), label: 'alpha' });
+  ok(alpha.hasAlpha, 'a meaningful alpha channel is detected from the pixels, not the channel count');
+  ok(!alpha.candidates.some((c) => c.format === 'jpeg'), 'JPEG is not a candidate when the image needs its alpha channel');
+  ok((await sharp(alpha.buffer).metadata()).hasAlpha, 'the chosen encoding keeps the alpha channel');
+
+  // ── dimension and metadata discipline ─────────────────────────────────────────────────
+  const wide = await toPng(photoPixels(2000, 300), 2000, 300);
+  const capped = await images.optimiseImage(wide, { config: cfg(), label: 'wide' });
+  eq(capped.width, 1200, 'a render wider than the 1200px cap is downscaled before encoding');
+  eq(capped.downscaled, true, 'the record says the slice was downscaled');
+  eq(capped.height, 180, 'the downscale keeps the aspect ratio');
+
+  const exifPng = await sharp(flatPng).withMetadata({ exif: { IFD0: { Copyright: 'Fig & Bloom' } } }).png().toBuffer();
+  const dirtyMeta = await sharp(exifPng).metadata();
+  ok(!!dirtyMeta.exif && !!dirtyMeta.icc, 'the probe source really carries EXIF and an ICC profile');
+  const cleaned = await images.optimiseImage(exifPng, { config: cfg(), label: 'metadata' });
+  const cleanMeta = await sharp(cleaned.buffer).metadata();
+  ok(!cleanMeta.exif && !cleanMeta.icc, 'EXIF and the ICC profile are stripped from the uploaded bytes');
+  eq(cleanMeta.space, 'srgb', 'the output is sRGB');
+
+  // ── SSIM correctness ──────────────────────────────────────────────────────────────────
+  // Exercise images.ssim() directly, on synthetic fields whose correct answer is known
+  // independently of the implementation — not through optimiseImage()/optimiseSlices(), and not
+  // through a threshold that sits above SSIM's own 1.0 ceiling (see below). Without this, a
+  // broken ssim() — e.g. one that always returns something close to 1 — passes the whole suite:
+  // confirmed by mutating ssim() to `return 1` and finding the 3078 other assertions still green.
+  const ssimW = 40, ssimH = 40, ssimN = ssimW * ssimH;
+  const constantField = (v) => new Float64Array(ssimN).fill(v);
+  const identicalField = constantField(120);
+  eq(+images.ssim(identicalField, identicalField, ssimW, ssimH).toFixed(5), 1,
+    'identical fields score a perfect 1');
+  // Two constant fields have zero variance and covariance everywhere, so the windowed formula
+  // collapses to (2ab+C1)/(a²+b²+C1) regardless of the blur kernel — an exact, hand-computable
+  // golden value (Wang et al. 2004, eq. 13: the C2 term is identical top and bottom and cancels).
+  const ssimGolden = (a, b) => { const C1 = (0.01 * 255) ** 2; return (2 * a * b + C1) / (a * a + b * b + C1); };
+  const offsetSsim = images.ssim(constantField(100), constantField(140), ssimW, ssimH);
+  ok(Math.abs(offsetSsim - ssimGolden(100, 140)) < 1e-6,
+    `a known offset/contrast pair matches the textbook formula (got ${offsetSsim}, expected ${ssimGolden(100, 140)})`);
+  // A linear ramp and its own inversion are perfectly anti-correlated in structure — a constant
+  // field can't show this (its variance is zero everywhere), so this needs a field with texture.
+  const gradientField = new Float64Array(ssimN);
+  for (let y = 0; y < ssimH; y++) for (let x = 0; x < ssimW; x++) gradientField[y * ssimW + x] = (x / (ssimW - 1)) * 255;
+  const invertedField = new Float64Array(ssimN);
+  for (let i = 0; i < ssimN; i++) invertedField[i] = 255 - gradientField[i];
+  ok(images.ssim(gradientField, invertedField, ssimW, ssimH) < 0,
+    'a contrast-inverted field scores negative (perfectly anti-correlated structure)');
+  // Independent noise shares no structure at all, so it must score low — nowhere near 1.
+  const lcg = (seed) => { let s = seed; return () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff; };
+  const noiseA = new Float64Array(ssimN), noiseB = new Float64Array(ssimN);
+  const rngA = lcg(1), rngB = lcg(2);
+  for (let i = 0; i < ssimN; i++) { noiseA[i] = rngA() * 255; noiseB[i] = rngB() * 255; }
+  ok(images.ssim(noiseA, noiseB, ssimW, ssimH) < 0.3, 'two independent noise fields score low, not near 1');
+
+  // ── quality gate ──────────────────────────────────────────────────────────────────────
+  // A gate nothing lossy can pass must fall back to the lossless PNG, and say so out loud. The
+  // threshold below (1.5) is deliberately above SSIM's own 1.0 ceiling so every lossy candidate
+  // is rejected regardless of its actual score — this exercises the *fallback* behaviour, not
+  // ssim()'s correctness (that's verified directly, above, against known inputs).
+  const warnings = [];
+  const strict = await images.optimiseImage(photoPng, {
+    config: cfg({ ssimThreshold: 1.5, logger: { warn: (m) => warnings.push(m), info: () => {} } }), label: 'strict',
+  });
+  eq(strict.format, 'png', 'when every lossy candidate fails the gate the losslessly optimised PNG ships');
+  eq(strict.lossless, true, 'the fallback is lossless, so the pixels are unchanged');
+  ok(warnings.some((w) => /rejected jpeg/.test(w)) && warnings.some((w) => /rejected png-palette/.test(w)),
+    'each rejected candidate is logged rather than silently dropped');
+  ok(strict.candidates.filter((c) => c.format !== 'png').every((c) => !c.accepted),
+    'the rejected candidates are recorded as rejected');
+
+  // ── WebP stays behind its flag ────────────────────────────────────────────────────────
+  ok(!photo.candidates.some((c) => c.format === 'webp'), 'WebP is not a candidate by default (Outlook will not render it)');
+  const webpOn = await images.optimiseImage(photoPng, { config: cfg({ webp: true }), label: 'webp' });
+  ok(webpOn.candidates.some((c) => c.format === 'webp'), 'WebP joins the candidate list only when the flag is on');
+
+  // ── slices, report and budget ─────────────────────────────────────────────────────────
+  const slice = (over) => ({ index: 0, seg: 0, segCount: 1, component: 'heroes/hero-a', kind: 'png',
+    width: 600, height: 400, buffer: photoPng, ...over });
+  const { slices, report } = await images.optimiseSlices([
+    slice({}),
+    slice({ index: 1, kind: 'gif', buffer: undefined, src: 'https://cdn.example.com/a.gif' }),
+  ], { config: cfg() });
+  eq(report.images.length, 2, 'the report carries one row per slice');
+  eq(report.images[0].label, '01-heroes-hero-a', 'the report names slices the way Klaviyo media names them');
+  eq(report.images[0].label, images.sliceBaseName(slices[0]), 'the report and the upload name share one naming rule');
+  ok(report.images[1].passthrough && report.images[1].after === 0, 'a live GIF passes through and is not counted as bytes');
+  eq(report.totalAfter, report.images[0].after, 'the total is the sum of the optimised images');
+  ok(report.savedPct > 50, `the report carries the saving (${report.savedPct}%)`);
+  eq(report.budget.status, 'pass', 'an email well under the pass threshold passes');
+  eq(report.settings.ssimThreshold, 0.98, 'the report records the encoder settings used');
+  // `slices[0].image` and `report.images[0]` are the very same object (optimiseSlices() builds
+  // one record and shares it both ways), so comparing a field of one against the other proves
+  // nothing — it is `x.format === x.format`. Check the actual returned bytes instead: their own
+  // magic number, read independently of anything the report claims about them.
+  const returnedMagic = slices[0].buffer.slice(0, 3);
+  const looksLikeJpeg = returnedMagic[0] === 0xff && returnedMagic[1] === 0xd8 && returnedMagic[2] === 0xff;
+  const looksLikePng = returnedMagic[0] === 0x89 && returnedMagic[1] === 0x50 && returnedMagic[2] === 0x4e;
+  eq(report.images[0].format === 'jpeg' ? looksLikeJpeg : looksLikePng,
+    true, `the buffer returned to the caller really is encoded as ${report.images[0].format} (checked by its own magic bytes, not the report's say-so)`);
+  eq(slices[0].buffer.length, report.images[0].after, 'the returned buffer is exactly the size the report claims');
+  // A concrete, independently-known expected string — not report.images[0]'s own label/ext
+  // fields recombined, which would just be fileName()'s formula compared against itself.
+  eq(images.fileName(slices[0]), '01-heroes-hero-a.jpg', 'the download name follows the chosen encoding');
+
+  const bytes = (n) => ({ after: n, label: 'x' });
+  eq(images.assessWeight([bytes(100 * 1024)], cfg()).status, 'pass', 'under 600 KB passes');
+  eq(images.assessWeight([bytes(700 * 1024)], cfg()).status, 'warn', 'between 600 KB and 1 MB warns');
+  eq(images.assessWeight([bytes(1200 * 1024)], cfg()).status, 'fail', 'over 1 MB fails the build');
+  const heavy = images.assessWeight([bytes(300 * 1024), bytes(200 * 1024), bytes(100 * 1024), bytes(50 * 1024)], cfg());
+  eq(heavy.heaviest.length, 3, 'the warning names the three heaviest images');
+  eq(heavy.heaviest[0].bytes, 300 * 1024, 'the heaviest image comes first');
+  eq(images.assessWeight([bytes(200)], cfg({ budgetPassBytes: 100, budgetWarnBytes: 1000 })).status, 'warn',
+    'the budget thresholds are configuration, not literals');
+
+  // ── cache ─────────────────────────────────────────────────────────────────────────────
+  const cacheDir = fs.mkdtempSync(path.join(os.tmpdir(), 'eb-opt-cache-'));
+  const cacheCfg = images.config({ logger: null, cache: true, cacheDir });
+  const before = images.cacheStats();
+  const first = await images.optimiseImage(flatPng, { config: cacheCfg, label: 'cached' });
+  const second = await images.optimiseImage(flatPng, { config: cacheCfg, label: 'cached' });
+  eq(first.cacheHit, false, 'the first encode is a cache miss');
+  eq(second.cacheHit, true, 'the second encode of the same bytes is served from the cache');
+  ok(second.buffer.equals(first.buffer), 'the cached entry returns identical bytes');
+  ok(images.cacheStats().hits > before.hits, 'the cache reports the hit');
+  ok(images.cacheKey(flatPng, cacheCfg) !== images.cacheKey(flatPng, images.config({ ...cacheCfg, jpegQuality: 60 })),
+    'the cache key covers the encoder settings, so a settings change re-encodes');
+  fs.rmSync(cacheDir, { recursive: true, force: true });
+}
+
+// ── HTTP-level: the 422 budget guard, end to end ───────────────────────────────────────
+// Every assertion above exercises assessWeight()/optimiseSlices() as pure functions. None of
+// them touch the actual refusal a caller sees: the `budget.status === 'fail'` branch in
+// server.js's /api/klaviyo-draft handler, which returns 422 *before* a single image is
+// uploaded. Confirmed by mutation — deleting that branch entirely still leaves the whole suite
+// green, because nothing above it calls through the real HTTP handler. This does: it starts the
+// real server on an ephemeral port, drives it with a real request, and asserts what a caller
+// actually receives plus that Klaviyo was never touched.
+async function integrationSuite() {
+  const http = require('http');
+  const klaviyo = require('../lib/klaviyo');
+  const { server } = require('../server');
+
+  const originalUpload = klaviyo.uploadImage;
+  const originalCreateDraft = klaviyo.createDraftCampaign;
+  let uploadCalls = 0, draftCalls = 0;
+  klaviyo.uploadImage = async (...args) => { uploadCalls++; return originalUpload(...args); };
+  klaviyo.createDraftCampaign = async (...args) => { draftCalls++; return originalCreateDraft(...args); };
+
+  const originalWarnBytes = process.env.IMAGE_WEIGHT_WARN_BYTES;
+  const originalApiKey = process.env.KLAVIYO_API_KEY;
+  // A threshold no real slice can clear, so the budget fails deterministically without having
+  // to engineer a campaign that is genuinely over a megabyte.
+  process.env.IMAGE_WEIGHT_WARN_BYTES = '1';
+  process.env.KLAVIYO_API_KEY = 'test-key';
+
+  try {
+    await new Promise((resolve, reject) => server.listen(0, (e) => (e ? reject(e) : resolve())));
+    const port = server.address().port;
+
+    const campaign = (seeds[0] && seeds[0].campaign) ||
+      { campaignName: 'T', blocks: [{ component: 'header', tokens: {} }, { component: 'footer', tokens: {} }] };
+    const body = JSON.stringify({ campaign, subject: 'Test subject', previewText: 'Test preview' });
+
+    const { status, body: respBody } = await new Promise((resolve, reject) => {
+      const req = http.request({
+        host: '127.0.0.1', port, path: '/api/klaviyo-draft', method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      }, (res) => {
+        let data = '';
+        res.on('data', (c) => { data += c; });
+        res.on('end', () => { try { resolve({ status: res.statusCode, body: JSON.parse(data) }); } catch (e) { reject(e); } });
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
+    });
+
+    eq(status, 422, 'an over-budget campaign is refused with HTTP 422, not just from the pure assessWeight() helper');
+    ok(!!respBody.imageWeight && !!respBody.imageWeight.budget && respBody.imageWeight.budget.status === 'fail',
+      'the 422 body carries the imageWeight table so the caller can see what to trim');
+    eq(uploadCalls, 0, 'no image is uploaded to Klaviyo once the budget guard refuses the draft');
+    eq(draftCalls, 0, 'no draft campaign is created once the budget guard refuses the draft');
+  } finally {
+    klaviyo.uploadImage = originalUpload;
+    klaviyo.createDraftCampaign = originalCreateDraft;
+    if (originalWarnBytes === undefined) delete process.env.IMAGE_WEIGHT_WARN_BYTES;
+    else process.env.IMAGE_WEIGHT_WARN_BYTES = originalWarnBytes;
+    if (originalApiKey === undefined) delete process.env.KLAVIYO_API_KEY;
+    else process.env.KLAVIYO_API_KEY = originalApiKey;
+    await new Promise((resolve) => server.close(resolve));
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
+  .then(() => imageSuite())
+  .catch((e) => { failures.push('image optimisation suite threw: ' + (e && e.stack || e)); })
+  .then(() => integrationSuite())
+  .catch((e) => { failures.push('HTTP integration suite threw: ' + (e && e.stack || e)); })
   .then(async () => {
     try { await require('../lib/db').close(); } catch (_) { /* no pool to close */ }
+    // integrationSuite() is the only suite that launches Puppeteer; close it so the process can
+    // exit instead of hanging on the open DevTools socket.
+    try { await render.closeBrowser(); } catch (_) { /* never opened */ }
     const driver = process.env.DATABASE_URL ? 'postgres' : 'disk';
     if (failures.length) {
       console.error(`\n✗ ${failures.length} failure(s), ${passed} passed (studio driver: ${driver}):\n`);

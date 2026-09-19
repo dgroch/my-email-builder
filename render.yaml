@@ -66,3 +66,20 @@ services:
       #   ASSET_LIBRARY_URL              — optional, default 'https://asset-library-u70t.onrender.com' (semantic image search; no auth, just a Referer header)
       #   ASSET_LIBRARY_REFERER          — optional, default 'https://my-email-builder.onrender.com/' (the Referer header the asset library expects)
       # Live context is cached for 15 minutes. Add ?fresh=1 to /api/live-context to bypass.
+      #
+      # Image optimisation (docs/image-optimisation.md). Encoder + quality gate; every slice that
+      # reaches Klaviyo goes through it. These are tunables, not requirements — the defaults are
+      # the measured-good settings, so set them only to experiment:
+      #   IMAGE_OPT_SSIM                 — optional, default 0.98. SSIM floor for a lossy candidate
+      #   IMAGE_OPT_MAX_WIDTH            — optional, default 1200 (2x the 600px display width)
+      #   IMAGE_OPT_JPEG_QUALITY         — optional, default 82
+      #   IMAGE_OPT_PNG_COLOURS          — optional, default 256
+      #   IMAGE_OPT_WEBP                 — optional, default off. WebP measured 87% smaller, but
+      #                                    Outlook on Windows will not render it
+      #   IMAGE_WEIGHT_PASS_BYTES        — optional, default 614400 (600 KB). Above this the draft
+      #                                    is created with a warning naming the heaviest images
+      #   IMAGE_WEIGHT_WARN_BYTES        — optional, default 1048576 (1 MB). Above this the push
+      #                                    is refused (422) and nothing is created in Klaviyo
+      #   IMAGE_OPT_CACHE / _CACHE_DIR   — optional, default on, in $TMPDIR. Keyed on the source
+      #                                    bytes + encoder settings, so an unchanged email does not
+      #                                    re-encode (the free plan has no persistent disk)

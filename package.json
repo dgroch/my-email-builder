@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "pg": "^8.23.0",
-    "puppeteer": "^22.0.0"
+    "puppeteer": "^22.0.0",
+    "sharp": "^0.35.4"
   }
 }
