@@ -706,6 +706,24 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   }
 }
 
+// ── Two small defects the card-live review found in shared parts ──────────────────────
+{
+  // The production shell opened one downlevel-revealed block and closed it twice.
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const opens = (shell.match(/<!--\[if [^\]]*\]>(?:<!-->)?/g) || []).length;
+    const closes = (shell.match(/<!\[endif\]-->/g) || []).length;
+    eq(closes, opens, `${shellName}: every conditional comment is closed exactly once`);
+  }
+
+  // An empty SUPER_LABEL left an empty paragraph with a 14px margin above the headline.
+  const sh = (label) => render.stripDocComments(render.assemble({ campaignName: 't', blocks: [
+    { component: 'sections/section-headline', tokens: { SUPER_LABEL: label, HEADLINE: 'Worth the wait.' } }] },
+  { assetsBase: '/a' }).html);
+  ok(!/<p[^>]*>\s*<\/p>/.test(sh('')), 'section-headline drops its label paragraph when SUPER_LABEL is empty');
+  ok(sh('A NOTE').includes('>A NOTE</p>'), 'section-headline still renders a label when one is given');
+}
+
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────
 // The block used to hard-code filter:grayscale(100%) on LEFT_IMAGE_URL, so a neutral A-vs-B
 // comparison silently rendered the author's own product in black and white.
