@@ -731,8 +731,18 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   ok(!/<p[^>]*>\s*<\/p>/.test(lone) && !/<h2[^>]*>\s*<\/h2>/.test(lone), 'body-copy-plain drops an empty label and headline');
   ok(!/<td[^>]*>\s*<\/td>/.test(lone), 'body-copy-plain leaves no empty row for a blank BODY_P2');
   ok(lone.includes('Here’s to the moment it arrives.'), 'body-copy-plain still renders the paragraph');
+  ok(!/padding:0 0 14px 0;">Here’s/.test(lone), 'a lone BODY_P1 carries no paragraph gap below it (the gap belongs to BODY_P2)');
   const full = bcp({ SUPER_LABEL: 'A NOTE', HEADLINE: 'The one that feels like home.', BODY_P1: 'One.', BODY_P2: 'Two.' });
   ok(full.includes('>A NOTE</p>') && full.includes('feels like home.</h2>') && full.includes('>Two.</td>'), 'body-copy-plain renders every part when given');
+}
+
+// ── The preheader escapes text but not Klaviyo tags ──────────────────────────────────
+{
+  const dyn = "{% if s|length > 35 %}{{ s }}, ready.{% else %}Ready <now> & then{% endif %}";
+  const ph = render.preheader(dyn);
+  ok(ph.includes('{% if s|length > 35 %}'), 'a comparison inside a Klaviyo tag in the preview text survives verbatim');
+  ok(ph.includes('Ready &lt;now&gt; &amp; then'), 'plain preview text is still escaped');
+  ok(render.preheader('A < B & C').includes('A &lt; B &amp; C'), 'a preview with no tags escapes exactly as before');
 }
 
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────
