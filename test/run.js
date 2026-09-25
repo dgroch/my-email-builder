@@ -667,6 +667,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const raw = fs.readFileSync(path.join(DS, 'templates', 'products', 'card-live.html'), 'utf8');
   const markup = render.stripDocComments(raw);
   ok(!/object-fit/.test(markup), 'card-live never crops the photo with object-fit');
+  ok(!/font-style:italic/.test(markup), 'card-live sets no italic (the shell loads no NeuzeitGro italic, so it would be faked)');
   ok(!/<img\b[^>]*\bheight="/.test(markup), 'the photo has no height attribute, so its own ratio decides the height');
   ok(/<img\b[^>]*style="[^"]*height:auto/.test(markup), 'the photo height follows the image');
   ok(!/\{%|\{\{\s*[a-z]/.test(raw.match(/<!--[\s\S]*?-->/)[0]),
@@ -722,6 +723,16 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   { assetsBase: '/a' }).html);
   ok(!/<p[^>]*>\s*<\/p>/.test(sh('')), 'section-headline drops its label paragraph when SUPER_LABEL is empty');
   ok(sh('A NOTE').includes('>A NOTE</p>'), 'section-headline still renders a label when one is given');
+
+  // body-copy-plain as a closing line: label, headline and second paragraph all optional.
+  const bcp = (tokens) => render.stripDocComments(render.assemble({ campaignName: 't', blocks: [
+    { component: 'sections/body-copy-plain', tokens } ] }, { assetsBase: '/a' }).html);
+  const lone = bcp({ SUPER_LABEL: '', HEADLINE: '', BODY_P1: 'Here’s to the moment it arrives.', BODY_P2: '' });
+  ok(!/<p[^>]*>\s*<\/p>/.test(lone) && !/<h2[^>]*>\s*<\/h2>/.test(lone), 'body-copy-plain drops an empty label and headline');
+  ok(!/<td[^>]*>\s*<\/td>/.test(lone), 'body-copy-plain leaves no empty row for a blank BODY_P2');
+  ok(lone.includes('Here’s to the moment it arrives.'), 'body-copy-plain still renders the paragraph');
+  const full = bcp({ SUPER_LABEL: 'A NOTE', HEADLINE: 'The one that feels like home.', BODY_P1: 'One.', BODY_P2: 'Two.' });
+  ok(full.includes('>A NOTE</p>') && full.includes('feels like home.</h2>') && full.includes('>Two.</td>'), 'body-copy-plain renders every part when given');
 }
 
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────

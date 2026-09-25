@@ -3,7 +3,9 @@ TOKENS:
   {{PRODUCT_IMAGE_URL}} — 4:5 product photo, shown 280px wide (560×700px source). On the Shopify CDN ask for width=560&height=700 with no crop, so a photo that is not 4:5 is scaled to fit, never cut.
   {{PRODUCT_LABEL}}     — optional small uppercase label above the name (e.g. "Back in stock"). Leave "" to omit.
   {{PRODUCT_NAME}}      — Lust font — SENTENCE CASE      — product name; also the photo's alt text
-  {{PRODUCT_NOTE}}      — optional italic line under the name: one reassurance or occasion line. Leave "" to omit.
+  {{PRODUCT_NOTE}}      — optional line under the name: one reassurance or occasion line. Leave "" to omit.
+                          Upright, not italic: the production shell loads no NeuzeitGro italic, so an
+                          italic here would be slanted artificially by the client.
   {{PRODUCT_PRICE}}     — price line, e.g. "Signature · $195.00"
   {{CTA_TEXT}}          — button label, 2–3 words, verb first (e.g. "See it again")
   {{PRODUCT_URL}}       — product page URL. The photo, the name and the button all link here.
@@ -32,8 +34,8 @@ RULES:
       <a href="{{PRODUCT_URL}}" target="_blank" style="display:block;line-height:0;text-decoration:none;"><img src="{{PRODUCT_IMAGE_URL}}" width="280" alt="{{PRODUCT_NAME}}" border="0" style="display:block;width:280px;height:auto;border:0;"></a>
     </td><td class="cl-txt" valign="middle" style="padding:32px 32px 32px 36px;vertical-align:middle;">
       {{#PRODUCT_LABEL}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#666666;margin:0 0 10px 0;">{{PRODUCT_LABEL}}</p>{{/PRODUCT_LABEL}}
-      <h3 class="pn" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:24px;color:#000000;line-height:1.15;margin:0 0 10px 0;"><a href="{{PRODUCT_URL}}" target="_blank" style="color:#000000;text-decoration:none;">{{PRODUCT_NAME}}</a></h3>
-      {{#PRODUCT_NOTE}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-style:italic;font-size:13px;color:#444444;line-height:1.6;margin:0 0 14px 0;">{{PRODUCT_NOTE}}</p>{{/PRODUCT_NOTE}}
+      <h3 class="pn" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;line-height:1.15;margin:0 0 10px 0;"><a href="{{PRODUCT_URL}}" target="_blank" style="color:#000000;text-decoration:none;">{{PRODUCT_NAME}}</a></h3>
+      {{#PRODUCT_NOTE}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.6;margin:0 0 14px 0;">{{PRODUCT_NOTE}}</p>{{/PRODUCT_NOTE}}
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:13px;color:#000000;line-height:1.4;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
       <!--[if gte mso 9]>
       <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
