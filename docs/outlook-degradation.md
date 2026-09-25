@@ -42,7 +42,7 @@ Word drops and none are currently exposed.** The difference is what happens at p
   Outlook receives an image. `position:absolute`, `transform`, `opacity` and `box-shadow` in
   `blocks/polaroid-collage` are irrelevant to Outlook because Outlook never sees that HTML.
 - **Blocks with a VML fallback are covered.** `sections/button`, `sections/promo-code`,
-  `heroes/hero-a` and `heroes/hero-image-only` ship Microsoft's vector markup inside
+  `products/card-live`, `heroes/hero-a` and `heroes/hero-image-only` ship Microsoft's vector markup inside
   `<!--[if gte mso 9]>`, so Outlook gets purpose-built markup rather than the CSS version.
 - **The genuine exposure is the intersection**: a block that stays live HTML on publish *and*
   declares unsupported CSS *and* has no VML fallback. That is what `atRisk: true` means.
