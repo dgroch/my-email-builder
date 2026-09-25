@@ -693,7 +693,10 @@ The **footer stays live HTML** (not an image) so its `{% unsubscribe %}` merge t
 rasterising it would break the legally-required unsubscribe link. The **promo-code block stays live
 HTML** for the same reason: the code is routinely a `{% coupon_code %}` tag that Klaviyo substitutes
 per recipient at send time, and a PNG would ship every recipient the same picture of the literal
-tag. (The full list is `assembly.html_only_components` in the manifest.) You then
+tag. **`products/card-live` stays live HTML** too: it is the product card for flows, where the
+photo, name, price and link are Klaviyo catalog or event tags filled per recipient (back in stock,
+browse abandonment). Every other product card is rasterised and cannot carry them. (The full list
+is `assembly.html_only_components` in the manifest.) You then
 finish/schedule/send the draft inside Klaviyo.
 
 **Per-block links:** open the **Slices** tab and click **Render slices** first — each image block

@@ -651,6 +651,100 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
     'the padding tokens frame the button cell');
 }
 
+// ── products/card-live: the product card that can carry per-recipient data ───────────
+// Every other product card is rasterised, so a Klaviyo catalog tag in PRODUCT_NAME would be
+// baked into the pixels as literal text. card-live stays live HTML so Klaviyo fills it at send
+// time — the back-in-stock and browse-abandonment flows need exactly that. The ways it could
+// regress: sliced on push, a CSS crop cutting the product, the button collapsing in Outlook,
+// or the assembly mangling the tag syntax on the way through.
+{
+  const cl = schema.components.find((c) => c.name === 'products/card-live');
+  ok(cl, 'products/card-live is in the schema');
+  eq(cl.designed, false, 'card-live is not a DESIGNED (sliced) block');
+  ok(render.isHtmlOnlyComponent('products/card-live', schema.assembly.html_only_components),
+    'card-live is html-only on push, so per-recipient tags reach Klaviyo as text');
+
+  const raw = fs.readFileSync(path.join(DS, 'templates', 'products', 'card-live.html'), 'utf8');
+  const markup = render.stripDocComments(raw);
+  ok(!/object-fit/.test(markup), 'card-live never crops the photo with object-fit');
+  ok(!/font-style:italic/.test(markup), 'card-live sets no italic (the shell loads no NeuzeitGro italic, so it would be faked)');
+  ok(!/<img\b[^>]*\bheight="/.test(markup), 'the photo has no height attribute, so its own ratio decides the height');
+  ok(/<img\b[^>]*style="[^"]*height:auto/.test(markup), 'the photo height follows the image');
+  ok(!/\{%|\{\{\s*[a-z]/.test(raw.match(/<!--[\s\S]*?-->/)[0]),
+    'the doc comment carries no template-tag syntax Klaviyo would parse');
+
+  const tag = (inner) => `{% catalog event.VariantId integration='shopify' %}${inner}{% endcatalog %}`;
+  const tokens = {
+    PRODUCT_IMAGE_URL: tag("{{ catalog_item.featured_image.full.src }}"),
+    PRODUCT_LABEL: '',
+    PRODUCT_NAME: tag('{{ catalog_item.title }}'),
+    PRODUCT_NOTE: '',
+    PRODUCT_PRICE: tag("{% currency_format catalog_item.variant.price|floatformat:2 %}"),
+    CTA_TEXT: 'See it again',
+    PRODUCT_URL: tag("https://figandbloom.com/products/{{ catalog_item.url|split:'/products/'|last }}"),
+  };
+  const camp = { campaignName: 't', blocks: [{ component: 'products/card-live', tokens }, { component: 'footer', tokens: {} }] };
+  const prod = render.stripDocComments(render.assemble(camp, { assetsBase: '/a', production: true }).html);
+  ok(prod.includes(tokens.PRODUCT_NAME), 'a catalog tag in PRODUCT_NAME survives production assembly byte for byte');
+  ok(prod.includes(tokens.PRODUCT_URL), "a tag with quotes and filters in PRODUCT_URL is not escaped");
+  eq((prod.match(/href="\{% catalog/g) || []).length, 4, 'photo, name, button and the Outlook VML all link to the product');
+  ok(!/\{\{[A-Z_]+\}\}/.test(prod), 'no builder token is left unfilled (BTN_WIDTH defaults)');
+  ok(/<v:roundrect[^>]*width:\d+px/.test(prod), 'BTN_WIDTH defaults to a real px width for Outlook');
+  ok(!/text-transform:uppercase;color:#666666;margin:0 0 10px 0;">/.test(prod), 'an empty PRODUCT_LABEL drops its paragraph');
+  ok(!/font-style:italic;font-size:13px/.test(prod), 'an empty PRODUCT_NOTE drops its paragraph');
+  eq(validateCampaign(camp, schema).ok, true, 'a card-live campaign built from Klaviyo tags validates');
+
+  const risk = render.outlookRisks({ blocks: [{ component: 'products/card-live', tokens: {} }] })[0];
+  ok(!risk || !risk.atRisk, 'card-live is not exposed to the Outlook renderer (VML button)');
+
+  // The layout the mobile rules exist for: side by side on a phone, button high on the page.
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const start = shell.indexOf('@media only screen and (max-width:600px)');
+    const media = start < 0 ? '' : shell.slice(start, shell.indexOf('</style>', start));
+    ok(/\.cl-img\{width:44%!important;\}/.test(media), `${shellName} narrows the card-live photo column on a phone`);
+    ok(/\.cl-img img\{width:100%!important;height:auto!important;\}/.test(media), `${shellName} lets the card-live photo follow its column`);
+  }
+}
+
+// ── Two small defects the card-live review found in shared parts ──────────────────────
+{
+  // The production shell opened one downlevel-revealed block and closed it twice.
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(DS, 'shell', shellName), 'utf8');
+    const opens = (shell.match(/<!--\[if [^\]]*\]>(?:<!-->)?/g) || []).length;
+    const closes = (shell.match(/<!\[endif\]-->/g) || []).length;
+    eq(closes, opens, `${shellName}: every conditional comment is closed exactly once`);
+  }
+
+  // An empty SUPER_LABEL left an empty paragraph with a 14px margin above the headline.
+  const sh = (label) => render.stripDocComments(render.assemble({ campaignName: 't', blocks: [
+    { component: 'sections/section-headline', tokens: { SUPER_LABEL: label, HEADLINE: 'Worth the wait.' } }] },
+  { assetsBase: '/a' }).html);
+  ok(!/<p[^>]*>\s*<\/p>/.test(sh('')), 'section-headline drops its label paragraph when SUPER_LABEL is empty');
+  ok(sh('A NOTE').includes('>A NOTE</p>'), 'section-headline still renders a label when one is given');
+
+  // body-copy-plain as a closing line: label, headline and second paragraph all optional.
+  const bcp = (tokens) => render.stripDocComments(render.assemble({ campaignName: 't', blocks: [
+    { component: 'sections/body-copy-plain', tokens } ] }, { assetsBase: '/a' }).html);
+  const lone = bcp({ SUPER_LABEL: '', HEADLINE: '', BODY_P1: 'Here’s to the moment it arrives.', BODY_P2: '' });
+  ok(!/<p[^>]*>\s*<\/p>/.test(lone) && !/<h2[^>]*>\s*<\/h2>/.test(lone), 'body-copy-plain drops an empty label and headline');
+  ok(!/<td[^>]*>\s*<\/td>/.test(lone), 'body-copy-plain leaves no empty row for a blank BODY_P2');
+  ok(lone.includes('Here’s to the moment it arrives.'), 'body-copy-plain still renders the paragraph');
+  ok(!/padding:0 0 14px 0;">Here’s/.test(lone), 'a lone BODY_P1 carries no paragraph gap below it (the gap belongs to BODY_P2)');
+  const full = bcp({ SUPER_LABEL: 'A NOTE', HEADLINE: 'The one that feels like home.', BODY_P1: 'One.', BODY_P2: 'Two.' });
+  ok(full.includes('>A NOTE</p>') && full.includes('feels like home.</h2>') && full.includes('>Two.</td>'), 'body-copy-plain renders every part when given');
+}
+
+// ── The preheader escapes text but not Klaviyo tags ──────────────────────────────────
+{
+  const dyn = "{% if s|length > 35 %}{{ s }}, ready.{% else %}Ready <now> & then{% endif %}";
+  const ph = render.preheader(dyn);
+  ok(ph.includes('{% if s|length > 35 %}'), 'a comparison inside a Klaviyo tag in the preview text survives verbatim');
+  ok(ph.includes('Ready &lt;now&gt; &amp; then'), 'plain preview text is still escaped');
+  ok(render.preheader('A < B & C').includes('A &lt; B &amp; C'), 'a preview with no tags escapes exactly as before');
+}
+
 // ── blocks/comparison-vs: desaturating the left photo is opt-in, never automatic ──────
 // The block used to hard-code filter:grayscale(100%) on LEFT_IMAGE_URL, so a neutral A-vs-B
 // comparison silently rendered the author's own product in black and white.
@@ -2308,11 +2402,51 @@ async function integrationSuite() {
   }
 }
 
+// products/card-live on a 375px phone, rendered: the document stays inside the viewport, the
+// photo keeps its 4:5 shape uncropped, and the button sits in the first screen. A local 4:5
+// image keeps the check off the network.
+async function cardLiveSuite() {
+  const sharp = require('sharp');
+  const png = await sharp({ create: { width: 560, height: 700, channels: 3, background: '#D8CCBE' } }).png().toBuffer();
+  const img = 'data:image/png;base64,' + png.toString('base64');
+  const cl = schema.components.find((c) => c.name === 'products/card-live');
+  const camp = sampleData.sampleCampaignFor(cl);
+  camp.blocks[0].tokens.PRODUCT_IMAGE_URL = img;
+  camp.blocks.unshift({ component: 'header', tokens: {} });
+  const html = render.assemble(camp, { assetsBase: '/a' }).html;
+
+  for (const [width, label] of [[335, 'phone'], [600, 'desktop']]) {
+    const { page, cleanup, RENDER_WIDTH } = await render.openPage(html, { width, scale: 1 });
+    try {
+      const m = await page.evaluate(() => {
+        const im = document.querySelector('.cl-img img');
+        const b = document.querySelector('.cl-btn').getBoundingClientRect();
+        const r = im.getBoundingClientRect();
+        return { docW: document.documentElement.scrollWidth, w: r.width, h: r.height, btnBottom: b.bottom, btnRight: b.right,
+          txtRight: document.querySelector('.cl-txt').getBoundingClientRect().right };
+      });
+      ok(m.docW <= RENDER_WIDTH, `${label}: card-live does not widen the document (${m.docW} > ${RENDER_WIDTH})`);
+      ok(Math.abs(m.h / m.w - 1.25) < 0.02, `${label}: the photo renders at its own 4:5 ratio (${m.w}x${m.h})`);
+      ok(m.btnRight <= m.txtRight, `${label}: the button fits inside its column`);
+      if (label === 'phone') {
+        ok(m.w < 200, `phone: the photo column narrows (${m.w}px)`);
+        ok(m.btnBottom < 560, `phone: the button sits in the first screen (${Math.round(m.btnBottom)}px)`);
+      } else {
+        eq(Math.round(m.w), 280, 'desktop: the photo is 280px wide');
+      }
+    } finally {
+      await cleanup();
+    }
+  }
+}
+
 // ── report ────────────────────────────────────────────────────────────────────────────
 studioSuite()
   .catch((e) => { failures.push('studio suite threw: ' + (e && e.stack || e)); })
   .then(() => imageSuite())
   .catch((e) => { failures.push('image optimisation suite threw: ' + (e && e.stack || e)); })
+  .then(() => cardLiveSuite())
+  .catch((e) => { failures.push('card-live render suite threw: ' + (e && e.stack || e)); })
   .then(() => integrationSuite())
   .catch((e) => { failures.push('HTTP integration suite threw: ' + (e && e.stack || e)); })
   .then(async () => {

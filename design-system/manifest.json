@@ -22,12 +22,13 @@
       "divider-line",
       "divider-whitespace",
       "full-width-image",
-      "promo-code"
+      "promo-code",
+      "card-live"
     ],
     "slice_components": [
       "header",
       "all hero variants (including hero-image-only)",
-      "all product cards",
+      "all product cards except card-live",
       "all designed blocks (blocks/*)",
       "body-copy",
       "testimonial",
@@ -299,6 +300,24 @@
           "REVIEW_TEXT",
           "REVIEWER_NAME"
         ]
+      },
+      "card-live": {
+        "file": "templates/products/card-live.html",
+        "description": "Live-HTML product card: 4:5 photo left, name, note, price and button right. Never sliced, so every token can carry per-recipient Klaviyo tags (catalog lookups, event properties). Use it in flows such as back in stock and browse abandonment. One per email.",
+        "classification": "html-safe",
+        "tokens": [
+          "PRODUCT_IMAGE_URL",
+          "PRODUCT_LABEL",
+          "PRODUCT_NAME",
+          "PRODUCT_NOTE",
+          "PRODUCT_PRICE",
+          "CTA_TEXT",
+          "PRODUCT_URL",
+          "BTN_WIDTH"
+        ],
+        "token_defaults": {
+          "BTN_WIDTH": "auto"
+        }
       }
     },
     "sections": {
