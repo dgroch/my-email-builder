@@ -637,7 +637,6 @@
         "assets_needed": "One full-bleed lifestyle photo (600×440 display). No illustration assets.",
         "levers": {
           "TYPE_SCALE": "regular | oversized (headline scale)",
-          "ROTATION": "flat | subtle | jaunty (plate tilt)",
           "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
         },
         "tokens": [
@@ -649,7 +648,6 @@
           "CTA_TEXT",
           "CTA_URL",
           "TYPE_SCALE",
-          "ROTATION",
           "ACCENT_ILLO"
         ]
       },
@@ -704,6 +702,53 @@
         "token_defaults": {
           "PADDING_TOP": "40px",
           "PADDING_BOTTOM": "50px"
+        }
+      },
+      "event-gallery": {
+        "file": "templates/blocks/event-gallery.html",
+        "classification": "slice",
+        "description": "A tidy mosaic or masonry grid of 5, 6 or 8 event photos on a palette panel, under an optional super-label, Cervanttis accent and Lust headline, with an optional square button. Upright, square-cornered tiles with even gutters: the quiet, many-photo counterpart to polaroid-collage.",
+        "when_to_use": "When an event, launch or shoot has more good photos than one hero can hold. Mid-email, after the story beat, often before a journal CTA. Max one gallery per email. Default LAYOUT='masonry-6', DENSITY='regular'; reach for masonry-8 only when the set is strong enough to hold at thumbnail size on a phone.",
+        "assets_needed": "5, 6 or 8 portrait (2:3) photos, per LAYOUT. Crops favour the upper third. No illustration assets.",
+        "parametrised": {
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+        },
+        "levers": {
+          "LAYOUT": "mosaic-5 | masonry-6 | masonry-8 (grid shape and photo count)",
+          "DENSITY": "tight | regular | airy (gutter between photos)"
+        },
+        "tokens": [
+          "SUPER_LABEL",
+          "ACCENT_SCRIPT",
+          "HEADLINE",
+          "LAYOUT",
+          "DENSITY",
+          "PHOTO_1_URL",
+          "PHOTO_2_URL",
+          "PHOTO_3_URL",
+          "PHOTO_4_URL",
+          "PHOTO_5_URL",
+          "PHOTO_6_URL",
+          "PHOTO_7_URL",
+          "PHOTO_8_URL",
+          "GALLERY_ALT",
+          "CTA_TEXT",
+          "CTA_URL",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PANEL_SUB",
+          "PANEL_BORDER"
+        ],
+        "token_defaults": {
+          "SUPER_LABEL": "",
+          "ACCENT_SCRIPT": "",
+          "HEADLINE": "",
+          "LAYOUT": "masonry-6",
+          "DENSITY": "regular",
+          "PHOTO_6_URL": "",
+          "PHOTO_7_URL": "",
+          "PHOTO_8_URL": "",
+          "CTA_TEXT": ""
         }
       },
       "caption-bar-hero": {
@@ -999,6 +1044,7 @@
           "feature-list",
           "story",
           "polaroid-collage",
+          "event-gallery",
           "testimonial",
           "designed-product-card",
           "howto-steps",
@@ -1016,19 +1062,21 @@
         "_about": "Layout levers on the designed blocks (editorial-hero, story, polaroid-collage, designed-product-card, and the draft editorial-collage / annotated-product) add a third axis of variation beyond (open_block, palette): composition. Values are locked enums only — no free hex/px — so variation never escapes the system.",
         "available": {
           "TYPE_SCALE": "regular | oversized — headline / name scale",
-          "ROTATION": "flat | subtle | jaunty — tilt of plates, polaroids, badges, frames, chips",
-          "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage)",
+          "ROTATION": "flat | subtle | jaunty — tilt of polaroids, badges, frames, chips. Never on a hero: the editorial-hero plate is always upright and has no ROTATION lever.",
+          "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage), photo gutter (event-gallery)",
+          "LAYOUT": "mosaic-5 | masonry-6 | masonry-8 — grid shape and photo count (blocks/event-gallery)",
           "ACCENT_ILLO": "on | off — faint brand-illustration accent",
           "IMG_SIDE": "left | right — which side the image sits (blocks/image-text)",
           "LEFT_TREATMENT": "none | grayscale — desaturate the left photo (blocks/comparison-vs)"
         },
-        "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE, ROTATION) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
+        "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
       },
       "no_repeat": [
         "Do not use the same designed block twice in one email (each is 'max one per email').",
         "Do not stack two designed blocks back-to-back without a divider.",
         "Do not repeat the same palette preset on the OPEN block in consecutive sends of a series.",
-        "Do not repeat the same (ROTATION, TYPE_SCALE) lever pair on the OPEN block in consecutive sends of a series.",
+        "Do not repeat the same TYPE_SCALE on the OPEN block in consecutive sends of a series.",
+        "Never tilt a hero. The OPEN block is always upright; ROTATION belongs to mid-email collage pieces only.",
         "Accent colour (non-mono) only on occasion/promo sends, only as a panel/border — never type."
       ]
     },

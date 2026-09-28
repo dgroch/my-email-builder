@@ -818,6 +818,9 @@ cards are absolutely positioned inside a fixed 600px region. On the Klaviyo push
 to PNG slices that scale as images, which is the shipping path and is fine. In the live-HTML
 `/api/export` output they still hold the document at 600px. Do not "fix" this by making the
 region fluid — the cards keep their absolute offsets and are simply cropped.
+`blocks/event-gallery` has the same limit for a different reason: its masonry rows are a fixed
+px track, so the grid holds 540px. It ships as one PNG slice, and `masonry-8` is the ceiling
+because each tile is ~80px wide once that slice scales to a phone.
 
 ## Keeping the design system in sync
 `design-system/` is a bundled copy of `creative-email-campaign-builder/references/`
