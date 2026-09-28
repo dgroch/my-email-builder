@@ -109,7 +109,11 @@
 
   function buildCard(c) {
     const card = $('#libCardTpl').content.firstElementChild.cloneNode(true);
-    card._state = { palette: (c.variants.palettes && c.variants.palettes[0]) || null, levers: {} };
+    // Levers open on the manifest default (e.g. event-gallery's masonry-6), so the card's selects,
+    // its preview and "Add to campaign" all agree; levers without a default fall back to option one.
+    const levers = {};
+    for (const t of c.tokens) if (t.type === 'enum' && (t.enumOptions || []).includes(t.default)) levers[t.name] = t.default;
+    card._state = { palette: (c.variants.palettes && c.variants.palettes[0]) || null, levers };
     card._comp = c;
     card.querySelector('.lib-name').textContent = c.name;
     const badges = card.querySelector('.lib-badges');

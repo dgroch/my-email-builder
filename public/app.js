@@ -42,8 +42,8 @@ function defaultsFor(comp) {
   for (const t of comp.tokens) tokens[t.name] = t.default !== undefined ? t.default : '';
   // palette: seed from first preset
   if (comp.palettePresets && comp.palettePresets.length) Object.assign(tokens, comp.palettePresets[0].values);
-  // enum: seed first option
-  for (const t of comp.tokens) if (t.type === 'enum' && t.enumOptions && t.enumOptions[0]) tokens[t.name] = t.enumOptions[0];
+  // enum: seed the manifest default when it is one of the options, else the first option
+  for (const t of comp.tokens) if (t.type === 'enum' && t.enumOptions && t.enumOptions[0]) tokens[t.name] = t.enumOptions.includes(t.default) ? t.default : t.enumOptions[0];
   return tokens;
 }
 function addBlock(name, opts = {}) {
