@@ -2437,6 +2437,40 @@ async function integrationSuite() {
       'the 422 body carries the imageWeight table so the caller can see what to trim');
     eq(uploadCalls, 0, 'no image is uploaded to Klaviyo once the budget guard refuses the draft');
     eq(draftCalls, 0, 'no draft campaign is created once the budget guard refuses the draft');
+
+    // ── Deep links: every design response carries /?design=<id>, and the builder opens it ──
+    const call = (method, path, payload) => new Promise((resolve, reject) => {
+      const data = payload ? JSON.stringify(payload) : '';
+      const r = http.request({ host: '127.0.0.1', port, path, method,
+        headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } }, (res) => {
+        let buf = '';
+        res.on('data', (c) => { buf += c; });
+        res.on('end', () => { try { resolve({ status: res.statusCode, body: JSON.parse(buf) }); } catch (e) { reject(e); } });
+      });
+      r.on('error', reject);
+      r.end(data);
+    });
+    const origin = `http://127.0.0.1:${port}`;
+    const made = await call('POST', '/api/designs', { name: 'Deep link test', campaign: { ...campaign, campaignName: 'Deep link test' } });
+    eq(made.body.link, `${origin}/?design=${encodeURIComponent(made.body.id)}`, 'a created design comes back with its deep link');
+    eq((await call('GET', '/api/designs/' + made.body.id)).body.link, made.body.link, 'fetching a design returns the same deep link');
+    ok((await call('GET', '/api/designs')).body.designs.some((d) => d.id === made.body.id && d.link === made.body.link),
+      'the design list carries a deep link per design');
+
+    const { page, cleanup } = await render.openPage('<html></html>', {});
+    try {
+      await page.goto(made.body.link, { waitUntil: 'networkidle0' });
+      await page.waitForFunction(() => document.querySelector('#campaignName').value === 'Deep link test', { timeout: 10000 }).catch(() => {});
+      eq(await page.$eval('#campaignName', (e) => e.value), 'Deep link test', 'opening the deep link loads that design into the builder');
+      ok(page.url().includes('design=' + encodeURIComponent(made.body.id)), 'the address bar keeps the design id after it loads');
+
+      await page.goto(`${origin}/?design=does-not-exist`, { waitUntil: 'networkidle0' });
+      await page.waitForFunction(() => !location.search.includes('design='), { timeout: 10000 }).catch(() => {});
+      ok(!page.url().includes('design='), 'a stale deep link is dropped from the address bar rather than left to mislead');
+    } finally {
+      await cleanup();
+      await call('DELETE', '/api/designs/' + made.body.id);
+    }
   } finally {
     klaviyo.uploadImage = originalUpload;
     klaviyo.createDraftCampaign = originalCreateDraft;

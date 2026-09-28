@@ -55,6 +55,9 @@ git push -u origin main
   enums and `lowercase` / `Sentence case` chips are all parsed from the template headers +
   `design-system/manifest.json`. Add a new template and it appears automatically.
 - **Live preview** — assembles the real shell (fonts embedded) and shows it in an iframe.
+- **Deep links** — `/?design=<id>` opens that saved design straight into the builder, and the address bar
+  follows whichever design is open, so it can always be copied and shared. Every `/api/designs` response
+  (create, get, update, clone, list, and a saved generation) carries the design's `link`.
 - **Component library** (the **Library** tab) — every component rendered *alive* with on-brand
   sample data (no fields to fill), with live **palette + lever** switching, a **variant-compare**
   strip (all palette presets / lever options side-by-side), search/filter (group, objective,
