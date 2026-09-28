@@ -1621,6 +1621,52 @@ async function studioSuite() {
   ok(regionH >= frameBottom, `the editorial-collage region (${regionH}px) clears its front frame (${frameBottom}px)`);
 }
 
+// ── A hero never tilts ─────────────────────────────────────────────────────────────────
+// editorial-hero used to take ROTATION (subtle -1.5deg / jaunty -3deg) on its plate. It read as
+// a mistake in a sent campaign, so the lever is gone: no token, no rotate rule, and a saved
+// design that still carries ROTATION renders upright rather than leaking {{ROTATION}}.
+{
+  const eh = schema.components.find((c) => c.name === 'blocks/editorial-hero');
+  ok(!eh.tokens.some((t) => t.name === 'ROTATION'), 'editorial-hero has no ROTATION token');
+  const src = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'editorial-hero.html'), 'utf8');
+  ok(!/rotate\(/.test(src.replace(/<!--[\s\S]*?-->/, '')), 'editorial-hero markup carries no rotate()');
+  const html = render.assemble({ blocks: [{ component: 'blocks/editorial-hero', tokens: {
+    ...sampleData.sampleTokensFor(eh), ROTATION: 'jaunty' } }] }, { assetsBase: '/a' }).html;
+  ok(!/rotate\(/.test(html) && !/\{\{ROTATION\}\}/.test(html), 'a legacy ROTATION value renders an upright hero');
+  const heroExamples = JSON.stringify(loadSeedExamples());
+  ok(!/"component":\s*"blocks\/editorial-hero"[^}]*"ROTATION"/.test(heroExamples), 'no seed exemplar tilts its hero');
+}
+
+// ── blocks/event-gallery: tidy mosaic / masonry grid of 5, 6 or 8 photos ────────────────
+{
+  const eg = schema.components.find((c) => c.name === 'blocks/event-gallery');
+  ok(eg && !eg.draft, 'event-gallery is a shipped (non-draft) designed block');
+  const layout = eg.tokens.find((t) => t.name === 'LAYOUT');
+  eq((layout.enumOptions || []).join(','), 'mosaic-5,masonry-6,masonry-8', 'LAYOUT is locked to the three grids');
+  eq((eg.tokens.find((t) => t.name === 'DENSITY').enumOptions || []).join(','), 'tight,regular,airy', 'DENSITY is locked');
+  const src = fs.readFileSync(path.join(DS, 'templates', 'blocks', 'event-gallery.html'), 'utf8');
+  ok(!/rotate\(|position:absolute/.test(src.replace(/<!--[\s\S]*?-->/, '')), 'gallery tiles are upright and never overlap');
+  // Each layout declares exactly the tiles it shows.
+  const counts = { 'mosaic-5': 5, 'masonry-6': 6, 'masonry-8': 8 };
+  for (const [ly, n] of Object.entries(counts)) {
+    const areas = (src.match(new RegExp(`\\.eg\\.ly-${ly} \\.eg-grid \\{[^}]*grid-template-areas:([^;]*);`)) || [])[1] || '';
+    eq(new Set(areas.match(/p\d/g) || []).size, n, `${ly} places ${n} photos`);
+  }
+  // A mosaic-5 with photos 6–8 left blank assembles clean: no stray tiles, no leaked tokens.
+  const tokens = { ...sampleData.sampleTokensFor(eg), LAYOUT: 'mosaic-5', PHOTO_6_URL: '', PHOTO_7_URL: '', PHOTO_8_URL: '' };
+  const rep = validateCampaign({ blocks: [{ component: 'blocks/event-gallery', tokens }] }, schema, { requireUnsubscribe: false });
+  eq(rep.issues.filter((i) => i.severity === 'error').length, 0, 'a mosaic-5 gallery validates clean');
+  const html = render.assemble({ blocks: [{ component: 'blocks/event-gallery', tokens }] }, { assetsBase: '/a' }).html;
+  ok(!/\{\{[A-Z0-9_#/]+\}\}/.test(html), 'mosaic-5 leaves no unfilled token');
+  ok(!/eg-t t6|eg-t t7|eg-t t8/.test(html), 'blank photos 6–8 drop their tiles');
+  // A photos-only band (header + CTA blank) drops the copy and the button.
+  const bare = render.assemble({ blocks: [{ component: 'blocks/event-gallery', tokens: {
+    ...tokens, SUPER_LABEL: '', ACCENT_SCRIPT: '', HEADLINE: '', CTA_TEXT: '' } }] }, { assetsBase: '/a' }).html;
+  ok(!/class="eg-hl"|class="eg-btn"/.test(bare), 'a photos-only gallery renders no headline or button');
+  // The slice's alt describes the set, even when there is no headline to fall back on.
+  eq(render.deriveAlt({ GALLERY_ALT: 'Guests at Hubert', HEADLINE: '' }), 'Guests at Hubert', 'gallery slice alt comes from GALLERY_ALT');
+}
+
 // ── Bug 9: nothing may hold the document wider than the viewport ───────────────────────
 // The email is one shrink-to-fit document: a single block that cannot go below 600px scales
 // EVERY glyph in the email, not just its own. That is why 14px body copy arrived at 8.8px —

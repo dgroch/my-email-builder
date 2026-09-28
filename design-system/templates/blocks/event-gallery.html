@@ -1,0 +1,113 @@
+<!-- COMPONENT: blocks/event-gallery | DESIGNED BLOCK — EVENT PHOTO GALLERY (MOSAIC / MASONRY GRID)
+TOKENS:
+  {{SUPER_LABEL}}     — NeuzeitGro Bold caps micro-label (e.g. "AT RESTAURANT HUBERT"). OPTIONAL ("")
+  {{ACCENT_SCRIPT}}   — Cervanttis script accent — MUST be lowercase (e.g. "the afternoon,"). OPTIONAL ("")
+  {{HEADLINE}}        — Lust display headline — SENTENCE CASE (~8 words). OPTIONAL ("")
+  {{LAYOUT}}          — LAYOUT lever: "mosaic-5" / "masonry-6" / "masonry-8". Locked to these three. Sets how many photos show.
+  {{DENSITY}}         — DENSITY lever: "tight" / "regular" / "airy" gutter between photos. Locked to these three.
+  {{PHOTO_1_URL}}     — photo 1 (portrait 2:3 source; in mosaic-5 this is the large feature tile)
+  {{PHOTO_2_URL}}     — photo 2
+  {{PHOTO_3_URL}}     — photo 3
+  {{PHOTO_4_URL}}     — photo 4
+  {{PHOTO_5_URL}}     — photo 5
+  {{PHOTO_6_URL}}     — photo 6 — masonry-6 and masonry-8 only. OPTIONAL ("") for mosaic-5
+  {{PHOTO_7_URL}}     — photo 7 — masonry-8 only. OPTIONAL ("")
+  {{PHOTO_8_URL}}     — photo 8 — masonry-8 only. OPTIONAL ("")
+  {{GALLERY_ALT}}     — one alt line describing the set (e.g. "Guests and florals at Restaurant Hubert")
+  {{CTA_TEXT}}        — button label. OPTIONAL ("") — blank drops the button
+  {{CTA_URL}}         — button href (the whole gallery links here too)
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  {{PANEL_BG}} {{PANEL_TEXT}} {{PANEL_SUB}} {{PANEL_BORDER}}
+RULES:
+  - DESIGNED BLOCK: slice to PNG. The staggered masonry columns are CSS grid with fixed tile
+    heights and object-fit:cover crops, none of which survive as live email HTML.
+  - Tiles are ALWAYS square-cornered and upright. No tilt, no overlap, no shadow: the photos
+    carry the block, the grid stays quiet. This is the tidy counterpart to polaroid-collage.
+  - LAYOUT decides the photo count. Photos beyond the layout's count are ignored; a layout's own
+    photos must all be filled (an empty one leaves a blank PANEL_BG tile, which reads as broken).
+      mosaic-5  — one large feature tile (PHOTO_1) + a 2×2 of four small tiles. 5 photos.
+      masonry-6 — 3 staggered columns (tall/short, short/tall, tall/short). 6 photos.
+      masonry-8 — 4 staggered columns, same rhythm. 8 photos. The practical ceiling: on a phone
+                  the 600px slice scales to ~62%, so each tile is ~80px wide. Do not add more.
+  - Crops favour the upper third (object-position center 30%) so faces and flower heads survive
+    the shorter tiles. Supply portrait (2:3) sources; landscape sources lose their edges.
+  - The header (SUPER_LABEL / ACCENT_SCRIPT / HEADLINE) and CTA are each optional. Blank all
+    three header tokens for a photos-only band. HEADLINE carries the gap to the grid, so a header
+    without a HEADLINE sits tight on the photos: use a HEADLINE whenever the header is used.
+  - ACCENT_SCRIPT is Cervanttis → lowercase; HEADLINE is Lust → sentence case.
+  - Script line carries padding-bottom:0.65em — clears the Cervanttis descender ink (see README)
+  - One link: the gallery slice and the button both go to CTA_URL. Max one gallery per email.
+  - Alt text: GALLERY_ALT is the slice alt and every tile's alt (describe the set, not the layout).
+  - MOBILE (known limit): the grid does not reflow; the slice scales as an image like every other
+    designed block. That is the shipping path, and it is why masonry-8 is the ceiling.
+PALETTE PRESETS (copy one row verbatim into the four PANEL_* tokens):
+  white :  PANEL_BG=#ffffff  PANEL_TEXT=#444444  PANEL_SUB=#aaaaaa  PANEL_BORDER=#e8e2da
+  clay  :  PANEL_BG=#D8CCBE  PANEL_TEXT=#000000  PANEL_SUB=#5f574d  PANEL_BORDER=#c7b9a9
+  50clay:  PANEL_BG=#EBE5DF  PANEL_TEXT=#444444  PANEL_SUB=#8a8178  PANEL_BORDER=#ded7cf
+  noir  :  PANEL_BG=#000000  PANEL_TEXT=#cfcac3  PANEL_SUB=#888888  PANEL_BORDER=#2c2825   (swap button to #fff/#000)
+  HEADLINE renders in the brand extreme: #000000 on light presets, #ffffff on noir.
+-->
+<tr><td style="padding:0;background:{{PANEL_BG}};">
+<style>
+  .eg .eg-grid { display:grid; width:540px; margin:0 auto; }
+  .eg.dn-tight .eg-grid { gap:4px; }
+  .eg.dn-regular .eg-grid { gap:8px; }
+  .eg.dn-airy .eg-grid { gap:14px; }
+  .eg .eg-grid img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 30%; border:0; }
+  .eg .eg-t { overflow:hidden; background:{{PANEL_BORDER}}; line-height:0; }
+  /* Every tile is hidden until the layout places it, so a layout never shows a stray photo. */
+  .eg .eg-t { display:none; }
+  /* mosaic-5: feature tile left spanning both rows, 2x2 on the right. */
+  .eg.ly-mosaic-5 .eg-grid { grid-template-columns:2fr 1fr 1fr; grid-template-rows:198px 198px;
+    grid-template-areas:"p1 p2 p3" "p1 p4 p5"; }
+  .eg.ly-mosaic-5 .t1, .eg.ly-mosaic-5 .t2, .eg.ly-mosaic-5 .t3,
+  .eg.ly-mosaic-5 .t4, .eg.ly-mosaic-5 .t5 { display:block; }
+  /* masonry-6/8: fixed 12-row track, tall tile = 7 rows, short = 5, alternating per column. */
+  .eg.ly-masonry-6 .eg-grid { grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(12,34px);
+    grid-template-areas:"p1 p3 p5" "p1 p3 p5" "p1 p3 p5" "p1 p3 p5" "p1 p3 p5" "p1 p4 p5" "p1 p4 p5"
+                        "p2 p4 p6" "p2 p4 p6" "p2 p4 p6" "p2 p4 p6" "p2 p4 p6"; }
+  .eg.ly-masonry-6 .t1, .eg.ly-masonry-6 .t2, .eg.ly-masonry-6 .t3,
+  .eg.ly-masonry-6 .t4, .eg.ly-masonry-6 .t5, .eg.ly-masonry-6 .t6 { display:block; }
+  .eg.ly-masonry-8 .eg-grid { grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(12,27px);
+    grid-template-areas:"p1 p3 p5 p7" "p1 p3 p5 p7" "p1 p3 p5 p7" "p1 p3 p5 p7" "p1 p3 p5 p7" "p1 p4 p5 p8" "p1 p4 p5 p8"
+                        "p2 p4 p6 p8" "p2 p4 p6 p8" "p2 p4 p6 p8" "p2 p4 p6 p8" "p2 p4 p6 p8"; }
+  .eg.ly-masonry-8 .eg-t { display:block; }
+  .eg .t1 { grid-area:p1; } .eg .t2 { grid-area:p2; } .eg .t3 { grid-area:p3; } .eg .t4 { grid-area:p4; }
+  .eg .t5 { grid-area:p5; } .eg .t6 { grid-area:p6; } .eg .t7 { grid-area:p7; } .eg .t8 { grid-area:p8; }
+  /* The masonry rows are a fixed px track, so the gap must not stack 11 times into the height:
+     row gap is zeroed and the column gap alone separates the stagger. The horizontal seam
+     between a column's two tiles comes from the tile's own top margin instead. */
+  .eg.ly-masonry-6 .eg-grid, .eg.ly-masonry-8 .eg-grid { row-gap:0; }
+  .eg.dn-tight .t2, .eg.dn-tight .t4, .eg.dn-tight .t6, .eg.dn-tight .t8 { margin-top:4px; }
+  .eg.dn-regular .t2, .eg.dn-regular .t4, .eg.dn-regular .t6, .eg.dn-regular .t8 { margin-top:8px; }
+  .eg.dn-airy .t2, .eg.dn-airy .t4, .eg.dn-airy .t6, .eg.dn-airy .t8 { margin-top:14px; }
+  .eg.ly-mosaic-5 .t2, .eg.ly-mosaic-5 .t4 { margin-top:0; }
+  /* Noir preset: headline to the white extreme and the button inverts (house rule). */
+  .eg[data-bg="#000000"] .eg-hl { color:#ffffff !important; }
+  .eg[data-bg="#000000"] .eg-btn { background:#ffffff !important; color:#000000 !important; }
+</style>
+<table width="600" cellpadding="0" cellspacing="0" border="0" class="eg ly-{{LAYOUT}} dn-{{DENSITY}} f600" data-bg="{{PANEL_BG}}" style="background:{{PANEL_BG}};">
+  <tr><td style="padding:46px 50px 0;text-align:center;">
+    {{#SUPER_LABEL}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:{{PANEL_SUB}};margin:0 0 14px 0;">{{SUPER_LABEL}}</p>{{/SUPER_LABEL}}
+    {{#ACCENT_SCRIPT}}<p style="font-family:'Cervanttis','Palatino Linotype',Palatino,Georgia,serif;font-weight:400;font-style:normal;font-synthesis:none;-webkit-font-smoothing:antialiased;font-size:30px;color:{{PANEL_TEXT}};line-height:1.0;padding-bottom:0.65em;margin:0 0 4px 0;">{{ACCENT_SCRIPT}}</p>{{/ACCENT_SCRIPT}}
+    {{#HEADLINE}}<p class="eg-hl" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:26px;color:#000000;line-height:1.2;margin:0 auto 30px;max-width:440px;">{{HEADLINE}}</p>{{/HEADLINE}}
+  </td></tr>
+  <tr><td style="padding:0 30px;">
+    <a href="{{CTA_URL}}" style="display:block;text-decoration:none;">
+      <div class="eg-grid">
+        <div class="eg-t t1"><img src="{{PHOTO_1_URL}}" alt="{{GALLERY_ALT}}"></div>
+        <div class="eg-t t2"><img src="{{PHOTO_2_URL}}" alt="{{GALLERY_ALT}}"></div>
+        <div class="eg-t t3"><img src="{{PHOTO_3_URL}}" alt="{{GALLERY_ALT}}"></div>
+        <div class="eg-t t4"><img src="{{PHOTO_4_URL}}" alt="{{GALLERY_ALT}}"></div>
+        <div class="eg-t t5"><img src="{{PHOTO_5_URL}}" alt="{{GALLERY_ALT}}"></div>
+        {{#PHOTO_6_URL}}<div class="eg-t t6"><img src="{{PHOTO_6_URL}}" alt="{{GALLERY_ALT}}"></div>{{/PHOTO_6_URL}}
+        {{#PHOTO_7_URL}}<div class="eg-t t7"><img src="{{PHOTO_7_URL}}" alt="{{GALLERY_ALT}}"></div>{{/PHOTO_7_URL}}
+        {{#PHOTO_8_URL}}<div class="eg-t t8"><img src="{{PHOTO_8_URL}}" alt="{{GALLERY_ALT}}"></div>{{/PHOTO_8_URL}}
+      </div>
+    </a>
+  </td></tr>
+  <tr><td style="padding:0 30px 46px;text-align:center;">
+    {{#CTA_TEXT}}<div style="padding-top:30px;"><a class="eg-btn" href="{{CTA_URL}}" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;line-height:1;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">{{CTA_TEXT}}</a></div>{{/CTA_TEXT}}
+  </td></tr>
+</table>
+</td></tr>
