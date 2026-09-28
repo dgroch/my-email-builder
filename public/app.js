@@ -34,6 +34,9 @@ fetch('/api/schema').then(r => r.json()).then(s => {
     sel.append(og);
   }
   bindToolbar();
+  // Deep link: /?design=<id> opens that saved design straight into the builder.
+  const linked = new URLSearchParams(location.search).get('design');
+  if (linked) loadDesign(linked);
 });
 
 // ── campaign model helpers ──────────────────────────────────────────────────────
@@ -464,7 +467,7 @@ async function exportHtml() {
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {
   const fr = new FileReader();
-  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; currentDesignId = null; currentDesignMeta = {}; hydrate(); } catch (e) { alert('Invalid JSON'); } };
+  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); } catch (e) { alert('Invalid JSON'); } };
   fr.readAsText(file);
 }
 function hydrate() {
@@ -594,8 +597,10 @@ async function submitCreate() {
     // Load the campaign into the builder.
     campaign = JSON.parse(JSON.stringify(camp));
     uid = Math.max(1, ...campaign.blocks.map(b => (b && b.id) || 0)) + 1;
+    supersedeLoads();
     if (data.design && data.design.id) currentDesignId = data.design.id;
     else currentDesignId = null;
+    setDesignUrl(currentDesignId);
     currentDesignMeta = { subjectLine: (data.design && data.design.subjectLine) || camp.subjectLine || '', previewText: (data.design && data.design.previewText) || camp.previewText || '' };
     $('#campaignName').value = campaign.campaignName || (data.design && data.design.name) || '';
     $('#bodyBg').value = campaign.bodyBg || '#2c2825';
@@ -635,7 +640,7 @@ function bindToolbar() {
   $('#btnExportJson').onclick = exportJson;
   $('#btnImport').onclick = () => $('#fileImport').click();
   $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
-  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; currentDesignId = null; currentDesignMeta = {}; hydrate(); };
+  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); };
   $('#btnKlaviyo').onclick = openKlaviyo;
   $('#kvSubmit').onclick = submitKlaviyo;
   $('#btnSave').onclick = saveDesign;
@@ -651,11 +656,28 @@ function bindToolbar() {
 let currentDesignId = null;   // server id of the design currently loaded (null = unsaved)
 let currentDesignMeta = {};   // { subjectLine, previewText } of the loaded design — feeds the Klaviyo modal prefill
 
+// Keep the address bar on /?design=<id> for whichever saved design is open, so the URL is always a
+// shareable deep link; an unsaved campaign drops the parameter. replaceState, not pushState: Back
+// should leave the builder, not step through every design opened in it.
+// Every design load takes a ticket; anything that replaces what is on screen (another load, the
+// sample, an import, a generation, a save, deleting the open design) takes a newer one. A load
+// whose ticket is no longer current when its response lands is discarded, so a slow deep-link
+// load can never overwrite work the user started in the meantime.
+let loadSeq = 0;
+function supersedeLoads() { return ++loadSeq; }
+
+function setDesignUrl(id) {
+  const url = new URL(location.href);
+  if (id) url.searchParams.set('design', id); else url.searchParams.delete('design');
+  if (url.href !== location.href) history.replaceState(null, '', url);
+}
+
 async function saveDesign() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
   refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
+  supersedeLoads();   // what is on screen is what gets saved; a load still in flight must not replace it
   try {
     let r;
     if (currentDesignId) {
@@ -668,6 +690,7 @@ async function saveDesign() {
     if (!r.ok) throw new Error('save failed');
     const d = await r.json();
     currentDesignId = d.id;
+    setDesignUrl(d.id);
     setStatus('saved ✓', 'ok');
   } catch (e) { setStatus('save failed', 'warn'); }
 }
@@ -699,17 +722,28 @@ async function openDesigns() {
 }
 
 async function loadDesign(id) {
+  const ticket = supersedeLoads();
   try {
-    const d = await (await fetch('/api/designs/' + id)).json();
+    const r = await fetch('/api/designs/' + encodeURIComponent(id));
+    if (ticket !== loadSeq) return;   // superseded while in flight
+    if (r.status === 404) { setDesignUrl(currentDesignId); setStatus('design not found — the link may be out of date', 'warn'); return; }
+    const d = await r.json();
+    if (ticket !== loadSeq) return;
     if (!d || !d.campaign) throw new Error('bad design');
     campaign = d.campaign;
     uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1;
     currentDesignId = d.id;
     currentDesignMeta = { subjectLine: d.subjectLine || '', previewText: d.previewText || '' };
+    setDesignUrl(d.id);
     $('#designsDialog').close();
     hydrate();
     setStatus('opened “' + (d.name || 'design') + '”', 'ok');
-  } catch (e) { setStatus('open failed', 'warn'); }
+  } catch (e) {
+    if (ticket !== loadSeq) return;
+    // Point the address bar back at what is actually on screen, not the design that failed.
+    setDesignUrl(currentDesignId);
+    setStatus('open failed', 'warn');
+  }
 }
 
 async function cloneDesign(id) {
@@ -724,7 +758,7 @@ async function deleteDesign(id, row) {
   if (!confirm('Delete this design? This cannot be undone.')) return;
   try {
     await fetch('/api/designs/' + id, { method: 'DELETE' });
-    if (id === currentDesignId) { currentDesignId = null; currentDesignMeta = {}; }
+    if (id === currentDesignId) { supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); }
     row.remove();
   } catch (e) { setStatus('delete failed', 'warn'); }
 }

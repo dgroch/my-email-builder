@@ -68,6 +68,15 @@ const MIME = {
 function send(res, code, body, headers = {}) { res.writeHead(code, headers); res.end(body); }
 function json(res, code, obj) { send(res, code, JSON.stringify(obj), { 'Content-Type': MIME['.json'] }); }
 
+// Deep link that opens a saved design in the builder (public/app.js reads ?design=). Built from the
+// request's own host, so it points at whichever deploy answered: the link is for a person to click,
+// not for a recipient's mail client, which is why PUBLIC_ASSETS_BASE has no say here.
+function designLink(req, id) {
+  const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
+  return req.headers.host && id ? `${proto}://${req.headers.host}/?design=${encodeURIComponent(id)}` : null;
+}
+function withLink(req, d) { return d && d.id ? { ...d, link: designLink(req, d.id) } : d; }
+
 function serveFile(res, filePath) {
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, 'Not found');
   const ext = path.extname(filePath).toLowerCase();
@@ -213,7 +222,7 @@ const server = http.createServer(async (req, res) => {
         return json(res, 200, {
           campaign: result.campaign,
           validation: result.validation || null,
-          design: design || null,
+          design: withLink(req, design) || null,
           liveContext: ctx ? {
             asOf: ctx.asOf,
             contextStatus: ctx.contextStatus,
@@ -548,12 +557,12 @@ const server = http.createServer(async (req, res) => {
 
     // ── persisted designs (save / reopen / clone / delete) ───────────────────────
     // Store calls are awaited so either backend works (disk = sync, Notion = async).
-    if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: await designs.list() });
+    if (req.method === 'GET' && p === '/api/designs') return json(res, 200, { designs: (await designs.list()).map((d) => withLink(req, d)) });
 
     if (req.method === 'POST' && p === '/api/designs') {
       // Pass the whole body so design metadata (isExample, objective, approvalStatus, …) is
       // persisted alongside name + campaign.
-      return json(res, 200, await designs.create(await readBody(req)));
+      return json(res, 200, withLink(req, await designs.create(await readBody(req))));
     }
 
     // /api/designs/:id  and  /api/designs/:id/clone
@@ -564,11 +573,11 @@ const server = http.createServer(async (req, res) => {
       if (req.method === 'POST' && action === 'clone') {
         const { name } = await readBody(req);
         const d = await designs.clone(id, name);
-        return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' });
+        return d ? json(res, 200, withLink(req, d)) : json(res, 404, { error: 'Design not found.' });
       }
       if (!action) {
-        if (req.method === 'GET') { const d = await designs.get(id); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
-        if (req.method === 'PUT') { const d = await designs.update(id, await readBody(req)); return d ? json(res, 200, d) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'GET') { const d = await designs.get(id); return d ? json(res, 200, withLink(req, d)) : json(res, 404, { error: 'Design not found.' }); }
+        if (req.method === 'PUT') { const d = await designs.update(id, await readBody(req)); return d ? json(res, 200, withLink(req, d)) : json(res, 404, { error: 'Design not found.' }); }
         if (req.method === 'DELETE') return (await designs.remove(id)) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Design not found.' });
       }
     }
