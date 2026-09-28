@@ -2467,6 +2467,37 @@ async function integrationSuite() {
       await page.goto(`${origin}/?design=does-not-exist`, { waitUntil: 'networkidle0' });
       await page.waitForFunction(() => !location.search.includes('design='), { timeout: 10000 }).catch(() => {});
       ok(!page.url().includes('design='), 'a stale deep link is dropped from the address bar rather than left to mislead');
+
+      // A slow deep-link load must not overwrite what the user did in the meantime: hold the
+      // design request, load the sample, then let the request land.
+      const designPath = '/api/designs/' + encodeURIComponent(made.body.id);
+      let held = null, heldSeen;
+      const seen = new Promise((resolve) => { heldSeen = resolve; });
+      let failNext = false;
+      await page.setRequestInterception(true);
+      const onRequest = (r) => {
+        if (!r.url().endsWith(designPath)) return r.continue();
+        if (failNext) return r.respond({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' });
+        held = r; heldSeen();
+      };
+      page.on('request', onRequest);
+      await page.goto(made.body.link, { waitUntil: 'domcontentloaded' });
+      await seen;
+      await page.evaluate(() => document.querySelector('#btnSample').click());
+      await held.continue();
+      await page.waitForResponse((res) => res.url().endsWith(designPath)).catch(() => {});
+      await new Promise((r) => setTimeout(r, 300));
+      eq(await page.$eval('#campaignName', (e) => e.value), 'When the card is the hard part',
+        'a deep-link load that lands after the user loaded the sample is discarded, not applied over it');
+      ok(!page.url().includes('design='), 'the superseded load does not put its id back in the address bar');
+
+      // A failed load (not a 404) must not leave a link to a design that is not on screen.
+      failNext = true;
+      await page.goto(made.body.link, { waitUntil: 'networkidle0' });
+      await page.waitForFunction(() => !location.search.includes('design='), { timeout: 10000 }).catch(() => {});
+      ok(!page.url().includes('design='), 'a failed deep-link load clears the address bar back to what is on screen');
+      page.off('request', onRequest);
+      await page.setRequestInterception(false);
     } finally {
       await cleanup();
       await call('DELETE', '/api/designs/' + made.body.id);

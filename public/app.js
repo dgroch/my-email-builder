@@ -467,7 +467,7 @@ async function exportHtml() {
 function exportJson() { download((campaign.campaignName || 'campaign').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(campaign, null, 2), 'application/json'); }
 function importJson(file) {
   const fr = new FileReader();
-  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); } catch (e) { alert('Invalid JSON'); } };
+  fr.onload = () => { try { campaign = JSON.parse(fr.result); uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1; supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); } catch (e) { alert('Invalid JSON'); } };
   fr.readAsText(file);
 }
 function hydrate() {
@@ -597,6 +597,7 @@ async function submitCreate() {
     // Load the campaign into the builder.
     campaign = JSON.parse(JSON.stringify(camp));
     uid = Math.max(1, ...campaign.blocks.map(b => (b && b.id) || 0)) + 1;
+    supersedeLoads();
     if (data.design && data.design.id) currentDesignId = data.design.id;
     else currentDesignId = null;
     setDesignUrl(currentDesignId);
@@ -639,7 +640,7 @@ function bindToolbar() {
   $('#btnExportJson').onclick = exportJson;
   $('#btnImport').onclick = () => $('#fileImport').click();
   $('#fileImport').onchange = e => e.target.files[0] && importJson(e.target.files[0]);
-  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); };
+  $('#btnSample').onclick = () => { campaign = JSON.parse(JSON.stringify(SAMPLE)); uid = campaign.blocks.length + 1; supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); hydrate(); };
   $('#btnKlaviyo').onclick = openKlaviyo;
   $('#kvSubmit').onclick = submitKlaviyo;
   $('#btnSave').onclick = saveDesign;
@@ -658,6 +659,13 @@ let currentDesignMeta = {};   // { subjectLine, previewText } of the loaded desi
 // Keep the address bar on /?design=<id> for whichever saved design is open, so the URL is always a
 // shareable deep link; an unsaved campaign drops the parameter. replaceState, not pushState: Back
 // should leave the builder, not step through every design opened in it.
+// Every design load takes a ticket; anything that replaces what is on screen (another load, the
+// sample, an import, a generation, a save, deleting the open design) takes a newer one. A load
+// whose ticket is no longer current when its response lands is discarded, so a slow deep-link
+// load can never overwrite work the user started in the meantime.
+let loadSeq = 0;
+function supersedeLoads() { return ++loadSeq; }
+
 function setDesignUrl(id) {
   const url = new URL(location.href);
   if (id) url.searchParams.set('design', id); else url.searchParams.delete('design');
@@ -669,6 +677,7 @@ async function saveDesign() {
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
   refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
+  supersedeLoads();   // what is on screen is what gets saved; a load still in flight must not replace it
   try {
     let r;
     if (currentDesignId) {
@@ -713,10 +722,13 @@ async function openDesigns() {
 }
 
 async function loadDesign(id) {
+  const ticket = supersedeLoads();
   try {
     const r = await fetch('/api/designs/' + encodeURIComponent(id));
+    if (ticket !== loadSeq) return;   // superseded while in flight
     if (r.status === 404) { setDesignUrl(currentDesignId); setStatus('design not found — the link may be out of date', 'warn'); return; }
     const d = await r.json();
+    if (ticket !== loadSeq) return;
     if (!d || !d.campaign) throw new Error('bad design');
     campaign = d.campaign;
     uid = Math.max(1, ...campaign.blocks.map(b => b.id || 0)) + 1;
@@ -726,7 +738,12 @@ async function loadDesign(id) {
     $('#designsDialog').close();
     hydrate();
     setStatus('opened “' + (d.name || 'design') + '”', 'ok');
-  } catch (e) { setStatus('open failed', 'warn'); }
+  } catch (e) {
+    if (ticket !== loadSeq) return;
+    // Point the address bar back at what is actually on screen, not the design that failed.
+    setDesignUrl(currentDesignId);
+    setStatus('open failed', 'warn');
+  }
 }
 
 async function cloneDesign(id) {
@@ -741,7 +758,7 @@ async function deleteDesign(id, row) {
   if (!confirm('Delete this design? This cannot be undone.')) return;
   try {
     await fetch('/api/designs/' + id, { method: 'DELETE' });
-    if (id === currentDesignId) { currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); }
+    if (id === currentDesignId) { supersedeLoads(); currentDesignId = null; currentDesignMeta = {}; setDesignUrl(null); }
     row.remove();
   } catch (e) { setStatus('delete failed', 'warn'); }
 }
