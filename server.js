@@ -37,6 +37,15 @@ const designs = (process.env.NOTION_TOKEN && process.env.NOTION_DESIGNS_DB)
     ? require('./lib/designsPg')
     : require('./lib/designs');
 
+const {authorizeExport,createArtifactService}=require('./lib/publishArtifacts');
+const publishAssembly=require('./lib/publishAssembly');
+let artifactService;
+function exportsService(req){
+ if(!authorizeExport(req.headers.authorization,process.env.BUILDER_EXPORT_CREDENTIAL))return null;
+ if(!artifactService)artifactService=createArtifactService({binding:{tenantId:process.env.BUILDER_EXPORT_TENANT,credential:process.env.BUILDER_EXPORT_CREDENTIAL},getDesign:id=>designs.get(id),freeze:d=>publishAssembly.freezeSavedDesign(d),render:publishAssembly.renderFrozenArtifact});
+ return artifactService;
+}
+const artifactTimer=setInterval(()=>{if(artifactService)artifactService.runNext().catch(()=>{});},1000);artifactTimer.unref();
 const PORT = process.env.PORT || 4321;
 const ROOT = __dirname;
 const DS = render.DS;
@@ -370,6 +379,22 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
       }
+    }
+
+    if(req.method==='GET'&&p==='/api/publishing-config'){
+      const origin=process.env.ENGAGEMENT_ENGINE_ORIGIN||'';
+      let enabled=false;try{const u=new URL(origin);enabled=u.protocol==='https:'&&u.origin===origin&&u.hostname.endsWith('.figandbloom.com')&&!u.username&&!u.password&&!u.port;}catch(_){}
+      return json(res,200,{engineOrigin:enabled?origin:null});
+    }
+
+    if(p==='/api/publish-artifacts'||p.startsWith('/api/publish-artifacts/')){
+      res.setHeader('Cache-Control','no-store');
+      const service=exportsService(req);if(!service)return json(res,401,{errorCode:'EXPORT_AUTH_REQUIRED'});
+      try {
+        if(req.method==='POST'&&p==='/api/publish-artifacts')return json(res,202,await service.start(await readBody(req)));
+        if(req.method==='GET'&&p.startsWith('/api/publish-artifacts/')){const result=await service.get(p.slice('/api/publish-artifacts/'.length));return json(res,result.artifact?200:result.state==='failed'?422:202,result);}
+        return json(res,405,{errorCode:'METHOD_NOT_ALLOWED'});
+      }catch(e){return json(res,e.status||503,{errorCode:e.status?e.message:'EXPORT_UNAVAILABLE'});}
     }
 
     // Create a *draft* campaign in Klaviyo, built from per-block image slices so each block

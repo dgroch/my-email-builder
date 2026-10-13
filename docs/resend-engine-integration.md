@@ -52,3 +52,20 @@ Pin the engine contract version and copy its synthetic compatibility fixtures. V
 First deliverable: an authenticated, idempotent, visually verified design-to-engine import and unsent native draft. Engine readiness covers the provider/account capabilities. Later engine tasks add contact/topic projection, final audience checks, local scheduling, native release/cancel and receipt reconciliation. Full Klaviyo retirement also covers forms, consent/history authority, all retained SMS and journeys, coupons, stock subscriptions, pending steps and historical links/assets; see the principal migration specification.
 
 The existing Klaviyo audience picker and `lib/liveContext.js` audience context must eventually read engine audience definitions. Make that a separate compatibility change after the engine exposes its versioned definitions; generator context receives names/rules, never permission to select recipients or send. Remove Klaviyo keys/calls only after all builder dependencies are accounted for and the legacy workflow is explicitly retired.
+
+## 13 October implementation checkpoint
+
+The first local preparation slice is on `codex/engine-artifact-publishing`; [scope/checks](publishing-slice.md) records the paired engine branch and limitations. Frozen export now captures supported image/background/CSS resources and blocks uncaptured render requests. The engine remains the approval/audience/provider owner. Neither repository has installed this publishing path in hosted operation. The source-flow and actual-data migration workstreams remain separately unfinished.
+
+## 14 October installation continuation
+
+Review follow-up: campaign cells can carry optional opaque `backgroundColor` (`#RGB` or `#RRGGBB`) to preserve GIF-column panel colours. Publish the compatible engine reader before enabling this builder writer; old readers reject the unknown field. Existing artifacts without it remain valid and unchanged. The browser handoff compares structural campaign values, so PostgreSQL object-key ordering is ignored while content and block order must still match the saved design. See [review evidence](publishing-slice.md).
+
+The [concrete paired installation operation](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/operations/publishing-installation.md) prepares a dedicated campaign asset host/private R2 bucket/read-only gateway, protected export credential, worker-only publishing binding and exact unsent readback sequence. Existing Namecheap and media-library configuration is preserved. Compatible engine release precedes enabling builder navigation; hosted PostgreSQL persistence and preservation of existing designs/components/brand are required. Deployment/configuration authority and actual installed pipeline verification remain distinct from the local tests and connector-only draft probe.
+
+
+## 14 October navigation and content corrections
+
+Subject and Preview text are editable in the builder and saved on the design. Save after changing either before publishing; missing or unsaved metadata holds the handoff. This supports manually authored and cloned designs as well as generated ones. Engine sign-in now preserves the import address, and campaign-list entries reopen the frozen preview instead of the ordinary composer.
+
+Inline GIF data URLs remain confined to frozen export; ordinary legacy slices are uploadable images. Artifact plain text is extracted structurally without stylesheet bodies and with decoded entities, readable links and image alt text. The original compatibility fixture is unchanged. See the [paired fix evidence](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-navigation-fixes.md). Hosted installation, email-client acceptance, actual flow transfer and customer-data migration remain separately unverified.
