@@ -1,5 +1,7 @@
 # Immutable export publishing slice — 13 October 2026
 
+**14 October — navigation/content fix pass (implementation926e610):** Editable saved subject/preview metadata supports manual designs; dirty metadata holds handoff. Ordinary inline GIFs remain raster uploads while frozen exports preserve GIF media. Plain text excludes styles and decodes entities/links/alt fallback. Disk passes 3280 legacy assertions +24 publishing tests; fresh PostgreSQL passes 3283 +24. Real local Chromium verified save/reload/handoff at desktop/mobile widths with no page errors. [Paired evidence and continuation](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-navigation-fixes.md) retains all software/flow/data operational gates. No production operations occurred.
+
 ## 14 October review follow-up
 
 Three paired review defects received a test-first fix pass: this builder's handoff now compares JSON structurally so JSONB object-key ordering cannot reject an unchanged saved design; array order and nested changes still hold. Frozen image/column cells preserve the renderer's optional opaque hex `backgroundColor`, including transparent GIFs and unequal-height neighbours. The paired engine also excludes welcome signing keys from publishing credentials. See [engine evidence](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-review-followup.md).
