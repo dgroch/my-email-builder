@@ -1,5 +1,7 @@
 # Fig & Bloom — Email Builder
 
+Proposed next integration: [native Resend Broadcast publishing through the customer engagement engine](docs/resend-engine-integration.md), including the cross-repository architecture, artifact contract, active Klaviyo flow porting and actual data migration plan.
+
 A local token-editor **UI + render server** for building on-brand Fig & Bloom campaign
 emails from the locked design-system templates. Pick blocks, fill their tokens in a form
 that **generates itself from the templates**, watch a live preview, then rasterise a
