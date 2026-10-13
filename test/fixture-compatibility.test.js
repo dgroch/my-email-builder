@@ -1,2 +1,35 @@
-const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('fs');const path=require('path');const artifact=require('../lib/campaignArtifact');
-test('shared compatibility fixture keeps pinned hash and immutable media',()=>{const f=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/artifact-v1/compatibility.json'),'utf8'));assert.equal(f.artifact.artifactHash,'2c2dcd4c2de15e80bc7f78bd48c3e8bb01aa1e24cd214fd85703c211b2006c2c');assert.equal(artifact.hash(Object.fromEntries(Object.entries(f.artifact).filter(([k])=>k!=='artifactHash'))),f.artifact.artifactHash);for(const asset of f.artifact.assets)assert.equal(artifact.binaryHash(Buffer.from(f.media.find(x=>x.assetId===asset.id).base64,'base64')),asset.sha256);});
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
+const artifact = require("../lib/campaignArtifact");
+test("shared compatibility fixture keeps pinned hash and immutable media", () => {
+  const f = JSON.parse(
+    fs.readFileSync(
+      path.join(__dirname, "fixtures/artifact-v1/compatibility.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(
+    f.artifact.artifactHash,
+    "2c2dcd4c2de15e80bc7f78bd48c3e8bb01aa1e24cd214fd85703c211b2006c2c",
+  );
+  assert.equal(
+    artifact.hash(
+      Object.fromEntries(
+        Object.entries(f.artifact).filter(([k]) => k !== "artifactHash"),
+      ),
+    ),
+    f.artifact.artifactHash,
+  );
+  for (const asset of f.artifact.assets)
+    assert.equal(
+      artifact.binaryHash(
+        Buffer.from(
+          f.media.find((x) => x.assetId === asset.id).base64,
+          "base64",
+        ),
+      ),
+      asset.sha256,
+    );
+});
