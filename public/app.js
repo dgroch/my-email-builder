@@ -471,6 +471,8 @@ function importJson(file) {
   fr.readAsText(file);
 }
 function hydrate() {
+  $('#subjectLine').value = currentDesignMeta.subjectLine ?? campaign.subjectLine ?? '';
+  $('#previewText').value = currentDesignMeta.previewText ?? campaign.previewText ?? '';
   $('#campaignName').value = campaign.campaignName || '';
   $('#bodyBg').value = campaign.bodyBg || '#2c2825';
   renderBlocks(); livePreview();
@@ -675,21 +677,23 @@ function setDesignUrl(id) {
 async function saveDesign() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  const metadata = {subjectLine: $('#subjectLine').value.trim(), previewText: $('#previewText').value.trim()};
   refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
   supersedeLoads();   // what is on screen is what gets saved; a load still in flight must not replace it
   try {
     let r;
     if (currentDesignId) {
-      r = await fetch('/api/designs/' + currentDesignId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: campaign.campaignName, campaign }) });
+      r = await fetch('/api/designs/' + currentDesignId, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: campaign.campaignName, campaign, ...metadata }) });
     } else {
       const name = prompt('Name this design:', campaign.campaignName || 'Untitled design');
       if (name === null) return;
-      r = await fetch('/api/designs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, campaign }) });
+      r = await fetch('/api/designs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, campaign, ...metadata }) });
     }
     if (!r.ok) throw new Error('save failed');
     const d = await r.json();
     currentDesignId = d.id;
+    currentDesignMeta = {subjectLine: d.subjectLine || '', previewText: d.previewText || ''};
     setDesignUrl(d.id);
     setStatus('saved ✓', 'ok');
   } catch (e) { setStatus('save failed', 'warn'); }
@@ -944,7 +948,8 @@ fetch('/api/publishing-config').then(r=>r.json()).then(config=>{
   if(!currentDesignId){setStatus('Save this design before publishing','warn');return;}
   const r=await fetch('/api/designs/'+encodeURIComponent(currentDesignId));if(!r.ok)throw Error('Saved design unavailable');const design=await r.json();
   if(!sameCampaignValue(design.campaign,campaign)){setStatus('Save your latest changes before publishing','warn');return;}
-  if(!design.subjectLine||!design.previewText){setStatus('Save a subject and preview text on the design before publishing','warn');return;}
+  if((design.subjectLine||'').trim()!==$('#subjectLine').value.trim()||(design.previewText||'').trim()!==$('#previewText').value.trim()){setStatus('Save your latest subject and preview text before publishing','warn');return;}
+  if(!design.subjectLine?.trim()||!design.previewText?.trim()){setStatus('Save a subject and preview text on the design before publishing','warn');return;}
   const target=new URL('/campaigns/import',config.engineOrigin);target.searchParams.set('designId',design.id);target.searchParams.set('expectedUpdatedAt',design.updatedAt);window.location.assign(target.href);
  }catch(e){setStatus(e.message||'Publishing unavailable','warn');}};
 }).catch(()=>{});

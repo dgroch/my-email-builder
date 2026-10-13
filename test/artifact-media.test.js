@@ -81,7 +81,10 @@ test("real raster worker preserves GIF columns and captured PNG bytes", async ()
       new AbortController().signal,
     );
     assert.equal(result.artifact.rows[0].kind, "columns");
-    assert.deepEqual(result.artifact.rows[0].cells.map(c => c.backgroundColor), ['#e00000', '#e00000']);
+    assert.deepEqual(
+      result.artifact.rows[0].cells.map((c) => c.backgroundColor),
+      ["#e00000", "#e00000"],
+    );
     assert.ok(result.artifact.assets.some((a) => a.mime === "image/gif"));
     assert.equal(
       result.media.find(
@@ -291,4 +294,68 @@ test("a sub-budget image can be frozen and rendered from its persisted snapshot"
 });
 require("node:test").after(async () => {
   await require("../lib/db").close();
+});
+
+test("ordinary inline GIF slices remain uploadable raster images", async () => {
+  const render = require("../lib/render");
+  const images = require("../lib/imageOptimiser");
+  const src =
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+  const html = `<html><body><table width="600"><tbody data-eb-block="0"><tr><td><img src="${src}" width="600" height="30"></td></tr></tbody></table></body></html>`;
+  try {
+    const rendered = await render.renderSlices(html, { scale: 1 });
+    const result = await images.optimiseSlices(rendered.slices);
+    assert.equal(result.slices[0].kind, "png");
+    assert.ok(result.slices[0].buffer.length > 0);
+    assert.equal(result.slices[0].src, undefined);
+  } finally {
+    await render.closeBrowser();
+  }
+});
+
+test("artifact plain text excludes styles and decodes readable copy and links", async () => {
+  const design = {
+    id: "text-design",
+    name: "Synthetic",
+    updatedAt: "2026-10-14T00:00:00Z",
+    subjectLine: "Synthetic",
+    previewText: "Synthetic",
+    campaign: {
+      blocks: [
+        { component: "blocks/fixture", tokens: {} },
+        { component: "footer", tokens: {} },
+      ],
+    },
+  };
+  const frozen = await assembly.freezeSavedDesign(design, {
+    brand: { colours: {}, baseline: {} },
+    resolve: (name) => ({
+      html:
+        name === "footer"
+          ? "<tr><td>{% unsubscribe %}</td></tr>"
+          : '<tr><td><style>/* private layout */ .copy { color:red; }</style><h2>Fig &amp; Bloom</h2><p>Read <strong>this</strong> today.</p><a href="https://figandbloom.com/?a=1&amp;b=2">Shop</a><img alt="A bouquet" width="1" height="1" src="https://cdn.shopify.com/fixture.png"></td></tr>',
+    }),
+    loadImage: async () =>
+      require("sharp")({
+        create: { width: 1, height: 1, channels: 3, background: "#fff" },
+      })
+        .png()
+        .toBuffer(),
+  });
+  try {
+    const { artifact } = await assembly.renderFrozenArtifact(
+      frozen,
+      new AbortController().signal,
+    );
+    assert.doesNotMatch(artifact.text, /private layout|color:red|&amp;/);
+    assert.match(artifact.text, /Fig & Bloom/);
+    assert.match(artifact.text, /Read this today\./);
+    assert.match(
+      artifact.text,
+      /Shop \(https:\/\/figandbloom\.com\/\?a=1&b=2\)/,
+    );
+    assert.match(artifact.text, /A bouquet/);
+  } finally {
+    await require("../lib/render").closeBrowser();
+  }
 });
