@@ -37,5 +37,9 @@ for (const [name, probe] of [['fallback', false], ['candidate-test-only', true]]
   records[name] = { bytes: Buffer.byteLength(html), sha256: crypto.createHash('sha256').update(html).digest('hex'),
     status: probe ? 'Unverified test artifact. Not a production carousel.' : 'Production exports use this static fallback.' };
 }
+const builderHtml = render.assemble(campaign, { production: true, shell: 'production', previewText: campaign.previewText, assetsBase: 'https://my-email-builder.onrender.com/design-system/assets' }).html;
+fs.writeFileSync(path.join(out, 'builder-production.html'), builderHtml);
+records['builder-production'] = { bytes: Buffer.byteLength(builderHtml), sha256: crypto.createHash('sha256').update(builderHtml).digest('hex'),
+  status: 'Full HTML export path used by the builder download. Static cards.' };
 fs.writeFileSync(path.join(out, 'export-evidence.json'), JSON.stringify({ generatedAt: new Date().toISOString(), artifacts: records }, null, 2) + '\n');
 console.log(JSON.stringify(records, null, 2));

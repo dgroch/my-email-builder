@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<!-- Light-only: iOS/Apple Mail and Gmail auto-invert email colours in dark mode, but they
+     only invert LIVE HTML — images are never touched. Our Klaviyo push is a mix (designed
+     blocks ship as rasterised image slices, html_only_components ship as live HTML), so
+     without this opt-out the email renders as a patchwork: sliced blocks keep their designed
+     colours while live blocks flip (a live black band under a black hero slice went WHITE).
+     Declaring the email light-only keeps every block exactly as designed. -->
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>TEST - Product carousel feasibility</title>
+<!--[if !mso]><!-->
+<style>
+@font-face{font-family:'Cervanttis';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cervanttis.ttf') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'Lust';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lust-Regular.woff2') format('woff2');font-weight:normal;font-style:normal;font-display:swap;}
+/* NeuzeitGro is the BODY face — nearly every word in every send is set in it. These two URLs
+   pointed at .otf files that do not exist on the CDN and returned 404, silently, so every
+   email went out in Calibri or whatever the stack fell through to. The faces are hosted as
+   .woff2; these are the widest-coverage uploads (full Latin-1, no folded glyphs — verified
+   with `npm run check:fonts`, which exists so this cannot rot unnoticed again). */
+@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Lig.woff2?v=1787899592') format('woff2');font-weight:300;font-style:normal;font-display:swap;}
+@font-face{font-family:'NeuzeitGro';src:url('https://cdn.shopify.com/s/files/1/0657/8723/2489/files/NeuzeitGro-Bol.woff2?v=1787899592') format('woff2');font-weight:700;font-style:normal;font-display:swap;}
+/* Gill Sans is deliberately NOT loaded as a web font. It was, pointing at three .otf files that
+   have never existed on the CDN — three 404s on every open, buying nothing. It stays in the
+   fallback STACK below (a system face on macOS/iOS) but is not something we host: it is a
+   licensed Monotype face and nobody has uploaded it. With NeuzeitGro actually loading again,
+   the stack rarely gets that far anyway. */
+</style>
+<!--<![endif]-->
+<style>
+/* PRODUCTION: No base64 fonts. Font CDN link above for Apple Mail/iOS.
+   All elements use fallback stacks inline. */
+:root{color-scheme:light;supported-color-schemes:light;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body,table,td{font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;}
+img{border:0;line-height:100%;outline:none;text-decoration:none;display:block;}
+table{border-collapse:collapse;}
+
+@media only screen and (max-width:600px){
+  .ew{width:100%!important;}
+  .f600{width:100%!important;max-width:100%!important;}
+  .fm{width:100%!important;}
+  /* Full-bleed 600px images, paired with the inline `width:100%;max-width:600px` on the tag.
+     The cap has to be a VIEWPORT unit, not a percentage. An image that has not loaded — a bad
+     URL, or images off, which is how a great many people read email — takes its intrinsic size
+     from its width/height attributes, so it has a 600x600 aspect ratio and a definite CSS
+     height. `width:100%` against a shrink-to-fit table is then resolved back through that ratio
+     to 600px, which becomes the table's minimum width. That held the ENTIRE document at 600px
+     on a 375px screen, and everything on it — every block, not just this one — was scaled to
+     0.625, which is how 14px body copy arrived at 8.8px. A percentage max-width cannot fix it
+     (it resolves to none against an indefinite container); 100vw is definite, so it caps the
+     image at the viewport and lets the table shrink. Height is deliberately left as declared:
+     these crop with object-fit, and letting height follow width would throw away the crop the
+     designer chose with IMG_HEIGHT. Clients without vw support simply behave as they did
+     before, so this can only improve on the status quo. */
+  .fimg{width:100%!important;max-width:100vw!important;}
+  .hh{font-size:38px!important;line-height:1.0!important;}
+  .sh{font-size:22px!important;}
+  .pn{font-size:18px!important;}
+  .uh{font-size:28px!important;}
+  .sp{padding-left:24px!important;padding-right:24px!important;}
+  .hp{padding:32px 24px!important;}
+  .it{direction:ltr!important;}
+  .itc{display:block!important;width:100%!important;}
+  .iti{width:100%!important;height:auto!important;}
+  .dpcc{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .hc{display:block!important;width:100%!important;}
+  .hi{display:block!important;width:100%!important;height:240px!important;}
+  .hi img{width:100%!important;height:240px!important;}
+  .hinfo{display:block!important;width:100%!important;padding:24px!important;}
+  /* products/card-live — stays side by side on a phone so the button stays high. The photo
+     column narrows and its image follows the column (height from the image's own ratio). */
+  .cl-img{width:44%!important;}
+  .cl-img img{width:100%!important;height:auto!important;}
+  .cl-txt{padding:20px 16px 20px 18px!important;}
+  .cl-btn{padding:12px 18px!important;}
+  .pt{display:block!important;width:100%!important;}
+  .ptimg{display:block!important;width:100%!important;border-right:none!important;border-bottom:1px solid #e8e2da!important;}
+  .pttesti{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .ud{min-height:0!important;padding:56px 28px!important;}
+  .uil{height:200px!important;}
+  .cc{display:block!important;width:100%!important;border-right:none!important;border-bottom:1px solid #e8e2da;padding:16px 0!important;}
+  .cc:last-child{border-bottom:none!important;}
+  .fi{display:block!important;}
+  /* blocks/story — portrait + narrative stack, portrait goes fluid.
+     The block carried .st* classes but the media block targeted none of them, so it stayed a
+     fixed 600px two-column table and held the whole document at 600px. */
+  .st-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .st-col-img{padding-bottom:0!important;}
+  .st-img{width:100%!important;height:auto!important;}
+  .st-polaroid{display:block!important;transform:none!important;}
+  .st-illo{display:none!important;}
+  /* blocks/feature-list — the block that had no classes at all. Same stack. */
+  .fl-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .fl-col-img{padding-bottom:0!important;}
+  .fl-img{width:100%!important;height:auto!important;}
+  .fl-polaroid{display:block!important;transform:none!important;}
+  .fl-bullet{width:34px!important;}
+  /* blocks/journal-tile — live HTML on export, so its tiles stack too. */
+  .jt-img{display:block!important;width:100%!important;}
+  .jt-imgel{width:100%!important;height:auto!important;}
+  .jt-txt{display:block!important;width:100%!important;height:auto!important;}
+  .jt-txt-link{height:auto!important;padding:20px 24px!important;}
+  /* blocks/annotated-product — image + notes stack, like story and feature-list. */
+  .ap-col{display:block!important;width:100%!important;padding:32px 24px!important;}
+  .ap-col-img{padding-bottom:0!important;}
+  .ap-img{width:100%!important;height:auto!important;}
+  /* blocks/comparison-vs — the two halves stay side by side (that IS the block); only the
+     images go fluid so the pair fits a phone. */
+  .cvs-img{width:100%!important;height:auto!important;}
+  /* blocks/offer-panel — the 60px display value needs the side padding back. */
+  .op{padding:36px 24px 38px!important;}
+  .op .ov{font-size:44px!important;}
+  /* The rotated "sticker" is offset +150px from centre. position:relative offsets do not
+     resize the parent, but they DO extend the document's scroll width — which is what pushed
+     an offer-panel email past a phone viewport even though nothing in it is 600px wide. */
+  .op-tag{left:64px!important;}
+}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#f3f0eb;">
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">Test email: portrait cards, individual links and a static fallback.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;</div>
+<center>
+<table class="ew" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;margin:0 auto;">
+<!-- COMPONENTS_START -->
+<!-- products/carousel-prototype -->
+
+<tr><td class="fbc-section" lang="en" dir="ltr" bgcolor="#ffffff" style="padding:32px 24px;background:#ffffff;">
+
+<h2 style="margin:0 0 24px;font-family:'Lust',Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;font-weight:normal;color:#000000;">A thoughtful addition</h2>
+<div class="fbc-products" role="region" aria-label="Products" tabindex="0" style="width:100%;">
+<a class="fbc-card" data-carousel-card="1" href="https://figandbloom.com/products/cloud-vase-icy-pink-xl?utm_source=klaviyo&amp;utm_medium=email&amp;utm_campaign=carousel_compatibility_test&amp;utm_content=product_1" target="_blank" style="display:block;width:228px;max-width:100%;margin:0 auto 24px;box-sizing:border-box;border:1px solid #e8e2da;border-radius:8px;background:#ffffff;color:#000000;text-decoration:none;white-space:normal;overflow-wrap:anywhere;">
+<img src="https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cloud-vase-icy-pink-xl-1.jpg?v=1788236112&amp;width=456&amp;height=570&amp;crop=center" width="226" height="283" alt="Icy pink ceramic cylinder vase" style="display:block;width:100%;max-width:226px;height:auto;aspect-ratio:4/5;object-fit:cover;border:0;border-radius:7px 7px 0 0;">
+<span style="display:block;padding:18px 16px 20px;font-family:'NeuzeitGro',Arial,sans-serif;font-size:17px;line-height:1.4;text-align:left;color:#000000;">Cloud Vase Icy Pink (XL)<span style="display:block;margin-top:8px;font-size:15px;color:#444444;">$52.00</span></span></a>
+<a class="fbc-card" data-carousel-card="2" href="https://figandbloom.com/products/glass-ribbed-vase-smoke-20cm?utm_source=klaviyo&amp;utm_medium=email&amp;utm_campaign=carousel_compatibility_test&amp;utm_content=product_2" target="_blank" style="display:block;width:228px;max-width:100%;margin:0 auto 24px;box-sizing:border-box;border:1px solid #e8e2da;border-radius:8px;background:#ffffff;color:#000000;text-decoration:none;white-space:normal;overflow-wrap:anywhere;">
+<img src="https://cdn.shopify.com/s/files/1/0657/8723/2489/files/0009_Glass_Ribbed_Vase_Smoke_20H_Ecommerce.jpg?v=1773960354&amp;width=456&amp;height=570&amp;crop=center" width="226" height="283" alt="Smoke grey ribbed glass vase" style="display:block;width:100%;max-width:226px;height:auto;aspect-ratio:4/5;object-fit:cover;border:0;border-radius:7px 7px 0 0;">
+<span style="display:block;padding:18px 16px 20px;font-family:'NeuzeitGro',Arial,sans-serif;font-size:17px;line-height:1.4;text-align:left;color:#000000;">Glass Ribbed Vase Smoke (20cm)<span style="display:block;margin-top:8px;font-size:15px;color:#444444;">$62.00</span></span></a>
+<a class="fbc-card" data-carousel-card="3" href="https://figandbloom.com/products/cocoon-vase-chalk-white-l?utm_source=klaviyo&amp;utm_medium=email&amp;utm_campaign=carousel_compatibility_test&amp;utm_content=product_3" target="_blank" style="display:block;width:228px;max-width:100%;margin:0 auto 24px;box-sizing:border-box;border:1px solid #e8e2da;border-radius:8px;background:#ffffff;color:#000000;text-decoration:none;white-space:normal;overflow-wrap:anywhere;">
+<img src="https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cocoon-vase-chalk-white-l-1.jpg?v=1788236113&amp;width=456&amp;height=570&amp;crop=center" width="226" height="283" alt="Chalk white ceramic bottle vase" style="display:block;width:100%;max-width:226px;height:auto;aspect-ratio:4/5;object-fit:cover;border:0;border-radius:7px 7px 0 0;">
+<span style="display:block;padding:18px 16px 20px;font-family:'NeuzeitGro',Arial,sans-serif;font-size:17px;line-height:1.4;text-align:left;color:#000000;">Cocoon Vase Chalk White (L)</span></a>
+</div><!-- carousel-region-end -->
+<p style="margin:24px 0 0;font-family:'NeuzeitGro',Arial,sans-serif;font-size:16px;line-height:1.5;"><a data-carousel-collection="true" href="https://figandbloom.com/collections/gifts" style="color:#000000;text-decoration:underline;">Explore gifts</a></p>
+</td></tr>
+
+<!-- sections/button -->
+<!-- COMPONENT: sections/button | STANDALONE CTA BUTTON
+TOKENS:
+  Explore gifts       — NeuzeitGro Bold caps button label (e.g. "Shop the collection")
+  https://figandbloom.com/collections/gifts?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=main_cta        — button href
+  center          — ALIGN lever: "center" / "left" / "right". Locked to these three.
+  260px      — Outlook-only button width in px (e.g. "260px"). Default: 260px.
+  32px    — Block top padding in px (e.g. "32px"). Default: 32px.
+  40px — Block bottom padding in px (e.g. "40px"). Default: 40px.
+  PALETTE TOKENS (copy ONE preset row verbatim — never invent hex):
+  #ffffff #000000 #ffffff
+RULES:
+  - HTML-SAFE: never slice this block. A rasterised button is an image — the href dies, the label
+    stops being selectable text, and it can't be restyled. It has to stay live HTML.
+  - Square button only, no border radius (locked brand style — arcsize="0%" in the VML).
+  - The label is NeuzeitGro Bold, uppercase, .16em tracking, 14px/40px padding — identical to the
+    inline CTA every other component already renders, so a standalone button is not a second
+    button style loose in the system.
+  - This component is the button ALONE. It does not replace the CTA built into a hero, an
+    offer-panel or a three-column-steps — use it when a text section needs its own call to
+    action, or when the closing beat is a button on its own.
+  - OUTLOOK: the Word renderer ignores padding on an <a>, which collapses the button to bare
+    underlined text. The VML roundrect draws the real button there and the <a> is hidden from
+    Outlook, so the two never both render. BTN_WIDTH sizes the VML only — Outlook cannot
+    shrink-wrap a button to its label, so a long label needs a wider BTN_WIDTH or it clips.
+    Every other client ignores BTN_WIDTH and shrink-wraps the <a>.
+PALETTE PRESETS (copy one row verbatim into the three palette tokens):
+  white :  PANEL_BG=#ffffff  BTN_BG=#000000  BTN_TEXT=#ffffff
+  clay  :  PANEL_BG=#D8CCBE  BTN_BG=#000000  BTN_TEXT=#ffffff
+  50clay:  PANEL_BG=#EBE5DF  BTN_BG=#000000  BTN_TEXT=#ffffff
+  noir  :  PANEL_BG=#000000  BTN_BG=#ffffff  BTN_TEXT=#000000
+-->
+<tr><td style="padding:0;background:#ffffff;">
+<table class="f600" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff">
+  <tr>
+    <td align="center" style="padding:32px 48px 40px;background:#ffffff;text-align:center;">
+      <!--[if gte mso 9]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="https://figandbloom.com/collections/gifts?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=main_cta" arcsize="0%" stroke="f" fillcolor="#000000"
+                   style="height:40px;width:260px;v-text-anchor:middle;">
+        <w:anchorlock/>
+        <center style="font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#ffffff;">Explore gifts</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !gte mso 9]><!-->
+      <a href="https://figandbloom.com/collections/gifts?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=main_cta" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 40px;display:inline-block;">Explore gifts</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+</td></tr>
+
+<!-- footer -->
+<!-- COMPONENT: footer | TOKENS: none (unsubscribe auto-injected by Klaviyo)
+Matches the designer's footer structure from Klaviyo template RdTtpm.
+All icons and nav links use CDN-hosted images (no inline SVG).
+Unsubscribe uses Klaviyo {% unsubscribe %} block tag (standalone, not inside <a>).
+-->
+
+<!-- ============ FOOTER LOGO ============ -->
+<tr><td>
+<table class="f600" border="0" cellpadding="0" cellspacing="0" width="600">
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com" style="text-decoration:none;display:block;">
+<img class="fimg" alt="Fig &amp; Bloom" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/84e17d95-ffb1-4dd2-932d-a3e87d99b4aa.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- ============ FOOTER NAV LINKS ============ -->
+<tr><td>
+<table class="f600" border="0" cellpadding="0" cellspacing="0" width="600">
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/collections/bouquets?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="BOUQUETS" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/033058ad-f0bf-4ec1-95e6-bb87ecbf2dc2.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/collections/vase-arrangements?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="VASE ARRANGEMENTS" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/16ce74ba-dc94-4cb5-bcdd-3cfcda651d72.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/collections/plants?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="PLANTS" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/25c63a75-210b-4e67-a426-0a83ce091462.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/collections/gifts?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="GIFTS" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/813f181c-5f25-4ed7-ab0b-70e108c2b619.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/pages/events?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="EVENTS" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/1926d071-0eb5-418a-81e0-d83e67f70add.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:0;background:#ffffff;">
+<a href="https://figandbloom.com/pages/store-finder?=footer" style="text-decoration:none;display:block;">
+<img class="fimg" alt="STORE FINDER" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/60834ffd-a474-4df2-9061-e14fb72424a7.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="600"/>
+</a>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- ============ SOCIAL ICONS ============ -->
+<tr><td>
+<table class="f600" border="0" cellpadding="0" cellspacing="0" width="600">
+<tr>
+<td align="center" style="padding:0;background:#ffffff;">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+<td align="center" style="width:25%;padding:0;">
+<a href="https://www.facebook.com/figbloom" style="text-decoration:none;display:block;">
+<img alt="Facebook" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/e1d6c12f-6c82-4e8c-8598-0dc28de70b08.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="150"/>
+</a>
+</td>
+<td align="center" style="width:25%;padding:0;">
+<a href="https://www.instagram.com/fig_and_bloom/" style="text-decoration:none;display:block;">
+<img alt="Instagram" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/840ed584-05fe-47ce-bc13-b5ee1c528263.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="150"/>
+</a>
+</td>
+<td align="center" style="width:25%;padding:0;">
+<a href="https://au.pinterest.com/figbloom/" style="text-decoration:none;display:block;">
+<img alt="Pinterest" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/aba6f3ff-0e3d-440e-bfd9-d337d3d32476.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="150"/>
+</a>
+</td>
+<td align="center" style="width:25%;padding:0;">
+<a href="https://www.youtube.com/channel/UCBpirKIdaSIN3TAN3rVLP6w" style="text-decoration:none;display:block;">
+<img alt="YouTube" src="https://d3k81ch9hvuctc.cloudfront.net/company/RHSpV7/images/4bff425c-03e4-4b6f-bcef-972aaf7b5a68.png" style="display:block;outline:none;text-decoration:none;height:auto;font-size:13px;width:100%;" width="150"/>
+</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- ============ UNSUBSCRIBE ============ -->
+<tr><td>
+<table class="f600" border="0" cellpadding="0" cellspacing="0" width="600">
+<tr>
+<td align="center" style="padding:9px 18px;background:#ffffff;">
+<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-size:10px;font-weight:300;line-height:1.3;text-align:center;color:#727272;margin:0;">No longer want to receive these emails? {% unsubscribe %}.</p>
+<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-size:10px;font-weight:300;line-height:1.3;text-align:center;color:#727272;margin:4px 0 0 0;">{{ organization.name }} {{ organization.full_address }}</p>
+</td>
+</tr>
+</table>
+</td></tr>
+
+<!-- COMPONENTS_END -->
+</table>
+</center>
+</body></html>

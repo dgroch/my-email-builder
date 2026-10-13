@@ -112,7 +112,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(res, path.join(ROOT, 'public', 'index.html'));
     if (req.method === 'GET' && (p === '/carousel-probe' || p.startsWith('/carousel-probe/'))) {
       const name = p === '/carousel-probe' ? 'index.html' : p.slice('/carousel-probe/'.length);
-      const allowed = ['index.html', 'campaign.json', 'fallback.html', 'candidate-test-only.html', 'compatibility.md', 'export-evidence.json'];
+      const allowed = ['index.html', 'campaign.json', 'fallback.html', 'builder-production.html', 'candidate-test-only.html', 'compatibility.md', 'export-evidence.json'];
       return allowed.includes(name) ? serveFile(res, path.join(ROOT, 'docs/product-carousel', name)) : send(res, 404, 'Not found');
     }
     if (req.method === 'GET' && (p === '/app.js' || p === '/library.js' || p === '/style.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));

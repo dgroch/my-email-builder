@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T08:21:25.270Z",
+  "generatedAt": "2026-10-13T08:39:04.062Z",
   "artifacts": {
     "fallback": {
       "bytes": 20778,
@@ -10,6 +10,11 @@
       "bytes": 21174,
       "sha256": "2dec0af28a8c0807e0c7a9f30c9f6573d4103ae3114d4c32e7614fedbe680139",
       "status": "Unverified test artifact. Not a production carousel."
+    },
+    "builder-production": {
+      "bytes": 23646,
+      "sha256": "02706d71682cfe9982fa5b450e277ff010f451e8abeecc70e5e84ebcb1e95be6",
+      "status": "Full HTML export path used by the builder download. Static cards."
     }
   }
 }
