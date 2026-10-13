@@ -207,3 +207,146 @@ test("artifact restart rerenders persisted frozen inputs without looking up muta
 require("node:test").after(async () => {
   await require("../lib/db").close();
 });
+
+test("concurrent export services reserve at most twenty pending slots", async () => {
+  const crypto = require("crypto"),
+    os = require("os"),
+    path = require("path");
+  process.env.DATA_DIR = fs.mkdtempSync(
+    path.join(os.tmpdir(), "artifact-capacity-"),
+  );
+  const { createArtifactService } = require("../lib/publishArtifacts");
+  const binding = {
+    tenantId: "capacity-" + crypto.randomUUID(),
+    credential: "x".repeat(40),
+  };
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const options = {
+    binding,
+    getDesign: async () => design,
+    freeze: async (d) => {
+      await gate;
+      return artifact.freezeArtifactInputs(d, [], {});
+    },
+    render: async () => {},
+  };
+  const requests = Array.from({ length: 21 }, () => ({
+    schema: 1,
+    requestId: crypto.randomUUID(),
+    designId: design.id,
+    expectedUpdatedAt: design.updatedAt,
+  }));
+  const starts = requests.map((request) =>
+    createArtifactService(options).start(request),
+  );
+  const resultsPromise = Promise.allSettled(starts);
+  setTimeout(release, 100);
+  const results = await resultsPromise;
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 20);
+  assert.equal(
+    results.filter(
+      (r) =>
+        r.status === "rejected" && r.reason.message === "EXPORT_QUEUE_FULL",
+    ).length,
+    1,
+  );
+  const accepted = results.findIndex((r) => r.status === "fulfilled");
+  assert.equal(
+    (await createArtifactService(options).start(requests[accepted]))
+      .artifactJobId,
+    results[accepted].value.artifactJobId,
+  );
+});
+
+test("failed snapshot captures release their queue reservations", async () => {
+  const crypto = require("crypto");
+  const { createArtifactService } = require("../lib/publishArtifacts");
+  const options = {
+    binding: {
+      tenantId: "failed-capture-" + crypto.randomUUID(),
+      credential: "x".repeat(40),
+    },
+    getDesign: async () => design,
+    freeze: async () => {
+      throw Error("Image unavailable");
+    },
+    render: async () => {},
+  };
+  const request = () => ({
+    schema: 1,
+    requestId: crypto.randomUUID(),
+    designId: design.id,
+    expectedUpdatedAt: design.updatedAt,
+  });
+  for (let i = 0; i < 21; i++)
+    await assert.rejects(
+      createArtifactService(options).start(request()),
+      /Image unavailable/,
+    );
+  const next = await createArtifactService({
+    ...options,
+    freeze: (d) => artifact.freezeArtifactInputs(d, [], {}),
+  }).start(request());
+  assert.equal(next.state, "queued");
+});
+
+test("expired snapshot reservations terminate and cannot be resurrected by late capture", async () => {
+  const crypto = require("crypto");
+  const { createArtifactService } = require("../lib/publishArtifacts");
+  const { collection } = require("../lib/recordStore");
+  const records = collection({
+    table: "publish_artifacts",
+    dir: "publish-artifacts",
+  });
+  const tenantId = "expired-capture-" + crypto.randomUUID();
+  let entered, release;
+  const started = new Promise((resolve) => {
+    entered = resolve;
+  });
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const options = {
+    binding: { tenantId, credential: "x".repeat(40) },
+    getDesign: async () => design,
+    freeze: async (d) => {
+      entered();
+      await gate;
+      return artifact.freezeArtifactInputs(d, [], {});
+    },
+    render: async () => {
+      throw Error("Unfrozen job must not render");
+    },
+  };
+  const service = createArtifactService(options);
+  const request = {
+    schema: 1,
+    requestId: crypto.randomUUID(),
+    designId: design.id,
+    expectedUpdatedAt: design.updatedAt,
+  };
+  const late = service.start(request);
+  const id = crypto
+    .createHash("sha256")
+    .update(tenantId + ":" + request.requestId)
+    .digest("hex");
+  const rejected = assert.rejects(late, /SNAPSHOT_LEASE_EXPIRED/);
+  try {
+    await started;
+    const record = await records.get(id);
+    await records.compareAndSwap(id, record.revision, {
+      ...record,
+      leaseUntil: 0,
+    });
+    await createArtifactService(options).runNext();
+    assert.equal((await service.get(id)).state, "failed");
+  } finally {
+    release();
+    await rejected;
+  }
+  assert.equal((await service.get(id)).state, "failed");
+  assert.equal((await service.get(id)).errorCode, "SNAPSHOT_LEASE_EXPIRED");
+});
