@@ -56,3 +56,7 @@ The existing Klaviyo audience picker and `lib/liveContext.js` audience context m
 ## 13 October implementation checkpoint
 
 The first local preparation slice is on `codex/engine-artifact-publishing`; [scope/checks](publishing-slice.md) records the paired engine branch and limitations. Frozen export now captures supported image/background/CSS resources and blocks uncaptured render requests. The engine remains the approval/audience/provider owner. Neither repository has installed this publishing path in hosted operation. The source-flow and actual-data migration workstreams remain separately unfinished.
+
+## 14 October installation continuation
+
+The [concrete paired installation operation](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/operations/publishing-installation.md) prepares a dedicated campaign asset host/private R2 bucket/read-only gateway, protected export credential, worker-only publishing binding and exact unsent readback sequence. Existing Namecheap and media-library configuration is preserved. Compatible engine release precedes enabling builder navigation; hosted PostgreSQL persistence and preservation of existing designs/components/brand are required. Deployment/configuration authority and actual installed pipeline verification remain distinct from the local tests and connector-only draft probe.
