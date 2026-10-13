@@ -6,9 +6,19 @@ The principal specification and build plan live in `dgroch/customer-engagement-e
 
 - [Migration architecture](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/specs/2026-10-13-klaviyo-retirement-and-broadcasts-design.md)
 - [Cross-repository build plan](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/plans/2026-10-13-klaviyo-retirement-and-broadcasts.md)
+- [Actual data and active flow migration execution plan](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/plans/2026-10-13-klaviyo-data-and-flow-migration.md)
+- [Per-flow transfer acceptance register](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/migrations/klaviyo-flow-transfer-register.md)
 - [Builder campaign artifact v1](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/contracts/builder-campaign-artifact-v1.md)
 
 These links target the proposed documentation branch until merge; replace them with main links when that branch is merged. The engine owns the contract and migration register. Do not maintain a competing audience/consent/scheduling system here.
+
+## Required programme scope
+
+The owner requires three delivered outcomes: native campaign publishing, porting **every active Klaviyo flow**, and **executing the Klaviyo data migration**. The engine plan includes actual exports, protected rehearsal, production import, ongoing deltas, per-flow cutover and final reconciliation/archive. Profiles, custom properties, consent/suppressions, list/segment rules and membership, required history, actual templates, in-progress journeys and issued benefits all receive an explicit migration disposition. Scripts, a generic flow runtime and a Resend contact upload do not establish completion.
+
+Flows continue through individual Resend email and Twilio SMS routes under engine policy. Porting includes their real triggers, filters, waits, branches, exits, content and non-message actions, plus customers already partway through them. Preserve Birthday Club's existing product/scheduling ownership. The flow tracker starts with 37 flows from the 7 October audit and must cover the refreshed active inventory before retirement.
+
+The builder's campaign artifact v1 is fixed creative content with a typed legal-footer slot. Dynamic flow templates use a separate engine-owned `FlowTemplateV1` with verified profile/event/catalog/issued-benefit inputs and explicit missing-value behavior. Do not put arbitrary Klaviyo Liquid or coupon generation into the campaign artifact. Any later builder authoring support for flow templates must adopt that contract explicitly; actual flow porting is already required in the engine workstream.
 
 ## User workflow
 
