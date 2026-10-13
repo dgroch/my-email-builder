@@ -1,5 +1,13 @@
 # Immutable export publishing slice — 13 October 2026
 
+## 14 October review follow-up
+
+Three paired review defects received a test-first fix pass: this builder's handoff now compares JSON structurally so JSONB object-key ordering cannot reject an unchanged saved design; array order and nested changes still hold. Frozen image/column cells preserve the renderer's optional opaque hex `backgroundColor`, including transparent GIFs and unequal-height neighbours. The paired engine also excludes welcome signing keys from publishing credentials. See [engine evidence](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-review-followup.md).
+
+The parity script's expected colour now comes from the source fixture, preventing artifact omissions from contaminating its reference. All four paired390/600 checks pass. Builder disk/PostgreSQL suites pass3280/3283legacy assertions plus21publishing tests; the handoff test includes an actual JSONB round trip in PostgreSQL mode. Independent scoped review found no introduced defects. The original shared compatibility fixture/hash is unchanged.
+
+Release the updated engine reader before enabling the builder writer's optional colour field. These draft fixes are not hosted installation, client acceptance, flow transfer or actual customer-data migration. No send/import/cutover/merge/deployment occurred; follow the engine's current Stage3 continuation and operational gates.
+
 Implements local saved-design export jobs, immutable component/brand/media snapshots, shared artifact-v1 fixture, engine handoff navigation and authenticated export routes. Jobs persist through existing recordStore (PostgreSQL for hosted operation), deduplicate request identity and recover from frozen inputs; render concurrency/leases, 120second timeout, three attempts and20pending bounds apply. Engine owns permanent asset storage, preview, native draft linkage and all later audience/approval/release work. No provider credential or customer contact enters this repository.
 
 Paired engine branch: `codex/klaviyo-broadcast-publishing`, principal repo `dgroch/customer-engagement-engine`. Contract/spec/build/data plans and27approved source IDs remain there. Shared fixture artifact hash `b241c713ebb0a49ba6c68f4202af57e127ff8d8dabedda8131577c02d3b8032d`. Both original checkouts/unrelated `.pr36/` retained. No merge/deployment, real provider draft, import or send is claimed.

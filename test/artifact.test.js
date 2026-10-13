@@ -15,6 +15,19 @@ const design = {
   previewText: "Fixture preview",
   campaign: { blocks: [{ component: "footer", tokens: {} }] },
 };
+test('artifact rejects unsafe or non-opaque background colours', async () => {
+  const fixture = require('./fixtures/artifact-v1/compatibility.json');
+  const frozen = artifact.freezeArtifactInputs(design, [], {});
+  for (const backgroundColor of ['#fff;display:none', '#12345', '#12345678', null]) {
+    await assert.rejects(artifact.compileArtifact(frozen, {
+      rows: [
+        { kind: 'image', assetId: 'png', width: 600, alt: 'Fixture', backgroundColor },
+        { kind: 'legal_footer' },
+      ],
+      media: [{ assetId: 'png', buffer: Buffer.from(fixture.media.find(m => m.assetId === 'png').base64, 'base64') }],
+    }), /background colour/);
+  }
+});
 test("artifact_freezes_components_and_brand", () => {
   assert.equal(typeof artifact.freezeArtifactInputs, "function");
   const components = [

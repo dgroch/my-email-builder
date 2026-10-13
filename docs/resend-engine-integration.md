@@ -59,4 +59,6 @@ The first local preparation slice is on `codex/engine-artifact-publishing`; [sco
 
 ## 14 October installation continuation
 
+Review follow-up: campaign cells can carry optional opaque `backgroundColor` (`#RGB` or `#RRGGBB`) to preserve GIF-column panel colours. Publish the compatible engine reader before enabling this builder writer; old readers reject the unknown field. Existing artifacts without it remain valid and unchanged. The browser handoff compares structural campaign values, so PostgreSQL object-key ordering is ignored while content and block order must still match the saved design. See [review evidence](publishing-slice.md).
+
 The [concrete paired installation operation](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/operations/publishing-installation.md) prepares a dedicated campaign asset host/private R2 bucket/read-only gateway, protected export credential, worker-only publishing binding and exact unsent readback sequence. Existing Namecheap and media-library configuration is preserved. Compatible engine release precedes enabling builder navigation; hosted PostgreSQL persistence and preservation of existing designs/components/brand are required. Deployment/configuration authority and actual installed pipeline verification remain distinct from the local tests and connector-only draft probe.

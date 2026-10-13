@@ -71,7 +71,7 @@ test("real raster worker preserves GIF columns and captured PNG bytes", async ()
       html:
         n === "footer"
           ? "<tr><td>{% unsubscribe %}</td></tr>"
-          : '<tr><td width="300"><img width="300" height="30" src="https://cdn.shopify.com/fixture.gif"></td><td width="300">Synthetic column copy<img width="8" height="8" src="https://cdn.shopify.com/fixture.png"></td></tr>',
+          : '<tr><td width="300" bgcolor="#e00000"><img width="300" height="30" src="https://cdn.shopify.com/fixture.gif"></td><td width="300" bgcolor="#e00000">Synthetic column copy<img width="8" height="8" src="https://cdn.shopify.com/fixture.png"></td></tr>',
     }),
     loadImage: async (url) => (url.endsWith(".gif") ? gif : png),
   });
@@ -81,6 +81,7 @@ test("real raster worker preserves GIF columns and captured PNG bytes", async ()
       new AbortController().signal,
     );
     assert.equal(result.artifact.rows[0].kind, "columns");
+    assert.deepEqual(result.artifact.rows[0].cells.map(c => c.backgroundColor), ['#e00000', '#e00000']);
     assert.ok(result.artifact.assets.some((a) => a.mime === "image/gif"));
     assert.equal(
       result.media.find(
