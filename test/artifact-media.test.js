@@ -359,3 +359,33 @@ test("artifact plain text excludes styles and decodes readable copy and links", 
     await require("../lib/render").closeBrowser();
   }
 });
+
+
+test("frozen inline GIF survives persistence and publishes its original bytes", async () => {
+  const base64 = "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+  const design = {
+    id: "inline-gif", updatedAt: "2026-10-14T00:00:00Z",
+    name: "Synthetic", subjectLine: "Synthetic", previewText: "Synthetic",
+    campaign: { blocks: [
+      { component: "blocks/fixture", tokens: {} },
+      { component: "footer", tokens: {} },
+    ] },
+  };
+  const options = (src) => ({
+    brand: { colours: {}, baseline: {} },
+    resolve: (name) => ({ html: name === "footer"
+      ? "<tr><td>{% unsubscribe %}</td></tr>"
+      : `<tr><td><img src="${src}" width="600" height="30" alt="Synthetic GIF"></td></tr>` }),
+  });
+  try {
+    const frozen = await assembly.freezeSavedDesign(design, options("data:image/gif;base64," + base64));
+    const result = await assembly.renderFrozenArtifact(JSON.parse(JSON.stringify(frozen)), new AbortController().signal);
+    assert.equal(result.artifact.rows[0].kind, "image");
+    assert.equal(result.artifact.assets[0].mime, "image/gif");
+    assert.equal(result.media[0].base64, base64);
+    await assert.rejects(assembly.freezeSavedDesign(design, options("data:image/gif;base64,%%%")), /INLINE_IMAGE_ENCODING/);
+    await assert.rejects(assembly.freezeSavedDesign(design, options("data:image/gif;base64," + Buffer.alloc(1048577).toString("base64"))), /CAPTURED_IMAGE_BUDGET/);
+  } finally {
+    await require("../lib/render").closeBrowser();
+  }
+});

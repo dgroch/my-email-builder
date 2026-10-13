@@ -2,6 +2,10 @@
 
 **14 October — navigation/content fix pass (implementation926e610):** Editable saved subject/preview metadata supports manual designs; dirty metadata holds handoff. Ordinary inline GIFs remain raster uploads while frozen exports preserve GIF media. Plain text excludes styles and decodes entities/links/alt fallback. Disk passes 3280 legacy assertions +24 publishing tests; fresh PostgreSQL passes 3283 +24. Real local Chromium verified save/reload/handoff at desktop/mobile widths with no page errors. [Paired evidence and continuation](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-navigation-fixes.md) retains all software/flow/data operational gates. No production operations occurred.
 
+## 14 October inline GIF capture fix
+
+Saved designs with inline base64 GIFs now enter the same immutable captured-media collection as fetched images. Strict base64 decoding, the existing 1 MiB capture budget and Sharp image validation run before storage; recipient-facing artifacts contain asset references. A regression first reproduced `CAPTURED_MEDIA_MISSING_0`, then passed through JSON persistence and real raster assembly with original GIF bytes preserved. Malformed and oversized inline data are rejected. `npm test` passes 3280 disk assertions plus 25 publishing tests. Exact-head disk/PostgreSQL CI remains the merge gate. This fix does not install hosted publishing or change the separate flow-transfer/data-migration status.
+
 ## 14 October review follow-up
 
 Three paired review defects received a test-first fix pass: this builder's handoff now compares JSON structurally so JSONB object-key ordering cannot reject an unchanged saved design; array order and nested changes still hold. Frozen image/column cells preserve the renderer's optional opaque hex `backgroundColor`, including transparent GIFs and unequal-height neighbours. The paired engine also excludes welcome signing keys from publishing credentials. See [engine evidence](https://github.com/dgroch/customer-engagement-engine/blob/codex/klaviyo-broadcast-publishing/docs/evidence/2026-10-14-publishing-review-followup.md).
