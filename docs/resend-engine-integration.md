@@ -1,18 +1,18 @@
 # Native Resend Broadcast publishing through the engagement engine
 
-**Approved flow scope, 13 October 2026:** Dan curated the live list in Klaviyo and instructed “approve them all”. The approved porting baseline is the **27 live flows** in the latest refetch, recorded by source ID in the [flow transfer register](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/migrations/klaviyo-flow-transfer-register.md). The nine draft flows, one manual flow and ten historical live candidates absent from that refetch are outside porting scope. Actual data migration remains required, including explicit disposition of historical records and pending obligations. Newly live flows or material behavior changes need a new scope decision. This approval permits recording the migration scope; it does not activate sending or independently approve retirement of a retained flow.
+**Approved flow scope, 13 October 2026:** Dan curated the live list in Klaviyo and instructed “approve them all”. The approved porting baseline is the **27 live flows** in the latest refetch, recorded by source ID in the [flow transfer register](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/migrations/klaviyo-flow-transfer-register.md). The nine draft flows, one manual flow and ten historical live candidates absent from that refetch are outside porting scope. Actual data migration remains required, including explicit disposition of historical records and pending obligations. Newly live flows or material behavior changes need a new scope decision. This approval permits recording the migration scope; it does not activate sending or independently approve retirement of a retained flow.
 
 Proposed integration, 13 October 2026. Dan selected native Resend Broadcasts with the engagement engine managing approval and audience eligibility. This is a documentation change; no provider connection, contact import or send is performed.
 
 The principal specification and build plan live in `dgroch/customer-engagement-engine`:
 
-- [Migration architecture](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/specs/2026-10-13-klaviyo-retirement-and-broadcasts-design.md)
-- [Cross-repository build plan](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/plans/2026-10-13-klaviyo-retirement-and-broadcasts.md)
-- [Actual data and active flow migration execution plan](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/superpowers/plans/2026-10-13-klaviyo-data-and-flow-migration.md)
-- [Per-flow transfer acceptance register](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/migrations/klaviyo-flow-transfer-register.md)
-- [Builder campaign artifact v1](https://github.com/dgroch/customer-engagement-engine/blob/docs/resend-broadcast-migration-architecture/docs/contracts/builder-campaign-artifact-v1.md)
+- [Migration architecture](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/superpowers/specs/2026-10-13-klaviyo-retirement-and-broadcasts-design.md)
+- [Cross-repository build plan](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/superpowers/plans/2026-10-13-klaviyo-retirement-and-broadcasts.md)
+- [Actual data and active flow migration execution plan](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/superpowers/plans/2026-10-13-klaviyo-data-and-flow-migration.md)
+- [Per-flow transfer acceptance register](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/migrations/klaviyo-flow-transfer-register.md)
+- [Builder campaign artifact v1](https://github.com/dgroch/customer-engagement-engine/blob/main/docs/contracts/builder-campaign-artifact-v1.md)
 
-These links target the proposed documentation branch until merge; replace them with main links when that branch is merged. The engine owns the contract and migration register. Do not maintain a competing audience/consent/scheduling system here.
+The engine owns the contract and migration register on its main branch. Do not maintain a competing audience/consent/scheduling system here.
 
 ## Required programme scope
 
