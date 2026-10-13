@@ -12,7 +12,7 @@ test("shared compatibility fixture keeps pinned hash and immutable media", () =>
   );
   assert.equal(
     f.artifact.artifactHash,
-    "2c2dcd4c2de15e80bc7f78bd48c3e8bb01aa1e24cd214fd85703c211b2006c2c",
+    "b241c713ebb0a49ba6c68f4202af57e127ff8d8dabedda8131577c02d3b8032d",
   );
   assert.equal(
     artifact.hash(

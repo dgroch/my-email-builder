@@ -45,7 +45,7 @@ test("artifact_preserves_gif_columns_and_canonical_hash", async () => {
     .png()
     .toBuffer();
   const gif = Buffer.from(
-    "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+    "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
     "base64",
   );
   const frozen = artifact.freezeArtifactInputs(

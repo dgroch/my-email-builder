@@ -8,13 +8,14 @@
     "start": "node server.js",
     "parse": "node lib/parseTemplates.js",
     "test": "node test/run.js && node --test test/artifact.test.js test/publish-assembly.test.js test/export-http.test.js test/artifact-media.test.js test/fixture-compatibility.test.js",
-    "test:pg": "node -e \"if(!process.env.DATABASE_URL){console.error('set DATABASE_URL to a scratch Postgres database');process.exit(1)}\" && node test/run.js",
+    "test:pg": "node -e \"if(!process.env.DATABASE_URL){console.error('set DATABASE_URL to a scratch Postgres database');process.exit(1)}\" && npm test",
     "check:fonts": "node scripts/check-fonts.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
+    "htmlparser2": "^12.0.0",
     "pg": "^8.23.0",
     "puppeteer": "^22.0.0",
     "sharp": "^0.35.4"

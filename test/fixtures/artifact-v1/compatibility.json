@@ -57,14 +57,14 @@
       },
       {
         "id": "gif",
-        "sha256": "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629",
+        "sha256": "693d949d8c3fdc7fd4ace7c340b5f177a9f0c5be7bafee8bc93a7d88b7523d75",
         "mime": "image/gif",
-        "bytes": 42,
+        "bytes": 43,
         "width": 1,
         "height": 1
       }
     ],
-    "artifactHash": "2c2dcd4c2de15e80bc7f78bd48c3e8bb01aa1e24cd214fd85703c211b2006c2c"
+    "artifactHash": "b241c713ebb0a49ba6c68f4202af57e127ff8d8dabedda8131577c02d3b8032d"
   },
   "provenance": {
     "brand": {},
@@ -87,7 +87,7 @@
     },
     {
       "assetId": "gif",
-      "base64": "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+      "base64": "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
     }
   ]
 }
