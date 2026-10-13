@@ -925,3 +925,15 @@ const SAMPLE = {
     { id: 13, component: 'footer', tokens: {} },
   ],
 };
+
+// Creative handoff only: engine GET does not import, approve or send.
+fetch('/api/publishing-config').then(r=>r.json()).then(config=>{
+ if(!config.engineOrigin)return;const button=document.querySelector('#btnResend');button.hidden=false;
+ button.onclick=async()=>{try{
+  if(!currentDesignId){setStatus('Save this design before publishing','warn');return;}
+  const r=await fetch('/api/designs/'+encodeURIComponent(currentDesignId));if(!r.ok)throw Error('Saved design unavailable');const design=await r.json();
+  if(JSON.stringify(design.campaign)!==JSON.stringify(campaign)){setStatus('Save your latest changes before publishing','warn');return;}
+  if(!design.subjectLine||!design.previewText){setStatus('Save a subject and preview text on the design before publishing','warn');return;}
+  const target=new URL('/campaigns/import',config.engineOrigin);target.searchParams.set('designId',design.id);target.searchParams.set('expectedUpdatedAt',design.updatedAt);window.location.assign(target.href);
+ }catch(e){setStatus(e.message||'Publishing unavailable','warn');}};
+}).catch(()=>{});

@@ -1,0 +1,93 @@
+{
+  "artifact": {
+    "schema": "fb-campaign-artifact/v1",
+    "format": "email-table-v1",
+    "source": {
+      "designId": "synthetic-compatibility",
+      "designUpdatedAt": "2026-10-13T00:00:00.000Z",
+      "designHash": "d6bd9c47439a4f385d339bd727e9c7cc8e1233ef0794ef4a9a0b72a53d480daa",
+      "renderVersion": "builder-artifact-v1",
+      "components": [],
+      "brandHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+    },
+    "name": "Synthetic compatibility fixture",
+    "subject": "Synthetic subject",
+    "previewText": "Synthetic preview",
+    "text": "Synthetic single image\n\nSynthetic GIF\n\nSynthetic PNG\n\nSynthetic live copy",
+    "rows": [
+      {
+        "alt": "Synthetic single image",
+        "assetId": "png",
+        "href": "https://figandbloom.com/",
+        "kind": "image",
+        "width": 600
+      },
+      {
+        "cells": [
+          {
+            "alt": "Synthetic GIF",
+            "assetId": "gif",
+            "width": 300
+          },
+          {
+            "alt": "Synthetic PNG",
+            "assetId": "png",
+            "width": 300
+          }
+        ],
+        "kind": "columns"
+      },
+      {
+        "html": "<p style=\"font-family:Arial,sans-serif;padding:12px\">Synthetic live copy</p>",
+        "kind": "live",
+        "text": "Synthetic live copy"
+      },
+      {
+        "kind": "legal_footer"
+      }
+    ],
+    "assets": [
+      {
+        "id": "png",
+        "sha256": "c51fbb8eaa25281e87e5df5c7299250b4f6053c354a3f0a1f6169e17c079529f",
+        "mime": "image/png",
+        "bytes": 891,
+        "width": 600,
+        "height": 80
+      },
+      {
+        "id": "gif",
+        "sha256": "ef1955ae757c8b966c83248350331bd3a30f658ced11f387f8ebf05ab3368629",
+        "mime": "image/gif",
+        "bytes": 42,
+        "width": 1,
+        "height": 1
+      }
+    ],
+    "artifactHash": "2c2dcd4c2de15e80bc7f78bd48c3e8bb01aa1e24cd214fd85703c211b2006c2c"
+  },
+  "provenance": {
+    "brand": {},
+    "components": [],
+    "design": {
+      "campaign": {
+        "blocks": []
+      },
+      "id": "synthetic-compatibility",
+      "name": "Synthetic compatibility fixture",
+      "previewText": "Synthetic preview",
+      "subjectLine": "Synthetic subject",
+      "updatedAt": "2026-10-13T00:00:00.000Z"
+    }
+  },
+  "media": [
+    {
+      "assetId": "png",
+      "base64": "iVBORw0KGgoAAAANSUhEUgAAAlgAAABQCAIAAABKyJzPAAAACXBIWXMAAAPoAAAD6AG1e1JrAAADLUlEQVR4nO3dSw0DMQxAQfMHVQQF8ODs2Qhy8EgLoJo+KdpP4un/cxEgQIAAga4uB/P8F7gIECBAgEAWQhEQIECAAIHcEYqAAAECBAjk0agICBAgQIBA3hGKgAABAgQI5GMZERAgQIAAgXw1KgICBAgQIJDtEyIgQIAAAQLZRygCAgQIECCQDfUiIECAAAECOVlGBAQIECBAIEesiYAAAQIECOSsUREQIECAAIEcui0CAgQIECCQ6RMiIECAAAECGcMkAgIECBAgkHmEIiBAgAABAhnMKwICBAgQIJAJ9SIgQIAAAQLt5XCIECBAgACBDl8Wwvf/gYsAAQIEshCKgAABAgQI5I5QBAQIECBAII9GRUCAAAECBPKOUAQECBAgQCAfy4iAAAECBAjkq1ERECBAgACBbJ8QAQECBAgQyD5CERAgQIAAgWyoFwEBAgQIEMjJMiIgQIAAAQI5Yk0EBAgQIEAgZ42KgAABAgQI5NBtERAgQIAAgUyfEAEBAgQIEMgYJhEQIECAAIHMIxQBAQIECBDIYF4RECBAgACBTKgXAQECBAgQaC+HQ4QAAQIECHT4shC+/w9cBAgQIJCFUAQECBAgQCB3hCIgQIAAAQJ5NCoCAgQIECCQd4QiIECAAAEC+VhGBAQIECBAIF+NioAAAQIECGT7hAgIECBAgED2EYqAAAECBAhkQ70ICBAgQIBATpYRAQECBAgQyBFrIiBAgAABAjlrVAQECBAgQCCHbouAAAECBAhk+oQICBAgQIBAxjCJgAABAgQIZB6hCAgQIECAQAbzioAAAQIECGRCvQgIECBAgEB7ORwiBAgQIECgw5eF8P1/4CJAgACBLIQiIECAAAECuSMUAQECBAgQyKNRERAgQIAAgbwjFAEBAgQIEMjHMiIgQIAAAQL5alQEBAgQIEAg2ydEQIAAAQIEso9QBAQIECBAIBvqRUCAAAECBHKyjAgIECBAgECOWBMBAQIECBDIWaMiIECAAAECOXRbBAQIECBAINMnRECAAAECBDKGSQQECBAgQCDzCEVAgAABAgQymFcEBAgQIEAgE+pFQIAAAQIE2svhB4fT4SPPDzmtAAAAAElFTkSuQmCC"
+    },
+    {
+      "assetId": "gif",
+      "base64": "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+    }
+  ]
+}
