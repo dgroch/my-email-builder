@@ -1,0 +1,603 @@
+{
+  "classification": "Browser simulations, not email-client verification",
+  "generatedAt": "2026-10-13T08:22:14.892Z",
+  "results": [
+    {
+      "name": "fallback",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 320,
+      "documentWidth": 320,
+      "regionWidth": 272,
+      "regionScrollWidth": 272,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 126,
+          "left": 46,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 525,
+          "left": 46,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 948,
+          "left": 46,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    },
+    {
+      "name": "candidate-browser-only",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 320,
+      "documentWidth": 320,
+      "regionWidth": 272,
+      "regionScrollWidth": 724,
+      "scrollLeft": 0,
+      "display": "flex",
+      "overflowX": "auto",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 126,
+          "left": 24,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 126,
+          "left": 272,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 126,
+          "left": 520,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "scrollAfterWheel": 400,
+      "keyboardOrder": [
+        "Cloud Vase Icy Pink (XL)$52.00",
+        "Glass Ribbed Vase Smoke (20cm)$62.00",
+        "Cocoon Vase Chalk White (L)"
+      ],
+      "scrollAfterTabbing": 452,
+      "pageOverflow": false
+    },
+    {
+      "name": "fallback",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 375,
+      "regionWidth": 327,
+      "regionScrollWidth": 327,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 74,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 74,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 74,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    },
+    {
+      "name": "candidate-browser-only",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 375,
+      "regionWidth": 327,
+      "regionScrollWidth": 724,
+      "scrollLeft": 0,
+      "display": "flex",
+      "overflowX": "auto",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 24,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 91,
+          "left": 272,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 91,
+          "left": 520,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "scrollAfterWheel": 397,
+      "keyboardOrder": [
+        "Cloud Vase Icy Pink (XL)$52.00",
+        "Glass Ribbed Vase Smoke (20cm)$62.00",
+        "Cocoon Vase Chalk White (L)"
+      ],
+      "scrollAfterTabbing": 397,
+      "pageOverflow": false
+    },
+    {
+      "name": "fallback",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 600,
+      "documentWidth": 600,
+      "regionWidth": 552,
+      "regionScrollWidth": 552,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 186,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 186,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 186,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    },
+    {
+      "name": "candidate-browser-only",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 600,
+      "documentWidth": 600,
+      "regionWidth": 552,
+      "regionScrollWidth": 724,
+      "scrollLeft": 0,
+      "display": "flex",
+      "overflowX": "auto",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 24,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 91,
+          "left": 272,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 91,
+          "left": 520,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "scrollAfterWheel": 172,
+      "keyboardOrder": [
+        "Cloud Vase Icy Pink (XL)$52.00",
+        "Glass Ribbed Vase Smoke (20cm)$62.00",
+        "Cocoon Vase Chalk White (L)"
+      ],
+      "scrollAfterTabbing": 172,
+      "pageOverflow": false
+    },
+    {
+      "name": "images-unavailable",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 375,
+      "regionWidth": 327,
+      "regionScrollWidth": 327,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 74,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 74,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 74,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 14,
+      "pageOverflow": false
+    },
+    {
+      "name": "long-product-name",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 320,
+      "documentWidth": 320,
+      "regionWidth": 272,
+      "regionScrollWidth": 272,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "A sculptural ceramic vase with a softly rounded profile and a very long product name for testing narrow mobile reading sizes\n$52.00",
+          "top": 126,
+          "left": 46,
+          "width": 228,
+          "name": "A sculptural ceramic vase with a softly rounded profile and a very long product name for testing narrow mobile reading sizes$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 644,
+          "left": 46,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 1067,
+          "left": 46,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    },
+    {
+      "name": "style-blocks-stripped",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 600,
+      "regionWidth": 552,
+      "regionScrollWidth": 552,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 186,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 186,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 186,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": true
+    },
+    {
+      "name": "partial-overflow-stripped",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 748,
+      "regionWidth": 327,
+      "regionScrollWidth": 724,
+      "scrollLeft": 0,
+      "display": "flex",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 24,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 91,
+          "left": 272,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 91,
+          "left": 520,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": true
+    },
+    {
+      "name": "klaviyo-stored-candidate",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 375,
+      "regionWidth": 327,
+      "regionScrollWidth": 327,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 74,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 74,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 74,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(38, 35, 34)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    },
+    {
+      "name": "fallback-fonts-dark-preference-simulation",
+      "browser": "Chrome/152.0.7977.82",
+      "viewport": 375,
+      "documentWidth": 375,
+      "regionWidth": 327,
+      "regionScrollWidth": 327,
+      "scrollLeft": 0,
+      "display": "block",
+      "overflowX": "visible",
+      "cards": [
+        {
+          "title": "Cloud Vase Icy Pink (XL)\n$52.00",
+          "top": 91,
+          "left": 74,
+          "width": 228,
+          "name": "Cloud Vase Icy Pink (XL)$52.00",
+          "alt": "Icy pink ceramic cylinder vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Glass Ribbed Vase Smoke (20cm)\n$62.00",
+          "top": 490,
+          "left": 74,
+          "width": 228,
+          "name": "Glass Ribbed Vase Smoke (20cm)$62.00",
+          "alt": "Smoke grey ribbed glass vase",
+          "ratio": 1.25
+        },
+        {
+          "title": "Cocoon Vase Chalk White (L)",
+          "top": 913,
+          "left": 74,
+          "width": 228,
+          "name": "Cocoon Vase Chalk White (L)",
+          "alt": "Chalk white ceramic bottle vase",
+          "ratio": 1.25
+        }
+      ],
+      "collectionOutside": true,
+      "hasScripts": false,
+      "hasIframes": false,
+      "darkPreference": true,
+      "cardTextColour": "rgb(0, 0, 0)",
+      "cardBackground": "rgb(255, 255, 255)",
+      "brokenImages": 0,
+      "pageOverflow": false
+    }
+  ]
+}

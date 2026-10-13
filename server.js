@@ -61,6 +61,7 @@ function schema() {
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
+  '.md': 'text/plain; charset=utf-8',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
   '.svg': 'image/svg+xml', '.woff': 'font/woff', '.woff2': 'font/woff2', '.otf': 'font/otf',
 };
@@ -109,6 +110,11 @@ const server = http.createServer(async (req, res) => {
       await Promise.all([componentStore.refreshIfStale(), brandTokens.refreshIfStale()]);
     }
     if (req.method === 'GET' && (p === '/' || p === '/index.html')) return serveFile(res, path.join(ROOT, 'public', 'index.html'));
+    if (req.method === 'GET' && (p === '/carousel-probe' || p.startsWith('/carousel-probe/'))) {
+      const name = p === '/carousel-probe' ? 'index.html' : p.slice('/carousel-probe/'.length);
+      const allowed = ['index.html', 'campaign.json', 'fallback.html', 'candidate-test-only.html', 'compatibility.md', 'export-evidence.json'];
+      return allowed.includes(name) ? serveFile(res, path.join(ROOT, 'docs/product-carousel', name)) : send(res, 404, 'Not found');
+    }
     if (req.method === 'GET' && (p === '/app.js' || p === '/library.js' || p === '/style.css')) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
     // The Studio is a separate page: a full-bleed canvas needs the whole viewport, and the
     // builder's three-pane layout has nothing to offer an authoring surface.
@@ -711,6 +717,7 @@ const server = http.createServer(async (req, res) => {
 
     send(res, 404, 'Not found');
   } catch (e) {
+    if (e.code === 'INVALID_PRODUCTS') return json(res, 422, { error: e.message, code: e.code });
     json(res, 500, { error: String((e && e.stack) || e) });
   }
 });

@@ -1,0 +1,61 @@
+{
+  "campaignName": "TEST - Product carousel feasibility",
+  "bodyBg": "#f3f0eb",
+  "previewText": "Test email: portrait cards, individual links and a static fallback.",
+  "blocks": [
+    {
+      "component": "products/carousel-prototype",
+      "tokens": {
+        "SECTION_HEADING": "A thoughtful addition",
+        "PRODUCTS": [
+          {
+            "title": "Cloud Vase Icy Pink (XL)",
+            "alt": "Icy pink ceramic cylinder vase",
+            "price": "$52.00",
+            "image": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cloud-vase-icy-pink-xl-1.jpg?v=1788236112",
+            "url": "https://figandbloom.com/products/cloud-vase-icy-pink-xl?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_1",
+            "available": true
+          },
+          {
+            "title": "Glass Ribbed Vase Smoke (20cm)",
+            "alt": "Smoke grey ribbed glass vase",
+            "price": "$62.00",
+            "image": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/0009_Glass_Ribbed_Vase_Smoke_20H_Ecommerce.jpg?v=1773960354",
+            "url": "https://figandbloom.com/products/glass-ribbed-vase-smoke-20cm?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_2",
+            "available": true
+          },
+          {
+            "title": "Cocoon Vase Chalk White (L)",
+            "alt": "Chalk white ceramic bottle vase",
+            "image": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cocoon-vase-chalk-white-l-1.jpg?v=1788236113",
+            "url": "https://figandbloom.com/products/cocoon-vase-chalk-white-l?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_3",
+            "available": true
+          }
+        ],
+        "COLLECTION_TEXT": "Explore gifts",
+        "COLLECTION_URL": "https://figandbloom.com/collections/gifts",
+        "PREVIEW_MODE": "fallback",
+        "PANEL_BG": "#ffffff",
+        "PANEL_TEXT": "#000000"
+      }
+    },
+    {
+      "component": "sections/button",
+      "tokens": {
+        "CTA_TEXT": "Explore gifts",
+        "CTA_URL": "https://figandbloom.com/collections/gifts?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=main_cta",
+        "ALIGN": "center",
+        "BTN_WIDTH": "260px",
+        "PADDING_TOP": "32px",
+        "PADDING_BOTTOM": "40px",
+        "PANEL_BG": "#ffffff",
+        "BTN_BG": "#000000",
+        "BTN_TEXT": "#ffffff"
+      }
+    },
+    {
+      "component": "footer",
+      "tokens": {}
+    }
+  ]
+}

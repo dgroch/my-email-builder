@@ -254,3 +254,7 @@ body.mode-library .campaign-meta,body.mode-library .actions{display:none;}
 
 /* The Studio tab is a link, not a button — it is a separate page. */
 a.seg{display:inline-flex;align-items:center;text-decoration:none;color:var(--ink);}
+/* Product-list authoring uses the existing token form and block movement controls. */
+.product-editor { border:1px solid #d8d1c8; border-radius:6px; padding:12px; margin:0 0 16px; }
+.product-editor label { display:block; margin:0 0 10px; }
+.product-editor input,.product-editor select { display:block; width:100%; box-sizing:border-box; margin-top:5px; }

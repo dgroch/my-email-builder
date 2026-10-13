@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-10-13T06:36:44.368Z",
+  "artifacts": {
+    "fallback": {
+      "bytes": 20794,
+      "sha256": "ce99e1d1318df0773f17311854c21260e0a71655690f27f909d60fb8e3284a20",
+      "status": "Production exports use this static fallback."
+    },
+    "candidate-test-only": {
+      "bytes": 21190,
+      "sha256": "5150358a40161ec7146b79cec0d45c48fba5341d5f21d4bf0a5f3f0e4315eda8",
+      "status": "Unverified test artifact. Not a production carousel."
+    }
+  }
+}

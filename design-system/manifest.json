@@ -23,12 +23,13 @@
       "divider-whitespace",
       "full-width-image",
       "promo-code",
-      "card-live"
+      "card-live",
+      "carousel-prototype"
     ],
     "slice_components": [
       "header",
       "all hero variants (including hero-image-only)",
-      "all product cards except card-live",
+      "all product cards except card-live and carousel-prototype",
       "all designed blocks (blocks/*)",
       "body-copy",
       "testimonial",
@@ -317,6 +318,35 @@
         ],
         "token_defaults": {
           "BTN_WIDTH": "auto"
+        }
+      },
+      "carousel-prototype": {
+        "file": "templates/products/carousel-prototype.html",
+        "plain_text_tokens": ["SECTION_HEADING", "COLLECTION_TEXT"],
+        "description": "DRAFT feasibility prototype. Live linked portrait cards. Production always exports a static stack until received-email scrolling is verified.",
+        "tokens": [
+          "SECTION_HEADING",
+          "PRODUCTS",
+          "COLLECTION_TEXT",
+          "COLLECTION_URL",
+          "PREVIEW_MODE",
+          "PANEL_BG",
+          "PANEL_TEXT"
+        ],
+        "token_defaults": {
+          "SECTION_HEADING": "",
+          "PRODUCTS": [],
+          "COLLECTION_TEXT": "",
+          "COLLECTION_URL": "",
+          "PREVIEW_MODE": "fallback",
+          "PANEL_BG": "#ffffff",
+          "PANEL_TEXT": "#000000"
+        },
+        "structured_tokens": {
+          "PRODUCTS": {
+            "type": "product-list",
+            "maxItems": 6
+          }
         }
       }
     },

@@ -149,7 +149,7 @@
 
   // current tokens for a card = sample tokens, with chosen palette + levers layered on
   function tokensFor(c, state) {
-    const t = { ...c.sampleTokens };
+    const t = structuredClone(c.sampleTokens);
     if (state.palette && c.palettePresets) {
       const p = c.palettePresets.find((x) => x.name === state.palette);
       if (p) Object.assign(t, p.values);

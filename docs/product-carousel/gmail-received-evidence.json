@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-13",
+  "source": "Received MIME in the approved Gmail test inbox. Recipient and tracking identifiers omitted.",
+  "messages": [
+    {
+      "template": "candidate",
+      "receivedAt": "2026-10-13T07:59:41.000Z",
+      "htmlBytes": 21892,
+      "enhancementSurvived": false,
+      "cardCount": 3,
+      "distinctProductTrackingLinks": 3,
+      "plaintextPresent": true
+    },
+    {
+      "template": "fallback",
+      "receivedAt": "2026-10-13T07:59:43.000Z",
+      "htmlBytes": 21892,
+      "enhancementSurvived": false,
+      "cardCount": 3,
+      "distinctProductTrackingLinks": 3,
+      "plaintextPresent": true
+    }
+  ],
+  "trackedLinkChecks": [
+    {
+      "product": 1,
+      "status": 200,
+      "destination": "https://figandbloom.com/products/cloud-vase-icy-pink-xl?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_1"
+    },
+    {
+      "product": 2,
+      "status": 200,
+      "destination": "https://figandbloom.com/products/glass-ribbed-vase-smoke-20cm?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_2"
+    },
+    {
+      "product": 3,
+      "status": 200,
+      "destination": "https://figandbloom.com/products/cocoon-vase-chalk-white-l?utm_source=klaviyo&utm_medium=email&utm_campaign=carousel_compatibility_test&utm_content=product_3"
+    }
+  ],
+  "gmailWeb": {
+    "measuredCardTops": [
+      319,
+      718,
+      1140
+    ],
+    "cardWidth": 228,
+    "regionWidth": 552,
+    "regionScrollWidth": 552,
+    "display": "block",
+    "overflowX": "visible",
+    "scrollLeftBefore": 0,
+    "scrollLeftAfterHorizontalInput": 0,
+    "imagesLoaded": 3,
+    "clipped": false
+  }
+}

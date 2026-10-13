@@ -26,6 +26,19 @@ part” campaign, and start editing.
 > If you already have a system Chromium, set `CHROMIUM_PATH=/path/to/chromium` to skip the
 > puppeteer download (`PUPPETEER_SKIP_DOWNLOAD=1 npm install`).
 
+## Product carousel research prototype
+
+`products/carousel-prototype` is a **draft feasibility component** with editable ordered
+portrait cards and individual live links. Klaviyo stripped the scrolling candidate, and
+the received Gmail test was static. Normal HTML and Klaviyo exports always use the static
+stack; scrolling is available only for browser inspection and an opt-in CLI test artifact.
+
+Open `/carousel-probe` to compare both layouts. Import
+[`docs/product-carousel/campaign.json`](docs/product-carousel/campaign.json) for a realistic
+editable sample. See the [compatibility matrix and editing instructions](docs/product-carousel/compatibility.md)
+for received-email evidence, research versions and release blockers. `npm run carousel:export`
+regenerates artifacts; `npm run carousel:check` runs browser simulations, not email-client tests.
+
 ## Deploy to Render.com
 The repo ships a `Dockerfile` (Node + system Chromium) and a `render.yaml` Blueprint, so the
 PNG renderer works in the cloud with no code changes. Render injects `$PORT` automatically.

@@ -42,7 +42,7 @@ fetch('/api/schema').then(r => r.json()).then(s => {
 // ── campaign model helpers ──────────────────────────────────────────────────────
 function defaultsFor(comp) {
   const tokens = {};
-  for (const t of comp.tokens) tokens[t.name] = t.default !== undefined ? t.default : '';
+  for (const t of comp.tokens) tokens[t.name] = t.default !== undefined ? structuredClone(t.default) : '';
   // palette: seed from first preset
   if (comp.palettePresets && comp.palettePresets.length) Object.assign(tokens, comp.palettePresets[0].values);
   // enum: seed the manifest default when it is one of the options, else the first option
@@ -120,6 +120,7 @@ function renderBlocks() {
     card.querySelector('.remove').onclick = () => remove(i);
     card.querySelector('.collapse').onclick = () => card.classList.toggle('collapsed');
     const fields = card.querySelector('.block-fields');
+    if (comp.name === 'products/carousel-prototype') fields.append(el('p', { class: 'desc', text: 'Experimental prototype. Scrolling is for inspection only. Production HTML and Klaviyo exports use the static fallback until received-email testing is complete.' }));
     if (comp.static) fields.append(el('p', { class: 'desc', text: 'Static block — no editable tokens.' }));
     else buildFields(fields, comp, block);
     wrap.append(card);
@@ -153,6 +154,7 @@ function buildFields(container, comp, block) {
 }
 
 function fieldFor(t, block) {
+  if (t.type === 'product-list') return productListField(t, block);
   const wrap = el('div', { class: 'field' });
   const lab = el('label', { text: t.name });
   if (t.case) lab.append(el('span', { class: 'case-chip ' + t.case, text: t.case === 'lower' ? 'lowercase' : 'Sentence case' }));
@@ -222,6 +224,80 @@ function fieldFor(t, block) {
     }
   }
   validate();
+  return wrap;
+}
+
+// Same array order is saved, previewed and exported. Buttons mirror block up/down/remove.
+function productListField(t, block) {
+  const wrap = el('div', { class: 'field product-list' });
+  wrap.append(el('label', { text: 'Products' }), el('p', { class: 'desc', text: t.desc }));
+  if (!Array.isArray(block.tokens[t.name])) {
+    wrap.append(el('p', { class: 'warn', text: 'Invalid imported product list. Import an array of product objects.' }));
+    return wrap;
+  }
+  const products = block.tokens[t.name];
+  const refresh = () => { renderBlocks(); livePreview(); };
+  products.forEach((p, i) => {
+    const card = el('fieldset', { class: 'product-editor' });
+    card.append(el('legend', { text: `Product ${i + 1}` }));
+    if (!p || typeof p !== 'object' || Array.isArray(p)) {
+      card.append(el('p', { class: 'warn', text: 'Invalid product object in imported JSON.' }),
+        el('button', { type: 'button', text: 'Remove product', onclick: () => { products.splice(i, 1); refresh(); } }));
+      wrap.append(card); return;
+    }
+    for (const [key, label] of [['image', 'Image URL'], ['alt', 'Image description'], ['title', 'Product name'], ['price', 'Price (optional)'], ['url', 'Product URL']]) {
+      const input = el('input', { type: key === 'image' || key === 'url' ? 'url' : 'text', value: p[key] || '',
+        oninput: e => { p[key] = e.target.value; scheduleLive(); } });
+      card.append(el('label', { text: label }, [input]));
+    }
+    const stock = el('select', { 'data-stock-index': String(i), onchange: e => { p.available = e.target.value === 'unknown' ? null : e.target.value === 'yes'; scheduleLive(); } });
+    for (const [value, label] of [['unknown', 'Availability unknown'], ['yes', 'Available at last check'], ['no', 'Unavailable: omitted from email']])
+      stock.append(el('option', { value, text: label, ...(value === (p.available == null ? 'unknown' : p.available ? 'yes' : 'no') ? { selected: 'selected' } : {}) }));
+    card.append(el('label', { text: 'Availability' }, [stock]));
+    const actions = el('div', { class: 'row' });
+    for (const [label, d] of [['Move up', -1], ['Move down', 1]]) actions.append(el('button', { type: 'button', text: label,
+      ...(i + d < 0 || i + d >= products.length ? { disabled: 'disabled' } : {}), onclick: () => {
+        const j = i + d; if (j < 0 || j >= products.length) return;
+        [products[i], products[j]] = [products[j], products[i]]; refresh();
+      } }));
+    actions.append(el('button', { type: 'button', text: 'Remove product', onclick: () => { products.splice(i, 1); refresh(); } }));
+    card.append(actions); wrap.append(card);
+  });
+  const actions = el('div', { class: 'row' });
+  actions.append(el('button', { type: 'button', text: 'Add product', ...(products.length >= t.maxItems ? { disabled: 'disabled' } : {}),
+    onclick: () => { products.push({ image: '', alt: '', title: '', price: '', url: '', available: null }); refresh(); } }));
+  const status = el('p', { class: 'desc', 'aria-live': 'polite' });
+  actions.append(el('button', { type: 'button', text: 'Load store products', onclick: async e => {
+    e.target.disabled = true; status.textContent = 'Loading the existing Shopify product source…';
+    try {
+      const ctx = await fetchLiveContext(true);
+      if (!ctx.products || !ctx.products.length) throw new Error((ctx.errors || {}).products || 'No products returned. Your list has been kept.');
+      const select = el('select', { 'aria-label': 'Store product' });
+      select.append(el('option', { value: '', text: 'Choose an available product' }));
+      const available = ctx.products.filter(p => p.available !== false && p.imageUrl);
+      for (const [i, p] of available.entries()) select.append(el('option', { value: String(i), text: p.title }));
+      select.onchange = () => {
+        if (select.value === '' || products.length >= t.maxItems) return;
+        const p = available[Number(select.value)];
+        products.push({ image: p.imageUrl, alt: p.title, title: p.title, price: p.priceText, url: p.url, available: p.available }); refresh();
+      };
+      wrap.append(select);
+      // Refresh only known matches; this source is limited to its existing 250-product page.
+      for (const [i, p] of products.entries()) {
+        if (!p || typeof p !== 'object') continue;
+        const found = ctx.products.find(s => { try { return new URL(s.url).pathname === new URL(p.url).pathname; } catch (_) { return false; } });
+        if (found) {
+          p.available = found.available;
+          const control = wrap.querySelector(`[data-stock-index="${i}"]`);
+          if (control) control.value = p.available == null ? 'unknown' : p.available ? 'yes' : 'no';
+        }
+      }
+      status.textContent = `Loaded ${available.length} products. Matched availability refreshed; unavailable cards are omitted on assembly. Unmatched products keep their last status.`;
+      livePreview();
+    } catch (err) { status.textContent = err.message; }
+    finally { e.target.disabled = false; }
+  } }));
+  wrap.append(actions, status, el('p', { class: 'desc', text: 'Stock is a snapshot. An already-delivered email cannot reliably update when stock changes.' }));
   return wrap;
 }
 

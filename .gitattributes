@@ -1,0 +1,2 @@
+# Preserve byte-exact exported email evidence, including renderer blank-line indentation.
+docs/product-carousel/*.html whitespace=-blank-at-eol

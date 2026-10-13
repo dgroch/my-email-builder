@@ -159,10 +159,10 @@ ok(storyV.lever && storyV.lever.name === 'TYPE_SCALE', 'story variant lever is t
 
 // ── draft flag is surfaced on the schema (coverage lens + library badges rely on it) ──
 const draftNames = schema.components.filter((c) => c.draft).map((c) => c.name).sort();
-// sections/trust-bar is draft for a different reason from the other two: its baked artwork
+// sections/trust-bar is draft for a different reason from the others: its baked artwork
 // carries a banned phrase and an unapproved delivery cut-off, so it must not ship until the
 // PNG is replaced (the copy is inside the flattened image — no token can disable it).
-eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage,sections/trust-bar',
+eq(draftNames.join(','), 'blocks/annotated-product,blocks/editorial-collage,products/carousel-prototype,sections/trust-bar',
   'exactly the DRAFT components are flagged draft');
 {
   const tb = fs.readFileSync(path.join(ROOT, 'design-system/templates/sections/trust-bar.html'), 'utf8');
@@ -1478,7 +1478,7 @@ async function studioSuite() {
   let typed = 0;
   for (const c of schema.components) {
     for (const t of c.tokens) {
-      ok(['text', 'url', 'image', 'length', 'palette', 'enum'].includes(t.type), `${c.name}.${t.name} has a known type`);
+      ok(['text', 'url', 'image', 'length', 'palette', 'enum', 'product-list'].includes(t.type), `${c.name}.${t.name} has a known type`);
       if (!t.font) continue;
       typed++;
       ok(['cervanttis', 'lust', 'neuzeitgro'].includes(t.font), `${c.name}.${t.name} names a brand face`);

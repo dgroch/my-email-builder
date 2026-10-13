@@ -1,0 +1,27 @@
+<!-- COMPONENT: products/carousel-prototype | DRAFT product carousel feasibility prototype
+TOKENS:
+  {{SECTION_HEADING}} — Optional section heading, sentence case. Leave blank to omit.
+  {{PRODUCTS}} — Ordered products: image, alt, title, optional price, url, optional available. At most six. Known unavailable products are omitted.
+  {{COLLECTION_TEXT}} — Optional collection-link text, paired with COLLECTION_URL.
+  {{COLLECTION_URL}} — Optional collection destination on figandbloom.com. Outside the cards.
+  {{PREVIEW_MODE}} — Inspection lever, one of "fallback" / "scroll". Normal HTML and Klaviyo exports always use fallback. Scrolling is unverified in received email.
+  {{PANEL_BG}} — Section background from a brand preset.
+  {{PANEL_TEXT}} — Section heading and collection-link colour from a brand preset.
+PALETTE PRESETS:
+  white : PANEL_BG=#ffffff PANEL_TEXT=#000000
+  clay : PANEL_BG=#D8CCBE PANEL_TEXT=#000000
+  noir : PANEL_BG=#000000 PANEL_TEXT=#ffffff
+RULES:
+  DRAFT research component, not a released email carousel. See docs/product-carousel/compatibility.md.
+  Live HTML via assembly.html_only_components. One set of linked cards; no duplicated fallback.
+  Preview mode never authorises enhanced production exports. Separate test export is opt-in at the CLI.
+  Use 4:5 imagery. Shopify CDN sources are resized/cropped during assembly; other hosts need a prepared 4:5 source.
+-->
+<tr><td class="fbc-section" lang="en" dir="ltr" bgcolor="{{PANEL_BG}}" style="padding:32px 24px;background:{{PANEL_BG}};">
+<!-- CAROUSEL_ENHANCEMENT -->
+{{#SECTION_HEADING}}<h2 style="margin:0 0 24px;font-family:'Lust',Georgia,'Times New Roman',serif;font-size:28px;line-height:1.25;font-weight:normal;color:{{PANEL_TEXT}};">{{SECTION_HEADING}}</h2>{{/SECTION_HEADING}}
+<div class="fbc-products" role="region" aria-label="Products" tabindex="0" style="width:100%;">
+{{PRODUCTS}}
+</div><!-- carousel-region-end -->
+{{#COLLECTION_URL}}<p style="margin:24px 0 0;font-family:'NeuzeitGro',Arial,sans-serif;font-size:16px;line-height:1.5;"><a data-carousel-collection="true" href="{{COLLECTION_URL}}" style="color:{{PANEL_TEXT}};text-decoration:underline;">{{COLLECTION_TEXT}}</a></p>{{/COLLECTION_URL}}
+</td></tr>
