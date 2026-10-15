@@ -145,12 +145,14 @@ test("artifact_duplicate_request_and_restart_uses_snapshot", async () => {
     requestId: "10000000-0000-4000-8000-000000000001",
     designId: saved.id,
     expectedUpdatedAt: saved.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash(saved),
   };
   const first = await service.start(request);
   assert.equal(
     (await service.start(request)).artifactJobId,
     first.artifactJobId,
   );
+  await assert.rejects(service.start({...request, expectedDesignHash: "0".repeat(64)}), /IDEMPOTENCY_CONFLICT/);
   saved.name = "Changed after queue";
   await service.runNext();
   const result = await service.get(first.artifactJobId);
@@ -204,6 +206,7 @@ test("artifact restart rerenders persisted frozen inputs without looking up muta
     requestId: "10000000-0000-4000-8000-000000000002",
     designId: design.id,
     expectedUpdatedAt: design.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash({ ...design, name: "Frozen" }),
   });
   const restarted = createArtifactService({
     ...options,
@@ -251,6 +254,7 @@ test("concurrent export services reserve at most twenty pending slots", async ()
     requestId: crypto.randomUUID(),
     designId: design.id,
     expectedUpdatedAt: design.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash(design),
   }));
   const starts = requests.map((request) =>
     createArtifactService(options).start(request),
@@ -293,6 +297,7 @@ test("failed snapshot captures release their queue reservations", async () => {
     requestId: crypto.randomUUID(),
     designId: design.id,
     expectedUpdatedAt: design.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash(design),
   });
   for (let i = 0; i < 21; i++)
     await assert.rejects(
@@ -340,6 +345,7 @@ test("expired snapshot reservations terminate and cannot be resurrected by late 
     requestId: crypto.randomUUID(),
     designId: design.id,
     expectedUpdatedAt: design.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash(design),
   };
   const late = service.start(request);
   const id = crypto

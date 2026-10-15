@@ -273,6 +273,7 @@ test("a sub-budget image can be frozen and rendered from its persisted snapshot"
       requestId: crypto.randomUUID(),
       designId: design.id,
       expectedUpdatedAt: design.updatedAt,
+    expectedDesignHash: require("../lib/campaignArtifact").selectedDesignHash(design),
     });
     const restarted = createArtifactService({
       ...options,

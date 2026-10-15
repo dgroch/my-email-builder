@@ -950,6 +950,7 @@ fetch('/api/publishing-config').then(r=>r.json()).then(config=>{
   if(!sameCampaignValue(design.campaign,campaign)){setStatus('Save your latest changes before publishing','warn');return;}
   if((design.subjectLine||'').trim()!==$('#subjectLine').value.trim()||(design.previewText||'').trim()!==$('#previewText').value.trim()){setStatus('Save your latest subject and preview text before publishing','warn');return;}
   if(!design.subjectLine?.trim()||!design.previewText?.trim()){setStatus('Save a subject and preview text on the design before publishing','warn');return;}
-  const target=new URL('/campaigns/import',config.engineOrigin);target.searchParams.set('designId',design.id);target.searchParams.set('expectedUpdatedAt',design.updatedAt);window.location.assign(target.href);
+  if(!/^[a-f0-9]{64}$/.test(design.designHash||''))throw Error('Saved design fingerprint unavailable');
+  const target=new URL('/campaigns/import',config.engineOrigin);target.searchParams.set('designId',design.id);target.searchParams.set('expectedUpdatedAt',design.updatedAt);target.searchParams.set('expectedDesignHash',design.designHash);window.location.assign(target.href);
  }catch(e){setStatus(e.message||'Publishing unavailable','warn');}};
 }).catch(()=>{});
