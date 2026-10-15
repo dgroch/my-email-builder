@@ -13,6 +13,7 @@ test("export HTTP requires dedicated credential and rejects stale design", async
   try {
     const req = {
       schema: 1,
+      expectedDesignHash: "a".repeat(64),
       requestId: "10000000-0000-4000-8000-000000000001",
       designId: "fixture-design",
       expectedUpdatedAt: "2026-10-13T00:00:00.000Z",
@@ -32,6 +33,16 @@ test("export HTTP requires dedicated credential and rejects stale design", async
       body: JSON.stringify(req),
     });
     assert.equal(auth.status, 404);
+    const created = await fetch(origin + "/api/designs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Synthetic selection", subjectLine: "Subject", previewText: "Preview", campaign: { blocks: [] } }),
+    });
+    const saved = await created.json();
+    const reopened = await (await fetch(origin + "/api/designs/" + saved.id)).json();
+    assert.match(saved.designHash, /^[a-f0-9]{64}$/);
+    assert.equal(reopened.designHash, saved.designHash);
+    assert.equal(saved.designHash, require("../lib/campaignArtifact").selectedDesignHash(saved));
   } finally {
     await new Promise((r) => server.close(r));
   }

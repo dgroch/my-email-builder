@@ -57,6 +57,7 @@ async function handoff(saved) {
             ? { engineOrigin: "https://engagement.figandbloom.com" }
             : {
                 id: "fixture-design",
+                designHash: "a".repeat(64),
                 campaign: saved,
                 subjectLine: "Fixture",
                 previewText: "Fixture",
@@ -82,7 +83,7 @@ test("publishing accepts saved campaigns with reordered JSONB object keys", asyn
   const result = await handoff(saved);
   assert.deepEqual(result.statuses, []);
   assert.deepEqual(result.navigations, [
-    "https://engagement.figandbloom.com/campaigns/import?designId=fixture-design&expectedUpdatedAt=2026-10-13T00%3A00%3A00Z",
+    "https://engagement.figandbloom.com/campaigns/import?designId=fixture-design&expectedUpdatedAt=2026-10-13T00%3A00%3A00Z&expectedDesignHash=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   ]);
 });
 
@@ -153,9 +154,10 @@ test("manual design metadata is saved, reopened and required before handoff", as
         if (url === "/api/designs")
           return designs.create(JSON.parse(options.body));
         const id = url.split("/").pop();
-        return options?.method === "PUT"
+        const saved = options?.method === "PUT"
           ? designs.update(id, JSON.parse(options.body))
           : designs.get(id);
+        return {...saved, designHash: require("../lib/campaignArtifact").selectedDesignHash(saved)};
       },
     }),
   });

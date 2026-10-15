@@ -84,7 +84,7 @@ function designLink(req, id) {
   const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim();
   return req.headers.host && id ? `${proto}://${req.headers.host}/?design=${encodeURIComponent(id)}` : null;
 }
-function withLink(req, d) { return d && d.id ? { ...d, link: designLink(req, d.id) } : d; }
+function withLink(req, d) { return d && d.id ? { ...d, ...(d.campaign ? { designHash: require("./lib/campaignArtifact").selectedDesignHash(d) } : {}), link: designLink(req, d.id) } : d; }
 
 function serveFile(res, filePath) {
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return send(res, 404, 'Not found');
