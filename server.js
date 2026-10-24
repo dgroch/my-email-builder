@@ -543,7 +543,7 @@ const server = http.createServer(async (req, res) => {
             rows.push(klaviyo.imageRow(imageUrl, { href: rowHref, alt: rowAlt }));
           }
         }
-        const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, assetsBase, previewText: preview });
+        const fullHtml = render.wrapProductionShell(rows.join('\n'), { campaignName: meta.campaignName, bodyBg: meta.bodyBg, theme: meta.theme, assetsBase, previewText: preview });
 
         // Same refusal as /api/export, checked here rather than up front because most of the
         // email has been rasterised by now: the slices carry their pixels to Klaviyo and no

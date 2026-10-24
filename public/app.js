@@ -25,6 +25,7 @@ const isLong = name => LONG.test(name);
 // ── boot ──────────────────────────────────────────────────────────────────────
 fetch('/api/schema').then(r => r.json()).then(s => {
   SCHEMA = s;
+  renderThemeAssets();
   const groups = {};
   for (const c of s.components) { byName[c.name] = c; (groups[c.group] ||= []).push(c); }
   const sel = $('#addSelect');
@@ -106,6 +107,7 @@ function fixSentence(v) {
 
 // ── render block cards & fields ───────────────────────────────────────────────
 function renderBlocks() {
+  renderThemeAssets();
   const wrap = $('#blocks'); wrap.innerHTML = '';
   if (!campaign.blocks.length) { wrap.append(el('p', { class: 'empty', html: 'No blocks yet. Add one above, pick one from the <b>Library</b> tab (“Add to campaign”), or click <b>Sample</b>.' })); return; }
   campaign.blocks.forEach((block, i) => {
@@ -133,6 +135,24 @@ function renderBlocks() {
   } }));
 }
 
+// Campaign-level asset controls keep the supplied cream marks swappable by designers.
+function renderThemeAssets() {
+  const panel = $('#darkThemeAssets');
+  if (!panel || !SCHEMA) return;
+  panel.hidden = campaign.theme !== 'dark';
+  const fields = $('#darkThemeAssetFields'); fields.innerHTML = '';
+  for (const [name, fallback] of Object.entries(SCHEMA.campaignThemes?.dark?.token_defaults || {})) {
+    const input = el('input', { type: 'text', value: campaign.themeTokens?.[name] || '', placeholder: fallback,
+      oninput: e => {
+        campaign.themeTokens ||= {};
+        if (e.target.value.trim()) campaign.themeTokens[name] = e.target.value.trim();
+        else delete campaign.themeTokens[name];
+        scheduleLive();
+      } });
+    fields.append(el('label', { text: name }, [input]));
+  }
+}
+
 function buildFields(container, comp, block) {
   // palette selector (once, if present)
   if (comp.palettePresets && comp.palettePresets.length) {
@@ -148,7 +168,10 @@ function buildFields(container, comp, block) {
   }
   for (const t of comp.tokens) {
     if (t.type === 'palette') continue; // handled by preset selector
-    container.append(fieldFor(t, block));
+    const capsHeadline = t.name === 'HEADLINE' && block.tokens.HEADLINE_STYLE === 'caps'
+      && comp.tokens.some(control => control.name === 'HEADLINE_STYLE');
+    const lustHeadline = comp.name === 'heroes/hero-a' && t.name === 'HEADLINE' && block.tokens.HEADLINE_FONT === 'lust';
+    container.append(fieldFor((capsHeadline || lustHeadline) ? { ...t, case: null, font: 'lust', desc: 'Lust display — copy renders exactly as typed.' } : t, block));
   }
 }
 
@@ -160,7 +183,7 @@ function fieldFor(t, block) {
   wrap.append(lab);
   if (t.desc) wrap.append(el('p', { class: 'desc', text: t.desc }));
 
-  const commit = (v) => { block.tokens[t.name] = v; scheduleLive(); };
+  const commit = (v) => { block.tokens[t.name] = v; if (['HEADLINE_STYLE', 'HEADLINE_FONT'].includes(t.name)) renderBlocks(); scheduleLive(); };
   let input;
   if (t.type === 'enum') {
     input = el('select', { onchange: e => commit(e.target.value) });
@@ -235,7 +258,7 @@ let liveTimer = null;
 // correct no matter which code path changed the campaign (edit, reorder, palette, import, load)
 // and can't race the debounced live preview. A rendered view records the key it was built from.
 // Stale views are badged, and opening one re-rasterises it.
-const campaignKey = () => JSON.stringify([campaign.blocks, campaign.campaignName, campaign.bodyBg]);
+const campaignKey = () => JSON.stringify([campaign.blocks, campaign.campaignName, campaign.bodyBg, campaign.theme, campaign.themeTokens]);
 let pngKey = null, slicesKey = null;
 function isStale(which) { return (which === 'png' ? pngKey : slicesKey) !== campaignKey(); }
 function refreshStaleBadges() {
@@ -251,6 +274,8 @@ function setStatus(msg, cls = '') { const s = $('#status'); s.textContent = msg;
 async function livePreview() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  if ($('#campaignTheme').value === 'dark') campaign.theme = 'dark';
+  else delete campaign.theme;
   refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   const frame = $('#liveFrame');
   if (!campaign.blocks.length) { frame.srcdoc = ''; return; }
@@ -475,6 +500,7 @@ function hydrate() {
   $('#previewText').value = currentDesignMeta.previewText ?? campaign.previewText ?? '';
   $('#campaignName').value = campaign.campaignName || '';
   $('#bodyBg').value = campaign.bodyBg || '#2c2825';
+  $('#campaignTheme').value = campaign.theme || 'light';
   renderBlocks(); livePreview();
 }
 
@@ -606,6 +632,7 @@ async function submitCreate() {
     currentDesignMeta = { subjectLine: (data.design && data.design.subjectLine) || camp.subjectLine || '', previewText: (data.design && data.design.previewText) || camp.previewText || '' };
     $('#campaignName').value = campaign.campaignName || (data.design && data.design.name) || '';
     $('#bodyBg').value = campaign.bodyBg || '#2c2825';
+  $('#campaignTheme').value = campaign.theme || 'light';
     hydrate();
     // Close the modal — campaign is now in the builder.
     $('#createDialog').close();
@@ -635,6 +662,10 @@ function bindToolbar() {
   $('#addSelect').onchange = e => { if (e.target.value) { addBlock(e.target.value); e.target.value = ''; } };
   $('#campaignName').oninput = scheduleLive;
   $('#bodyBg').oninput = scheduleLive;
+  $('#campaignTheme').onchange = () => {
+    if ($('#campaignTheme').value === 'dark') campaign.theme = 'dark'; else delete campaign.theme;
+    renderThemeAssets(); scheduleLive();
+  };
   $('#btnRender').onclick = renderPng;
   $('#btnRenderSlices').onclick = renderSlices;
   $('#btnDownloadSlices').onclick = downloadSlices;
@@ -677,6 +708,8 @@ function setDesignUrl(id) {
 async function saveDesign() {
   campaign.campaignName = $('#campaignName').value;
   campaign.bodyBg = $('#bodyBg').value || '#2c2825';
+  if ($('#campaignTheme').value === 'dark') campaign.theme = 'dark';
+  else delete campaign.theme;
   const metadata = {subjectLine: $('#subjectLine').value.trim(), previewText: $('#previewText').value.trim()};
   refreshStaleBadges();   // name/bg are only synced here, and both affect the render
   if (!campaign.blocks.length) { setStatus('nothing to save', 'warn'); return; }
