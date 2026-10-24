@@ -1,0 +1,23 @@
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EPERM: operation not permitted 0.0.0.0
+    at Server.setupListenHandle [as _listen2] (node:net:1883:21)
+    at listenInCluster (node:net:1962:12)
+    at Server.listen (node:net:2064:7)
+    at /workspace/wt/eb212-s7/test/run.js:2414:51
+    at new Promise (<anonymous>)
+    at integrationSuite (/workspace/wt/eb212-s7/test/run.js:2414:11)
+    at /workspace/wt/eb212-s7/test/run.js:2561:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1941:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '0.0.0.0'
+}
+
+Node.js v20.19.2

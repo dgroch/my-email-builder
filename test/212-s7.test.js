@@ -26,6 +26,7 @@ function baselineCases() {
   const cases = JSON.parse(zlib.gunzipSync(Buffer.from(f.data, 'base64')).toString()
     .replace(/@@BASELINE_ASSET_(\d+)@@/g, (_m, i) => f.shared[i]));
   const delta = require('./fixtures/212-s7b-muted-baseline.json');
+  assert.deepEqual(cases.filter(c => /color:#aaaaaa/i.test(JSON.stringify(c.renders)) || /color:#aaaaaa/i.test(JSON.stringify(c.blocks))).map(c => c.id), delta.cases);
   return cases.map(c => delta.cases.includes(c.id) ? JSON.parse(JSON.stringify(c).replace(/color:#aaaaaa/gi, 'color:' + delta.to)) : c);
 }
 test('S7 compatibility control: all 105 campaigns retain bytes except the listed fine_print baseline delta', () => {
@@ -146,4 +147,58 @@ test('S7 unsupported authored block warns by name, without making validation fai
   const warning = report.issues.find(i => i.type === 'missing_dark_version');
   assert.equal(warning?.severity, 'warning'); assert.ok(warning.message.includes(custom.name));
   assert.equal(validateCampaign({ ...campaign, theme: 'light' }, customSchema, { requireUnsubscribe: false }).warningCount, 0);
+});
+
+test('S7b hero-a HEADLINE_FONT defaults retain exact bytes and Lust preserves case and punctuation', () => {
+  const comp = schema.components.find(c => c.name === 'heroes/hero-a');
+  assert.deepEqual(comp.tokens.find(t => t.name === 'HEADLINE_FONT')?.enumOptions, ['cervanttis', 'lust']);
+  const campaign = sample.sampleCampaignFor(comp);
+  const explicit = structuredClone(campaign);
+  explicit.blocks[0].tokens.HEADLINE_FONT = 'cervanttis';
+  for (const opts of [{}, { markBlocks: true }, { production: true, shell: 'production' }]) {
+    assert.equal(render.assemble(campaign, opts).html, render.assemble(explicit, opts).html);
+  }
+  assert.deepEqual(render.assembleBlocks(campaign).blocks, render.assembleBlocks(explicit).blocks);
+  for (const font of ['cervanttis', 'lust', 'unknown']) {
+    const c = structuredClone(campaign);
+    Object.assign(c.blocks[0].tokens, { HEADLINE_FONT: font, HEADLINE: font === 'cervanttis' ? 'the christmas table, done.' : 'The Christmas table, done.' });
+    const report = validateCampaign(c, schema, { requireUnsubscribe: false });
+    if (font === 'unknown') assert.ok(report.issues.some(i => i.type === 'invalid_enum'));
+    else assert.equal(report.errorCount, 0, JSON.stringify(report.issues));
+    if (font === 'lust') for (const theme of ['light', 'dark']) {
+      const html = render.assemble({ ...c, theme }).html;
+      assert.match(html, />The Christmas table, done\.<\/h1>/);
+      const h = tags(html).find(t => t['data-eb-headline-font']);
+      assert.match(css(h, 'font-family'), /^'Lust'/);
+      assert.equal(css(h, 'text-transform'), 'none');
+      assert.equal(css(h, 'padding-bottom'), '0');
+    }
+  }
+  const tokens = sample.sampleTokensFor(comp, { levers: { HEADLINE_FONT: 'lust', HEADLINE: 'The Christmas table, done.' } });
+  assert.equal(tokens.HEADLINE, 'The Christmas table, done.');
+});
+
+function contrast(a, b) {
+  const lum = hex => {
+    const rgb = hex.replace('#', '').match(/../g).map(c => parseInt(c, 16) / 255)
+      .map(c => c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    return rgb.reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+  };
+  const x = lum(a), y = lum(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+test('S7b fine_print alone changes and meets WCAG 4.5:1 on cream and S7 noir', () => {
+  const manifest = require(path.join(root, 'design-system/manifest.json'));
+  const colours = manifest.locked_styles.colours;
+  assert.deepEqual(colours, { primary: '#000000', body: '#444444', secondary: '#666666', fine_print: '#4d4d4d', stars: '#C8A888', clay: '#D8CCBE', clay_50: '#EBE5DF', border: '#e8e2da' });
+  const campaign = { blocks: [{ component: 'sections/delivery-cutoffs', tokens: { CUTOFF_NOTE: 'Small note' } }] };
+  const light = tags(render.assembleBlocks(campaign).blocks[0].html).find(t => t.name === 'p');
+  const dark = tags(render.assembleBlocks({ ...campaign, theme: 'dark' }).blocks[0].html).find(t => t.name === 'p');
+  assert.equal(css(light, 'color'), colours.fine_print);
+  const ratios = { oldLight: contrast('#aaaaaa', '#EBE5DF'), newLight: contrast(css(light, 'color'), '#EBE5DF'), oldLightClay: contrast('#aaaaaa', '#D8CCBE'), newLightClay: contrast(css(light, 'color'), '#D8CCBE'), oldDark: contrast('#d9d4ce', '#000000'), newDark: contrast(css(dark, 'color'), '#000000') };
+  assert.ok(ratios.oldLight < 4.5);
+  assert.ok(ratios.newLight >= 4.5, JSON.stringify(ratios));
+  assert.ok(ratios.newLightClay >= 4.5, JSON.stringify(ratios));
+  assert.ok(ratios.newDark >= 4.5, JSON.stringify(ratios));
+  console.log('S7b contrast ratios: ' + JSON.stringify(ratios));
 });

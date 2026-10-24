@@ -1,0 +1,361 @@
+TAP version 13
+# Subtest: S7 compatibility control: all 105 campaigns retain bytes except the listed fine_print baseline delta
+ok 1 - S7 compatibility control: all 105 campaigns retain bytes except the listed fine_print baseline delta
+  ---
+  duration_ms: 2103.260985
+  ...
+# Subtest: S7 dark: blocks/annotated-product paints noir wrappers and light text/links
+ok 2 - S7 dark: blocks/annotated-product paints noir wrappers and light text/links
+  ---
+  duration_ms: 9.084503
+  ...
+# Subtest: S7 dark: blocks/caption-bar-hero paints noir wrappers and light text/links
+ok 3 - S7 dark: blocks/caption-bar-hero paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.005699
+  ...
+# Subtest: S7 dark: blocks/comparison-vs paints noir wrappers and light text/links
+ok 4 - S7 dark: blocks/comparison-vs paints noir wrappers and light text/links
+  ---
+  duration_ms: 5.486521
+  ...
+# Subtest: S7 dark: blocks/designed-product-card paints noir wrappers and light text/links
+ok 5 - S7 dark: blocks/designed-product-card paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.195817
+  ...
+# Subtest: S7 dark: blocks/editorial-collage paints noir wrappers and light text/links
+ok 6 - S7 dark: blocks/editorial-collage paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.933487
+  ...
+# Subtest: S7 dark: blocks/editorial-hero paints noir wrappers and light text/links
+ok 7 - S7 dark: blocks/editorial-hero paints noir wrappers and light text/links
+  ---
+  duration_ms: 6.191828
+  ...
+# Subtest: S7 dark: blocks/event-gallery paints noir wrappers and light text/links
+ok 8 - S7 dark: blocks/event-gallery paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.504796
+  ...
+# Subtest: S7 dark: blocks/feature-list paints noir wrappers and light text/links
+ok 9 - S7 dark: blocks/feature-list paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.349853
+  ...
+# Subtest: S7 dark: blocks/howto-steps paints noir wrappers and light text/links
+ok 10 - S7 dark: blocks/howto-steps paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.715415
+  ...
+# Subtest: S7 dark: blocks/image-text paints noir wrappers and light text/links
+ok 11 - S7 dark: blocks/image-text paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.773098
+  ...
+# Subtest: S7 dark: blocks/journal-tile paints noir wrappers and light text/links
+ok 12 - S7 dark: blocks/journal-tile paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.511035
+  ...
+# Subtest: S7 dark: blocks/offer-panel paints noir wrappers and light text/links
+ok 13 - S7 dark: blocks/offer-panel paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.766349
+  ...
+# Subtest: S7 dark: blocks/polaroid-collage paints noir wrappers and light text/links
+ok 14 - S7 dark: blocks/polaroid-collage paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.834125
+  ...
+# Subtest: S7 dark: blocks/story paints noir wrappers and light text/links
+ok 15 - S7 dark: blocks/story paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.85585
+  ...
+# Subtest: S7 dark: dividers/divider-illo-50clay paints noir wrappers and light text/links
+ok 16 - S7 dark: dividers/divider-illo-50clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.591467
+  ...
+# Subtest: S7 dark: dividers/divider-illo-clay paints noir wrappers and light text/links
+ok 17 - S7 dark: dividers/divider-illo-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.2386
+  ...
+# Subtest: S7 dark: dividers/divider-illo-noir paints noir wrappers and light text/links
+ok 18 - S7 dark: dividers/divider-illo-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.51605
+  ...
+# Subtest: S7 dark: dividers/divider-illo-white paints noir wrappers and light text/links
+ok 19 - S7 dark: dividers/divider-illo-white paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.458827
+  ...
+# Subtest: S7 dark: dividers/divider-image paints noir wrappers and light text/links
+ok 20 - S7 dark: dividers/divider-image paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.387497
+  ...
+# Subtest: S7 dark: dividers/divider-line paints noir wrappers and light text/links
+ok 21 - S7 dark: dividers/divider-line paints noir wrappers and light text/links
+  ---
+  duration_ms: 6.613633
+  ...
+# Subtest: S7 dark: dividers/divider-whitespace paints noir wrappers and light text/links
+ok 22 - S7 dark: dividers/divider-whitespace paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.194631
+  ...
+# Subtest: S7 dark: footer paints noir wrappers and light text/links
+ok 23 - S7 dark: footer paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.572761
+  ...
+# Subtest: S7 dark: header paints noir wrappers and light text/links
+ok 24 - S7 dark: header paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.058932
+  ...
+# Subtest: S7 dark: heroes/hero-a paints noir wrappers and light text/links
+ok 25 - S7 dark: heroes/hero-a paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.273761
+  ...
+# Subtest: S7 dark: heroes/hero-b-clay paints noir wrappers and light text/links
+ok 26 - S7 dark: heroes/hero-b-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.435343
+  ...
+# Subtest: S7 dark: heroes/hero-b-noir paints noir wrappers and light text/links
+ok 27 - S7 dark: heroes/hero-b-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.07898
+  ...
+# Subtest: S7 dark: heroes/hero-b-white paints noir wrappers and light text/links
+ok 28 - S7 dark: heroes/hero-b-white paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.172505
+  ...
+# Subtest: S7 dark: heroes/hero-c1 paints noir wrappers and light text/links
+ok 29 - S7 dark: heroes/hero-c1 paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.872111
+  ...
+# Subtest: S7 dark: heroes/hero-c1-clay paints noir wrappers and light text/links
+ok 30 - S7 dark: heroes/hero-c1-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.058651
+  ...
+# Subtest: S7 dark: heroes/hero-c1-noir paints noir wrappers and light text/links
+ok 31 - S7 dark: heroes/hero-c1-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.870139
+  ...
+# Subtest: S7 dark: heroes/hero-c2 paints noir wrappers and light text/links
+ok 32 - S7 dark: heroes/hero-c2 paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.996673
+  ...
+# Subtest: S7 dark: heroes/hero-c2-clay paints noir wrappers and light text/links
+ok 33 - S7 dark: heroes/hero-c2-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.892814
+  ...
+# Subtest: S7 dark: heroes/hero-c2-noir paints noir wrappers and light text/links
+ok 34 - S7 dark: heroes/hero-c2-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.693427
+  ...
+# Subtest: S7 dark: heroes/hero-d-clay paints noir wrappers and light text/links
+ok 35 - S7 dark: heroes/hero-d-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.69409
+  ...
+# Subtest: S7 dark: heroes/hero-d-noir paints noir wrappers and light text/links
+ok 36 - S7 dark: heroes/hero-d-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.650591
+  ...
+# Subtest: S7 dark: heroes/hero-d-white paints noir wrappers and light text/links
+ok 37 - S7 dark: heroes/hero-d-white paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.674999
+  ...
+# Subtest: S7 dark: heroes/hero-image-only paints noir wrappers and light text/links
+ok 38 - S7 dark: heroes/hero-image-only paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.376465
+  ...
+# Subtest: S7 dark: products/card-horizontal paints noir wrappers and light text/links
+ok 39 - S7 dark: products/card-horizontal paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.205997
+  ...
+# Subtest: S7 dark: products/card-horizontal-reversed paints noir wrappers and light text/links
+ok 40 - S7 dark: products/card-horizontal-reversed paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.128498
+  ...
+# Subtest: S7 dark: products/card-lifestyle-studio paints noir wrappers and light text/links
+ok 41 - S7 dark: products/card-lifestyle-studio paints noir wrappers and light text/links
+  ---
+  duration_ms: 8.440954
+  ...
+# Subtest: S7 dark: products/card-live paints noir wrappers and light text/links
+ok 42 - S7 dark: products/card-live paints noir wrappers and light text/links
+  ---
+  duration_ms: 4.962466
+  ...
+# Subtest: S7 dark: products/card-single-testimonial paints noir wrappers and light text/links
+ok 43 - S7 dark: products/card-single-testimonial paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.832767
+  ...
+# Subtest: S7 dark: sections/body-copy paints noir wrappers and light text/links
+ok 44 - S7 dark: sections/body-copy paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.515151
+  ...
+# Subtest: S7 dark: sections/body-copy-plain paints noir wrappers and light text/links
+ok 45 - S7 dark: sections/body-copy-plain paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.337177
+  ...
+# Subtest: S7 dark: sections/button paints noir wrappers and light text/links
+ok 46 - S7 dark: sections/button paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.282307
+  ...
+# Subtest: S7 dark: sections/delivery-cutoffs paints noir wrappers and light text/links
+ok 47 - S7 dark: sections/delivery-cutoffs paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.69812
+  ...
+# Subtest: S7 dark: sections/full-width-image paints noir wrappers and light text/links
+ok 48 - S7 dark: sections/full-width-image paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.144638
+  ...
+# Subtest: S7 dark: sections/opt-out paints noir wrappers and light text/links
+ok 49 - S7 dark: sections/opt-out paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.50522
+  ...
+# Subtest: S7 dark: sections/promo-code paints noir wrappers and light text/links
+ok 50 - S7 dark: sections/promo-code paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.576079
+  ...
+# Subtest: S7 dark: sections/section-headline paints noir wrappers and light text/links
+ok 51 - S7 dark: sections/section-headline paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.226414
+  ...
+# Subtest: S7 dark: sections/testimonial paints noir wrappers and light text/links
+ok 52 - S7 dark: sections/testimonial paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.176174
+  ...
+# Subtest: S7 dark: sections/three-column-steps-50clay paints noir wrappers and light text/links
+ok 53 - S7 dark: sections/three-column-steps-50clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.816954
+  ...
+# Subtest: S7 dark: sections/three-column-steps-beige paints noir wrappers and light text/links
+ok 54 - S7 dark: sections/three-column-steps-beige paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.416614
+  ...
+# Subtest: S7 dark: sections/three-column-steps-clay paints noir wrappers and light text/links
+ok 55 - S7 dark: sections/three-column-steps-clay paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.408541
+  ...
+# Subtest: S7 dark: sections/three-column-steps-white paints noir wrappers and light text/links
+ok 56 - S7 dark: sections/three-column-steps-white paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.569326
+  ...
+# Subtest: S7 dark: sections/trust-bar paints noir wrappers and light text/links
+ok 57 - S7 dark: sections/trust-bar paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.207069
+  ...
+# Subtest: S7 dark: sections/upsell-noir paints noir wrappers and light text/links
+ok 58 - S7 dark: sections/upsell-noir paints noir wrappers and light text/links
+  ---
+  duration_ms: 3.298011
+  ...
+# Subtest: S7 dark preview, production, marked and sliced shells carry client-mode protection
+ok 59 - S7 dark preview, production, marked and sliced shells carry client-mode protection
+  ---
+  duration_ms: 28.445451
+  ...
+S7b contrast ratios: {"oldLight":1.8591290840164447,"newLight":6.764840965228249,"oldLightClay":1.4713636273450679,"newLightClay":5.35387296481168,"oldDark":14.25898239151275,"newDark":14.25898239151275}
+# Subtest: S7 supplied cream assets are default, swappable and local; footer navigation survives images off
+ok 60 - S7 supplied cream assets are default, swappable and local; footer navigation survives images off
+  ---
+  duration_ms: 59.422876
+  ...
+# Subtest: S7 reconstructed dark test and caps variant validate clean with real uppercase HTML
+ok 61 - S7 reconstructed dark test and caps variant validate clean with real uppercase HTML
+  ---
+  duration_ms: 39.434496
+  ...
+# Subtest: S7 caps: heroes/hero-d-noir preserves text, uses Lust and validates separately from default
+ok 62 - S7 caps: heroes/hero-d-noir preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 1.716657
+  ...
+# Subtest: S7 caps: heroes/hero-b-noir preserves text, uses Lust and validates separately from default
+ok 63 - S7 caps: heroes/hero-b-noir preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 1.29151
+  ...
+# Subtest: S7 caps: heroes/hero-c1-noir preserves text, uses Lust and validates separately from default
+ok 64 - S7 caps: heroes/hero-c1-noir preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 0.980452
+  ...
+# Subtest: S7 caps: heroes/hero-c2-noir preserves text, uses Lust and validates separately from default
+ok 65 - S7 caps: heroes/hero-c2-noir preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 1.046647
+  ...
+# Subtest: S7 caps: sections/upsell-noir preserves text, uses Lust and validates separately from default
+ok 66 - S7 caps: sections/upsell-noir preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 0.922553
+  ...
+# Subtest: S7 caps: sections/section-headline preserves text, uses Lust and validates separately from default
+ok 67 - S7 caps: sections/section-headline preserves text, uses Lust and validates separately from default
+  ---
+  duration_ms: 0.738394
+  ...
+# Subtest: S7 unsupported authored block warns by name, without making validation fail
+ok 68 - S7 unsupported authored block warns by name, without making validation fail
+  ---
+  duration_ms: 0.287661
+  ...
+# Subtest: S7b hero-a HEADLINE_FONT defaults retain exact bytes and Lust preserves case and punctuation
+ok 69 - S7b hero-a HEADLINE_FONT defaults retain exact bytes and Lust preserves case and punctuation
+  ---
+  duration_ms: 16.957769
+  ...
+# Subtest: S7b fine_print alone changes and meets WCAG 4.5:1 on cream and S7 noir
+ok 70 - S7b fine_print alone changes and meets WCAG 4.5:1 on cream and S7 noir
+  ---
+  duration_ms: 2.20879
+  ...
+1..70
+# tests 70
+# suites 0
+# pass 70
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2505.055983

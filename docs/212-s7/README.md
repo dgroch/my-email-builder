@@ -101,3 +101,106 @@ EB212S7_RENDER_DIR=/tmp/212-s7-html node scripts/render-212-s7.js --assemble-onl
 | `design-system/assets/F_B_Logo_Horizontal_{CREAM,WHT}_914x200.png` | Two original supplied raster logos (binary files). |
 | `design-system/assets/F_B_Social_{Facebook,Instagram,Pinterest,Youtube}_CREAM_300x120.png` | Four original supplied raster social icons (binary files). |
 | `docs/212-s7/{README.md,implementation.tap,revert-main.tap,existing-tests.tap,legacy-browser-free.log}` | Handoff and recorded verification. |
+
+
+## S7b follow-on — B-G5 and B-G6
+
+Plan: [.plan-212-s7b.md](../../.plan-212-s7b.md). Builds on S7 without restructuring it.
+
+Hero-a now exposes `HEADLINE_FONT` in the same enum-control UI as the S7 caps levers. Allowed values are `cervanttis` (default) and `lust`; unknown values produce `invalid_enum`. Omitted and explicit `cervanttis` retain the original bytes, lowercase validation, and font/glyph behavior. `lust` uses the bundled display serif, removes the script descender pad, and preserves case/punctuation verbatim in preview, production and block assembly. Validation, sample generation, UI casing hints and glyph auditing use the selected face. Set `HEADLINE: "The Christmas table, done."` and `HEADLINE_FONT: "lust"`.
+
+Only the `fine_print` colour token changes: light `#aaaaaa` → `#4d4d4d` (70% black, rounded to an opaque sRGB value). The dark adapter already supplies `#d9d4ce`, so its value stays unchanged. Existing immutable/shipped template literals resolve through the brand token layer; only `color:#aaaaaa` declarations change, leaving template comments, other colours, supplied copy and other tokens alone. The Studio impact list also recognises the original literal.
+
+WCAG relative luminance contrast (sRGB linearisation; asserted from actual assembled light/dark text colours):
+
+| Background | Old muted | New muted | Old ratio | New ratio |
+| --- | --- | --- | --- | --- |
+| Cream / 50% clay `#EBE5DF` | `#aaaaaa` | `#4d4d4d` | 1.859129:1 | **6.764841:1** |
+| Full clay `#D8CCBE` (additional check) | `#aaaaaa` | `#4d4d4d` | 1.471364:1 | **5.353873:1** |
+| S7 noir `#000000` | `#d9d4ce` | `#d9d4ce` | 14.258982:1 | **14.258982:1** |
+
+### Exact byte-baseline exceptions
+
+The original compressed baseline is untouched. [212-s7b-muted-baseline.json](../../test/fixtures/212-s7b-muted-baseline.json) is an explicit delta overlay for precisely the following **39** cases. The compatibility test checks the list against the original fixture and replaces only the old muted colour declaration in expected HTML. **396 of 630 full renders remain identical to the original; 234 change solely at muted colour declarations.** Of the 210 block-byte comparison sets, 132 remain original and 78 receive the same delta. Hero-a's original baseline remains unchanged. No committed example source HTML is rewritten.
+
+- `blocks/annotated-product`
+- `blocks/annotated-product:white`
+- `blocks/caption-bar-hero`
+- `blocks/caption-bar-hero:white`
+- `blocks/caption-bar-hero:noir`
+- `blocks/comparison-vs`
+- `blocks/comparison-vs:white`
+- `blocks/designed-product-card`
+- `blocks/designed-product-card:white`
+- `blocks/editorial-collage`
+- `blocks/editorial-collage:white`
+- `blocks/editorial-hero`
+- `blocks/event-gallery`
+- `blocks/event-gallery:white`
+- `blocks/feature-list`
+- `blocks/howto-steps`
+- `blocks/howto-steps:white`
+- `blocks/image-text`
+- `blocks/image-text:white`
+- `blocks/offer-panel`
+- `blocks/offer-panel:white`
+- `blocks/story`
+- `blocks/story:white`
+- `heroes/hero-b-white`
+- `heroes/hero-c1`
+- `heroes/hero-c2`
+- `heroes/hero-d-white`
+- `products/card-horizontal`
+- `products/card-horizontal-reversed`
+- `products/card-lifestyle-studio`
+- `products/card-single-testimonial`
+- `sections/body-copy`
+- `sections/body-copy-plain`
+- `sections/delivery-cutoffs`
+- `sections/promo-code`
+- `sections/section-headline`
+- `email:seed-editorial-digest`
+- `email:seed-farewell`
+- `email:all-components`
+
+
+All listed cases change because their assembled HTML uses the muted token. Cases with `:white`/`:noir` are the corresponding palette samples; the unqualified names are the default samples. `sections/section-headline` contains the token in its source/assembled token documentation. The two seed campaigns and all-components email contain affected components. Other palette variants retain their original bytes.
+
+### B3 Sunday note rendering
+
+```bash
+CHROMIUM_PATH=/opt/google/chrome/chrome \
+EB212S7_RENDER_DIR=/tmp/212-s7b-b3 \
+node scripts/render-212-s7b.js
+```
+
+The sibling runner reads `/workspace/email-3x-week/month-2026-11/build/B3/design-payload.json`, applies only the hero-a font choice and requested headline, validates, and writes `b3-sunday.json`, preview/production HTML and `b3-report.json`. Override the source folder with `EB212S7_B3_SOURCE`. It renders four PNGs: 600/390, each images on/off. The audit checks exact headline text, computed Lust font family, no text transform, overflow, failed requests and broken images. Images-off aborts image requests, including the hero background. Unlike the original offline S7 runner, this B3 runner uses the source campaign's hosted images and fonts; bundled illustration requests are served locally. Browser closes in `finally`, and launch/render errors are recorded in the report.
+
+`EB212S7_RENDER_DIR=/tmp/212-s7b-b3 node scripts/render-212-s7b.js --assemble-only` passed with zero validation errors, warnings or unfilled tokens. A real browser run was attempted: Chrome fails before page creation with `crashpad ... setsockopt: Operation not permitted`. **No new PNGs or computed browser results are claimed; 600/390 and images-off visual verification remains pending on a host that permits Chromium.** See [browser failure](browser-s7b.txt). A final pipe-transport launch with single-process/no-zygote also failed (`Target closed`).
+
+### Follow-on verification
+
+- **70/70 S7 tests pass**, including the original 68 and two new tests covering font selection/default identity/enum rejection/case preservation and both theme contrast ratios. [TAP](implementation-s7b.tap).
+- **Main revert proof:** using the already extracted `/tmp/212-s7-main` (`2782d75`), `EB212S7_TEST_ROOT=/tmp/212-s7-main node test/212-s7.test.js` fails both new feature tests: main lacks the enum and retains the pale token. With the new baseline delta, all 70 tests fail against main (the former compatibility control now intentionally expects the muted-token correction). [TAP](revert-main-s7b.tap). No working code was removed or reverted.
+- **3,309 browser-free legacy assertions pass** with the same temporary in-memory harness described above, excluding only `cardLiveSuite()` and `integrationSuite()`. [Log](legacy-browser-free-s7b.txt).
+- **Six existing test files pass:** artifact, publish-assembly, fixture-compatibility, publishing-handoff, notion-revision and selected-design. [TAP](existing-tests-s7b.tap).
+- Full `npm test` was attempted: S7 passed, then `test/run.js` exited 1 in this sandbox; a direct full legacy rerun confirms `listen EPERM` in `integrationSuite()` ([failure](full-legacy-s7b.txt)). Full browser/HTTP suites remain unverified. [Output](npm-test-s7b.txt). Syntax checks and `git diff --check` pass.
+- No Git write commands were run. HEAD changed externally during this session to `7f3eaf5`; that state was left untouched.
+
+### Follow-on changed-file map
+
+| File and line | Follow-on change |
+| --- | --- |
+| [.plan-212-s7b.md:1](../../.plan-212-s7b.md#L1) | Initial plan. |
+| [design-system/manifest.json:95](../../design-system/manifest.json#L95) | Font enum/default; fine_print at line 1255. |
+| [lib/campaignTheme.js:20](../../lib/campaignTheme.js#L20) | Verbatim headline selection and hero-a Lust styling. |
+| [lib/brandTokens.js:225](../../lib/brandTokens.js#L225) | Resolve only muted colour declarations; impact discovery at line 258. |
+| [lib/validate.js:327](../../lib/validate.js#L327) | Selected face casing/glyph validation. |
+| [lib/glyphs.js:277](../../lib/glyphs.js#L277) | Campaign glyph auditing uses selected font. |
+| [lib/sampleData.js:259](../../lib/sampleData.js#L259) | Preserve exact copy with Lust. |
+| [public/app.js:173](../../public/app.js#L173) | Font-aware headline field and control refresh. |
+| [scripts/render-212-s7b.js:1](../../scripts/render-212-s7b.js#L1) | B3 renderer and browser audit. |
+| [test/212-s7.test.js:28](../../test/212-s7.test.js#L28) | Narrow baseline delta; new tests at lines 152 and 190. |
+| [test/fixtures/212-s7b-muted-baseline.json:1](../../test/fixtures/212-s7b-muted-baseline.json#L1) | Exact 39-case baseline overlay. |
+| [docs/212-s7/README.md](README.md) | Ratios, exception list, rendering instructions and evidence. |
+| `docs/212-s7/{implementation-s7b.tap,revert-main-s7b.tap,existing-tests-s7b.tap,legacy-browser-free-s7b.txt,browser-s7b.txt,npm-test-s7b.txt,full-legacy-s7b.txt}` | Verification outputs. |
