@@ -1,0 +1,10 @@
+Error: Failed to launch the browser process:  Code: null
+
+stderr:
+[34:34:1025/084731.010615:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
+    at ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    at ChildProcess.emit (node:events:536:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:293:12)

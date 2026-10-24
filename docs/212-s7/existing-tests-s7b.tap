@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: /workspace/wt/eb212-s7/test/artifact.test.js
+ok 1 - /workspace/wt/eb212-s7/test/artifact.test.js
+  ---
+  duration_ms: 331.642816
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/fixture-compatibility.test.js
+ok 2 - /workspace/wt/eb212-s7/test/fixture-compatibility.test.js
+  ---
+  duration_ms: 114.047289
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/notion-revision.test.js
+ok 3 - /workspace/wt/eb212-s7/test/notion-revision.test.js
+  ---
+  duration_ms: 125.960818
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/publish-assembly.test.js
+ok 4 - /workspace/wt/eb212-s7/test/publish-assembly.test.js
+  ---
+  duration_ms: 215.551265
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/publishing-handoff.test.js
+ok 5 - /workspace/wt/eb212-s7/test/publishing-handoff.test.js
+  ---
+  duration_ms: 139.663919
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/selected-design.test.js
+ok 6 - /workspace/wt/eb212-s7/test/selected-design.test.js
+  ---
+  duration_ms: 119.663551
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 338.218024
