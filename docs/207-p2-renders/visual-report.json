@@ -1,0 +1,437 @@
+{
+  "baseCommit": "575e1a4",
+  "assets": "Offline embedded local 4:5 placeholder; embedded brand fonts; all network requests intercepted.",
+  "captures": [
+    {
+      "stem": "item-1-sample-before-600",
+      "documentWidth": 600,
+      "blockHeight": 331,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-1-sample-after-600",
+      "documentWidth": 600,
+      "blockHeight": 350,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": {
+        "width": 280,
+        "height": 350
+      },
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-2-sample-before-600",
+      "documentWidth": 600,
+      "blockHeight": 252.0625,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-2-sample-after-600",
+      "documentWidth": 600,
+      "blockHeight": 176.171875,
+      "blockWidth": 600,
+      "paddingTop": "32px",
+      "paddingBottom": "32px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "32px",
+        "paddingBottom": "32px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-4-sample-before-600",
+      "documentWidth": 600,
+      "blockHeight": 114.890625,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-4-sample-after-600",
+      "documentWidth": 600,
+      "blockHeight": 153.671875,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [
+        "left",
+        "left",
+        "left"
+      ],
+      "image": null,
+      "copy": {
+        "paddingTop": "24px",
+        "paddingBottom": "24px",
+        "textAlign": "left"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-8-sample-before-600",
+      "documentWidth": 600,
+      "blockHeight": 252.0625,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-8-sample-after-600",
+      "documentWidth": 600,
+      "blockHeight": 252.0625,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-9-sample-before-600",
+      "documentWidth": 600,
+      "blockHeight": 750,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-9-sample-after-600",
+      "documentWidth": 600,
+      "blockHeight": 798,
+      "blockWidth": 600,
+      "paddingTop": "24px",
+      "paddingBottom": "24px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-oneLine-before-600",
+      "documentWidth": 600,
+      "blockHeight": 750,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-oneLine-after-600",
+      "documentWidth": 600,
+      "blockHeight": 38,
+      "blockWidth": 600,
+      "paddingTop": "10px",
+      "paddingBottom": "10px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-twoLines-before-600",
+      "documentWidth": 600,
+      "blockHeight": 750,
+      "blockWidth": 600,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-twoLines-after-600",
+      "documentWidth": 600,
+      "blockHeight": 56,
+      "blockWidth": 600,
+      "paddingTop": "10px",
+      "paddingBottom": "10px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-1-sample-before-390",
+      "documentWidth": 390,
+      "blockHeight": 225.46875,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-1-sample-after-390",
+      "documentWidth": 390,
+      "blockHeight": 279.046875,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": {
+        "width": 171.59375,
+        "height": 214.484375
+      },
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-2-sample-before-390",
+      "documentWidth": 390,
+      "blockHeight": 304.34375,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-2-sample-after-390",
+      "documentWidth": 390,
+      "blockHeight": 176.171875,
+      "blockWidth": 390,
+      "paddingTop": "32px",
+      "paddingBottom": "32px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "32px",
+        "paddingBottom": "32px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-4-sample-before-390",
+      "documentWidth": 390,
+      "blockHeight": 140.78125,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-4-sample-after-390",
+      "documentWidth": 390,
+      "blockHeight": 153.671875,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [
+        "left",
+        "left",
+        "left"
+      ],
+      "image": null,
+      "copy": {
+        "paddingTop": "24px",
+        "paddingBottom": "24px",
+        "textAlign": "left"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-8-sample-before-390",
+      "documentWidth": 390,
+      "blockHeight": 304.34375,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-8-sample-after-390",
+      "documentWidth": 390,
+      "blockHeight": 304.34375,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": {
+        "paddingTop": "44px",
+        "paddingBottom": "44px",
+        "textAlign": "center"
+      },
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-9-sample-before-390",
+      "documentWidth": 390,
+      "blockHeight": 487.5,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-9-sample-after-390",
+      "documentWidth": 390,
+      "blockHeight": 519.5,
+      "blockWidth": 390,
+      "paddingTop": "16px",
+      "paddingBottom": "16px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-oneLine-before-390",
+      "documentWidth": 390,
+      "blockHeight": 487.5,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-oneLine-after-390",
+      "documentWidth": 390,
+      "blockHeight": 38,
+      "blockWidth": 390,
+      "paddingTop": "10px",
+      "paddingBottom": "10px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-twoLines-before-390",
+      "documentWidth": 390,
+      "blockHeight": 487.5,
+      "blockWidth": 390,
+      "paddingTop": "0px",
+      "paddingBottom": "0px",
+      "textAlign": "start",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    },
+    {
+      "stem": "item-10-twoLines-after-390",
+      "documentWidth": 390,
+      "blockHeight": 56,
+      "blockWidth": 390,
+      "paddingTop": "10px",
+      "paddingBottom": "10px",
+      "textAlign": "center",
+      "bodyCells": [],
+      "image": null,
+      "copy": null,
+      "fontLoaded": true
+    }
+  ],
+  "topLine390": {
+    "oneLine": 38,
+    "twoLines": 56
+  },
+  "changedExistingDefaultComponents": []
+}

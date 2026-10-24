@@ -1,0 +1,42 @@
+<!-- COMPONENT: products/card-feature | FEATURE CARD (HTML-SAFE)
+TOKENS:
+  {{IMAGE_URL}} — required 4:5 image URL, minimum source 560x700.
+  {{IMAGE_ALT}} — required plain text alt, no markdown.
+  {{LINK_URL}} — required URL wrapping image, title and label.
+  {{SUPER_LABEL}} — optional bold caps label.
+  {{TITLE}} — Lust title, sentence case.
+  {{LINK_LABEL}} — optional linked label under title.
+  {{BODY_P1}} — required paragraph, markdown.
+  {{BODY_P2}} — optional paragraph, markdown.
+  {{LINK_ROW}} — optional markdown links separated by /.
+  {{CTA_TEXT}} — optional button label; blank omits button and VML.
+  {{BTN_WIDTH}} — Outlook button width in px, e.g. "180px", or auto.
+  {{IMG_SIDE}} — image side lever: "left" or "right".
+RULES:
+  - After body copy, before bands/main button. Side by side on mobile.
+-->
+<tr><td style="padding:0;background:#ffffff;">
+<style>@media only screen and (max-width:599px){.cf-img{width:44%!important;}.cf-img img{width:100%!important;height:auto!important;}.cf-txt{padding:20px 16px 20px 18px!important;}.cf-title{font-size:18px!important;}.cf-btn{padding:12px 18px!important;}}</style>
+<table class="f600" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" dir="{{IMG_SIDE}}">
+<tr><td class="cf-img" width="280" valign="middle" style="width:280px;padding:0;vertical-align:middle;">
+<a href="{{LINK_URL}}" target="_blank" style="display:block;font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-size:14px;line-height:1.4;color:#444444;text-decoration:none;"><img src="{{IMAGE_URL}}" width="280" alt="{{IMAGE_ALT}}" border="0" style="display:block;width:280px;height:auto;border:0;"></a>
+</td><td class="cf-txt" dir="ltr" valign="middle" style="padding:32px 32px 32px 36px;vertical-align:middle;text-align:left;">
+{{#SUPER_LABEL}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#666666;margin:0 0 10px;">{{SUPER_LABEL}}</p>{{/SUPER_LABEL}}
+<h3 class="cf-title" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-size:22px;line-height:1.2;color:#000000;margin:0 0 10px;"><a href="{{LINK_URL}}" target="_blank" style="color:#000000;text-decoration:none;">{{TITLE}}</a></h3>
+{{#LINK_LABEL}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;margin:0 0 14px;"><a href="{{LINK_URL}}" target="_blank" style="color:#000000;text-decoration:underline;">{{LINK_LABEL}}</a></p>{{/LINK_LABEL}}
+<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:#444444;margin:0;">{{BODY_P1}}</p>
+{{#BODY_P2}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:#444444;margin:14px 0 0;">{{BODY_P2}}</p>{{/BODY_P2}}
+{{#LINK_ROW}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:#000000;margin:14px 0;">{{LINK_ROW}}</p>{{/LINK_ROW}}
+{{#CTA_TEXT}}<!--[if gte mso 9]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   href="{{LINK_URL}}" arcsize="0%" stroke="f" fillcolor="#000000"
+                   style="height:40px;width:{{BTN_WIDTH}};v-text-anchor:middle;">
+        <w:anchorlock/>
+        <center style="font-family:'Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#ffffff;">{{CTA_TEXT}}</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !gte mso 9]><!-->
+      <a class="cf-btn" href="{{LINK_URL}}" target="_blank" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 28px;display:inline-block;">{{CTA_TEXT}}</a>
+      <!--<![endif]-->{{/CTA_TEXT}}
+</td></tr></table>
+</td></tr>
