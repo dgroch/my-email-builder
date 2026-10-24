@@ -1,0 +1,48 @@
+TAP version 13
+# Subtest: /workspace/wt/eb212-s7/test/207-p2-render.test.js
+not ok 1 - /workspace/wt/eb212-s7/test/207-p2-render.test.js
+  ---
+  duration_ms: 455.161822
+  location: '/workspace/wt/eb212-s7/test/207-p2-render.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/45-images-off.test.js
+ok 2 - /workspace/wt/eb212-s7/test/45-images-off.test.js
+  ---
+  duration_ms: 3458.432166
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/artifact-media.test.js
+not ok 3 - /workspace/wt/eb212-s7/test/artifact-media.test.js
+  ---
+  duration_ms: 649.027082
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/export-http.test.js
+not ok 4 - /workspace/wt/eb212-s7/test/export-http.test.js
+  ---
+  duration_ms: 169.097134
+  location: '/workspace/wt/eb212-s7/test/export-http.test.js:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4736.736936

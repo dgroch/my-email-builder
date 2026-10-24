@@ -1,0 +1,152 @@
+TAP version 13
+# Subtest: artifact rejects unsafe or non-opaque background colours
+ok 1 - artifact rejects unsafe or non-opaque background colours
+  ---
+  duration_ms: 41.539993
+  ...
+# Subtest: artifact_freezes_components_and_brand
+ok 2 - artifact_freezes_components_and_brand
+  ---
+  duration_ms: 0.307538
+  ...
+# Subtest: artifact_preserves_gif_columns_and_canonical_hash
+ok 3 - artifact_preserves_gif_columns_and_canonical_hash
+  ---
+  duration_ms: 5.500008
+  ...
+# Subtest: artifact_rejects_dynamic_coupon
+ok 4 - artifact_rejects_dynamic_coupon
+  ---
+  duration_ms: 0.531243
+  ...
+# Subtest: artifact_duplicate_request_and_restart_uses_snapshot
+ok 5 - artifact_duplicate_request_and_restart_uses_snapshot
+  ---
+  duration_ms: 4.994678
+  ...
+# Subtest: artifact_service_auth
+ok 6 - artifact_service_auth
+  ---
+  duration_ms: 0.216797
+  ...
+# Subtest: artifact restart rerenders persisted frozen inputs without looking up mutable designs
+ok 7 - artifact restart rerenders persisted frozen inputs without looking up mutable designs
+  ---
+  duration_ms: 1.701337
+  ...
+# Subtest: concurrent export services reserve at most twenty pending slots
+ok 8 - concurrent export services reserve at most twenty pending slots
+  ---
+  duration_ms: 106.505565
+  ...
+# Subtest: failed snapshot captures release their queue reservations
+ok 9 - failed snapshot captures release their queue reservations
+  ---
+  duration_ms: 16.014857
+  ...
+# Subtest: expired snapshot reservations terminate and cannot be resurrected by late capture
+ok 10 - expired snapshot reservations terminate and cannot be resurrected by late capture
+  ---
+  duration_ms: 2.908042
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 191.297811
+TAP version 13
+# Subtest: frozen assembly uses captured component and brand, preserves exact footer slot
+ok 1 - frozen assembly uses captured component and brand, preserves exact footer slot
+  ---
+  duration_ms: 92.101478
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 105.138494
+TAP version 13
+# Subtest: shared compatibility fixture keeps pinned hash and immutable media
+ok 1 - shared compatibility fixture keeps pinned hash and immutable media
+  ---
+  duration_ms: 1.799528
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8.905136
+TAP version 13
+# Subtest: publishing accepts saved campaigns with reordered JSONB object keys
+ok 1 - publishing accepts saved campaigns with reordered JSONB object keys
+  ---
+  duration_ms: 5.7695
+  ...
+# Subtest: publishing still blocks changed nested content and reordered blocks
+ok 2 - publishing still blocks changed nested content and reordered blocks
+  ---
+  duration_ms: 4.125838
+  ...
+# Subtest: manual design metadata is saved, reopened and required before handoff
+ok 3 - manual design metadata is saved, reopened and required before handoff
+  ---
+  duration_ms: 12.468958
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28.54379
+(node:42) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+TAP version 13
+# Subtest: Notion saved-design revisions round-trip and distinguish same-day edits
+ok 1 - Notion saved-design revisions round-trip and distinguish same-day edits
+  ---
+  duration_ms: 5.931125
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 14.572996
+TAP version 13
+# Subtest: selected hash binds creative but ignores presentation metadata and key order
+ok 1 - selected hash binds creative but ignores presentation metadata and key order
+  ---
+  duration_ms: 1.701664
+  ...
+# Subtest: same-timestamp changed design is rejected before freezing or reserving
+ok 2 - same-timestamp changed design is rejected before freezing or reserving
+  ---
+  duration_ms: 2.673811
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13.015651

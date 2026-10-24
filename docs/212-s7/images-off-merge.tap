@@ -1,0 +1,58 @@
+TAP version 13
+[image-opt] rejected jpeg for 01-heroes-hero-image-only (34.0 KB, SSIM 0.8595 < 0.98)
+[image-opt] rejected jpeg for 01-heroes-hero-image-only (34.0 KB, SSIM 0.8595 < 0.98)
+[image-opt] rejected jpeg for 02-heroes-hero-image-only (34.0 KB, SSIM 0.8595 < 0.98)
+# Subtest: final direct email preserves readable HERO_IMAGE_ALT
+ok 1 - final direct email preserves readable HERO_IMAGE_ALT
+  ---
+  duration_ms: 3114.974744
+  ...
+# Subtest: final sliced email preserves readable HERO_IMAGE_ALT
+ok 2 - final sliced email preserves readable HERO_IMAGE_ALT
+  ---
+  duration_ms: 1.033963
+  ...
+# Subtest: final gif email preserves readable HERO_IMAGE_ALT
+ok 3 - final gif email preserves readable HERO_IMAGE_ALT
+  ---
+  duration_ms: 0.756026
+  ...
+# Subtest: final columns email preserves readable HERO_IMAGE_ALT
+ok 4 - final columns email preserves readable HERO_IMAGE_ALT
+  ---
+  duration_ms: 1.264482
+  ...
+# Subtest: final fallback email preserves readable HERO_IMAGE_ALT
+ok 5 - final fallback email preserves readable HERO_IMAGE_ALT
+  ---
+  duration_ms: 0.905793
+  ...
+# Subtest: final direct MSO/VML branch preserves readable alt
+ok 6 - final direct MSO/VML branch preserves readable alt
+  ---
+  duration_ms: 0.285209
+  ...
+# Subtest: final fallback MSO/VML branch preserves readable alt
+ok 7 - final fallback MSO/VML branch preserves readable alt
+  ---
+  duration_ms: 0.134303
+  ...
+# Subtest: final sliced images also reach Outlook without a conditional exclusion
+ok 8 - final sliced images also reach Outlook without a conditional exclusion
+  ---
+  duration_ms: 0.676306
+  ...
+# Subtest: final HTML and VML alt attributes escape quotes and ampersands
+ok 9 - final HTML and VML alt attributes escape quotes and ampersands
+  ---
+  duration_ms: 0.271612
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3173.166523

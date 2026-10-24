@@ -1,0 +1,5 @@
+Skipped browser-only cardLiveSuite
+Skipped browser/HTTP integrationSuite
+
+✓ all 3461 assertions passed (studio driver: disk)
+

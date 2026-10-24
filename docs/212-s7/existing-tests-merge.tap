@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: /workspace/wt/eb212-s7/test/207-p1.test.js
+ok 1 - /workspace/wt/eb212-s7/test/207-p1.test.js
+  ---
+  duration_ms: 297.484534
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/207-p2.test.js
+ok 2 - /workspace/wt/eb212-s7/test/207-p2.test.js
+  ---
+  duration_ms: 387.591477
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/artifact.test.js
+ok 3 - /workspace/wt/eb212-s7/test/artifact.test.js
+  ---
+  duration_ms: 295.467935
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/fixture-compatibility.test.js
+ok 4 - /workspace/wt/eb212-s7/test/fixture-compatibility.test.js
+  ---
+  duration_ms: 121.872846
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/notion-revision.test.js
+ok 5 - /workspace/wt/eb212-s7/test/notion-revision.test.js
+  ---
+  duration_ms: 116.23815
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/publish-assembly.test.js
+ok 6 - /workspace/wt/eb212-s7/test/publish-assembly.test.js
+  ---
+  duration_ms: 203.455006
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/publishing-handoff.test.js
+ok 7 - /workspace/wt/eb212-s7/test/publishing-handoff.test.js
+  ---
+  duration_ms: 120.49144
+  ...
+# Subtest: /workspace/wt/eb212-s7/test/selected-design.test.js
+ok 8 - /workspace/wt/eb212-s7/test/selected-design.test.js
+  ---
+  duration_ms: 118.409435
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1666.726499

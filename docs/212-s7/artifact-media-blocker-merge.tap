@@ -1,0 +1,176 @@
+TAP version 13
+# Subtest: snapshot captures GIF bytes before rendering instead of retaining mutable image URL
+ok 1 - snapshot captures GIF bytes before rendering instead of retaining mutable image URL
+  ---
+  duration_ms: 40.818986
+  ...
+# Subtest: real raster worker preserves GIF columns and captured PNG bytes
+not ok 2 - real raster worker preserves GIF columns and captured PNG bytes
+  ---
+  duration_ms: 130.590381
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:41:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [30:30:1025/092219.598867:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  ...
+# Subtest: frozen snapshot captures CSS/background/unquoted image resources
+ok 3 - frozen snapshot captures CSS/background/unquoted image resources
+  ---
+  duration_ms: 11.037161
+  ...
+# Subtest: frozen raster transport refuses uncaptured network and file resources
+not ok 4 - frozen raster transport refuses uncaptured network and file resources
+  ---
+  duration_ms: 31.421973
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:141:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /UNCAPTURED_RENDER_RESOURCE/. Input:
+    
+    'Error: Failed to launch the browser process:  Code: null\n' +
+      '\n' +
+      'stderr:\n' +
+      '[31:31:1025/092219.642935:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)\n' +
+      '\n' +
+      'TROUBLESHOOTING: https://pptr.dev/troubleshooting\n'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [31:31:1025/092219.642935:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  operator: 'rejects'
+  stack: |-
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    async TestContext.<anonymous> (/workspace/wt/eb212-s7/test/artifact-media.test.js:144:5)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: prefix-related image URLs remain distinct captured resources through rasterisation
+not ok 5 - prefix-related image URLs remain distinct captured resources through rasterisation
+  ---
+  duration_ms: 44.09792
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:156:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [32:32:1025/092219.688889:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  ...
+# Subtest: a sub-budget image can be frozen and rendered from its persisted snapshot
+not ok 6 - a sub-budget image can be frozen and rendered from its persisted snapshot
+  ---
+  duration_ms: 83.517271
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:223:1'
+  failureType: 'testCodeFailure'
+  error: '{"artifactJobId":"e1b03781ed8923b999e89d0abeb0f3d075b15973e80f711a27e1769f10364dfa","state":"queued","errorCode":"ARTIFACT_RENDER_FAILED"}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/workspace/wt/eb212-s7/test/artifact-media.test.js:289:12)
+    process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: ordinary inline GIF slices remain uploadable raster images
+not ok 7 - ordinary inline GIF slices remain uploadable raster images
+  ---
+  duration_ms: 29.927806
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:300:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [34:34:1025/092219.801710:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  ...
+# Subtest: artifact plain text excludes styles and decodes readable copy and links
+not ok 8 - artifact plain text excludes styles and decodes readable copy and links
+  ---
+  duration_ms: 38.566996
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:317:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [35:35:1025/092219.840779:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  ...
+# Subtest: frozen inline GIF survives persistence and publishes its original bytes
+not ok 9 - frozen inline GIF survives persistence and publishes its original bytes
+  ---
+  duration_ms: 39.912788
+  location: '/workspace/wt/eb212-s7/test/artifact-media.test.js:365:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Failed to launch the browser process:  Code: null
+    
+    stderr:
+    [36:36:1025/092219.881013:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:45] setsockopt: Operation not permitted (1)
+    
+    TROUBLESHOOTING: https://pptr.dev/troubleshooting
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    ChildProcess.onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    ChildProcess.emit (node:events:536:35)
+    ChildProcess._handle.onexit (node:internal/child_process:293:12)
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 2
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 457.523545

@@ -1,0 +1,60 @@
+TAP version 13
+# Subtest: markdown links use an explicit fallback plus inherit and underline in both render paths
+ok 1 - markdown links use an explicit fallback plus inherit and underline in both render paths
+  ---
+  duration_ms: 37.814234
+  ...
+# Subtest: markdown fallback follows each occurrence and ancestor, including palette tokens
+ok 2 - markdown fallback follows each occurrence and ancestor, including palette tokens
+  ---
+  duration_ms: 2.575176
+  ...
+# Subtest: hero and all footer image wrappers have readable alt typography and block images
+ok 3 - hero and all footer image wrappers have readable alt typography and block images
+  ---
+  duration_ms: 2.163586
+  ...
+# Subtest: heroes/hero-image-only rejects blank HERO_LINK_URL: ""
+ok 4 - heroes/hero-image-only rejects blank HERO_LINK_URL: ""
+  ---
+  duration_ms: 5.932007
+  ...
+# Subtest: heroes/hero-image-only rejects blank HERO_LINK_URL: "  \\t\\n"
+ok 5 - heroes/hero-image-only rejects blank HERO_LINK_URL: "  \\t\\n"
+  ---
+  duration_ms: 5.409193
+  ...
+# Subtest: heroes/hero-image-only rejects blank HERO_LINK_URL: null
+ok 6 - heroes/hero-image-only rejects blank HERO_LINK_URL: null
+  ---
+  duration_ms: 5.770196
+  ...
+# Subtest: products/card-live rejects blank CTA_TEXT: ""
+ok 7 - products/card-live rejects blank CTA_TEXT: ""
+  ---
+  duration_ms: 4.659639
+  ...
+# Subtest: products/card-live rejects blank CTA_TEXT: "  \\t\\n"
+ok 8 - products/card-live rejects blank CTA_TEXT: "  \\t\\n"
+  ---
+  duration_ms: 4.288531
+  ...
+# Subtest: products/card-live rejects blank CTA_TEXT: null
+ok 9 - products/card-live rejects blank CTA_TEXT: null
+  ---
+  duration_ms: 3.840138
+  ...
+# Subtest: all other component samples are byte-identical to the pre-fix baseline
+ok 10 - all other component samples are byte-identical to the pre-fix baseline
+  ---
+  duration_ms: 32.729297
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 115.743761

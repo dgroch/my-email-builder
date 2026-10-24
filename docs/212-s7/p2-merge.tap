@@ -1,0 +1,50 @@
+TAP version 13
+# Subtest: 1: feature card links, independent alt, side lever, optional rows/button and validation
+ok 1 - 1: feature card links, independent alt, side lever, optional rows/button and validation
+  ---
+  duration_ms: 52.586475
+  ...
+# Subtest: 2: text band palette, optional content, markdown, alignment and max two
+ok 2 - 2: text band palette, optional content, markdown, alignment and max two
+  ---
+  duration_ms: 24.230508
+  ...
+# Subtest: 4: body copy controls and arbitrary paragraphs preserve markdown in both render paths
+ok 3 - 4: body copy controls and arbitrary paragraphs preserve markdown in both render paths
+  ---
+  duration_ms: 7.576652
+  ...
+# Subtest: 8: trust-bar is optional pending artwork, and a sendable campaign without it validates
+ok 4 - 8: trust-bar is optional pending artwork, and a sendable campaign without it validates
+  ---
+  duration_ms: 3.601321
+  ...
+# Subtest: 9: full width image padding is optional, independent and schema-typed
+ok 5 - 9: full width image padding is optional, independent and schema-typed
+  ---
+  duration_ms: 5.431957
+  ...
+# Subtest: 10: top-line fixed typography, plain text, no rule/link and HTML-only publication
+ok 6 - 10: top-line fixed typography, plain text, no rule/link and HTML-only publication
+  ---
+  duration_ms: 5.210465
+  ...
+# Subtest: every existing component keeps exact sample, current sample and empty/default HTML bytes
+ok 7 - every existing component keeps exact sample, current sample and empty/default HTML bytes
+  ---
+  duration_ms: 92.26148
+  ...
+# Subtest: 10: frozen publication includes the notice in HTML and plain text
+ok 8 - 10: frozen publication includes the notice in HTML and plain text
+  ---
+  duration_ms: 61.598275
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 258.58222

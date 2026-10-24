@@ -29,7 +29,7 @@ function baselineCases() {
   assert.deepEqual(cases.filter(c => /color:#aaaaaa/i.test(JSON.stringify(c.renders)) || /color:#aaaaaa/i.test(JSON.stringify(c.blocks))).map(c => c.id), delta.cases);
   return cases.map(c => delta.cases.includes(c.id) ? JSON.parse(JSON.stringify(c).replace(/color:#aaaaaa/gi, 'color:' + delta.to)) : c);
 }
-test('S7 compatibility control: all 105 campaigns retain bytes except the listed fine_print baseline delta', () => {
+test('S7 compatibility control: all 112 campaigns retain bytes except the listed fine_print baseline delta', () => {
   for (const c of baselineCases()) for (const theme of [undefined, 'light']) {
     const campaign = { ...c.campaign, ...(theme ? { theme } : {}) };
     for (const expected of c.renders) {
@@ -201,4 +201,38 @@ test('S7b fine_print alone changes and meets WCAG 4.5:1 on cream and S7 noir', (
   assert.ok(ratios.newLightClay >= 4.5, JSON.stringify(ratios));
   assert.ok(ratios.newDark >= 4.5, JSON.stringify(ratios));
   console.log('S7b contrast ratios: ' + JSON.stringify(ratios));
+});
+
+// The #207 fallback must remain explicit and readable with images disabled, including VML.
+test('S7 merged #207 markdown links and image alt typography stay readable in both themes', () => {
+  for (const theme of ['light', 'dark']) {
+    const c = sample.sampleCampaignFor(schema.components.find(c => c.name === 'sections/body-copy-plain'));
+    c.theme = theme;
+    c.blocks[0].tokens.BODY_P1 = '[Read **more**](https://example.test/read)';
+    for (const html of [render.assemble(c).html, render.assembleBlocks(c).blocks[0].html]) {
+      const link = tags(html).find(t => t.href === 'https://example.test/read');
+      assert.ok(link);
+      assert.equal(css(link, 'color'), theme === 'dark' ? '#ffffff' : 'inherit');
+      assert.equal(css(link, 'text-decoration'), 'underline');
+      assert.match(link.style, theme === 'dark' ? /color:#ffffff;/ : /color:#444444;/);
+    }
+    for (const name of ['footer', 'heroes/hero-image-only']) {
+      const campaign = { ...sample.sampleCampaignFor(schema.components.find(c => c.name === name)), theme };
+      for (const html of [render.assemble(campaign).html, render.assembleBlocks(campaign).blocks[0].html]) {
+        const clean = render.stripDocComments(html);
+        const anchors = [...clean.matchAll(/<a\b[^>]*>\s*(?:<!--[\s\S]*?-->\s*)*<img\b/g)];
+        assert.equal(anchors.length, name === 'footer' ? (theme === 'dark' ? 5 : 11) : 1);
+        for (const anchor of anchors) {
+          const a = tags(anchor[0])[0];
+          assert.match(a.style, /font-size:14px;/);
+          assert.match(a.style, /line-height:normal;/);
+          assert.equal(css(a, 'color'), theme === 'dark' ? '#ffffff' : '#444444');
+        }
+        if (name === 'heroes/hero-image-only') {
+          const vml = clean.match(/<v:image\b[\s\S]*?\/>/)[0];
+          assert.match(vml, theme === 'dark' ? /color:#d9d4ce;/ : /color:#444444;/);
+        }
+      }
+    }
+  }
 });

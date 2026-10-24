@@ -1,5 +1,5 @@
 {
-  "description": "Only these original baseline cases replace color:#aaaaaa with color:#4d4d4d; all other bytes remain the original S7 baseline.",
+  "description": "Only these main 2cb23d5 baseline cases replace color:#aaaaaa with color:#4d4d4d; all other bytes remain unchanged.",
   "from": "#aaaaaa",
   "to": "#4d4d4d",
   "cases": [

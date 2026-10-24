@@ -208,3 +208,70 @@ The sibling runner reads `/workspace/email-3x-week/month-2026-11/build/B3/design
 ## S7b box verification (outside the Codex sandbox)
 
 The sandbox browser and `listen EPERM` failures recorded above do not apply on the box. On 25 Oct 2026 the full `npm test` passed with Chromium (70/70 S7 + S7b tests, all 3,331 legacy assertions, 28/28 publishing tests; [summary](npm-test-s7b-box.txt)). `scripts/render-212-s7.js` passed its offline visual audit (24 PNGs) and `scripts/render-212-s7b.js` rendered the B3 Sunday note at 600, 390 and images-off ([600](../212-s7-renders/b3-sunday-600.png), [390](../212-s7-renders/b3-sunday-390.png), [600 images-off](../212-s7-renders/b3-sunday-600-images-off.png), [390 images-off](../212-s7-renders/b3-sunday-390-images-off.png)). "The Christmas table, done." renders exactly as typed in Lust on hero-a in all three.
+
+
+## Rebased on main 2cb23d5
+
+Completed the working-tree merge of main `2cb23d5` into S7/S7b (`733c07ce`). The three conflicted files were resolved as follows:
+
+- `design-system/manifest.json`: retained main's optional trust-bar, ordering rules, P2 components and lever metadata, plus S7 theme declarations, caps controls, hero-a HEADLINE_FONT and fine_print `#4d4d4d`. Added card-feature, text-band and top-line to the dark support list.
+- `lib/render.js`: composed main's component-lever preparation with S7 template/headline handling before token substitution in both full and block assembly; retained main's contextual markdown colour and escaped hero alt handling. Dark transformation follows token/brand resolution, including VML image text. Dark footer image wrappers now have main's readable 14px alt typography.
+- `package.json`: runs S7 tests, the legacy runner, and every test file from main, retaining main's serial test execution.
+
+Regenerated the complete byte fixture from a clean `git archive 2cb23d5` extraction under `/tmp`, removed after generation. `git worktree add` was attempted but could not write the parent repository's read-only worktree metadata. All previous 105 input cases remain; seven added cases cover card-feature, top-line, and text-band's sample plus four palettes. The all-components campaign also includes all three new components. Expected HTML comes exclusively from main's renderer. The fixture contains **112 campaigns: 672 full-render byte comparisons and 224 block-output comparison sets**, covering absent and explicit light theme, preview, production and marked output. **73 cases retain main bytes exactly; 39 differ solely by `color:#aaaaaa` → `color:#4d4d4d`.** Main's P1/P2 compatibility tests retain their original fixtures and assertions with only this same colour correction allowed.
+
+Exact muted-token fixture list (39, in fixture order):
+
+```text
+blocks/annotated-product
+blocks/annotated-product:white
+blocks/caption-bar-hero
+blocks/caption-bar-hero:white
+blocks/caption-bar-hero:noir
+blocks/comparison-vs
+blocks/comparison-vs:white
+blocks/designed-product-card
+blocks/designed-product-card:white
+blocks/editorial-collage
+blocks/editorial-collage:white
+blocks/editorial-hero
+blocks/event-gallery
+blocks/event-gallery:white
+blocks/feature-list
+blocks/howto-steps
+blocks/howto-steps:white
+blocks/image-text
+blocks/image-text:white
+blocks/offer-panel
+blocks/offer-panel:white
+blocks/story
+blocks/story:white
+heroes/hero-b-white
+heroes/hero-c1
+heroes/hero-c2
+heroes/hero-d-white
+products/card-horizontal
+products/card-horizontal-reversed
+products/card-lifestyle-studio
+products/card-single-testimonial
+sections/body-copy
+sections/body-copy-plain
+sections/delivery-cutoffs
+sections/promo-code
+sections/section-headline
+email:seed-editorial-digest
+email:seed-farewell
+email:all-components
+```
+
+Verification for this merged tree:
+
+- **74/74 S7 tests pass**, including all 60 shipped components and a new light/dark markdown-link and images-off typography regression: [node --test result](implementation-merge.tap), [individual test results](implementation-merge-detail.tap). This environment's `node --test` reporter groups each file into one subtest; the direct test log records all 74.
+- **3,461 browser-free legacy assertions pass**, using an in-memory copy of `test/run.js` that skips only `cardLiveSuite()` and `integrationSuite()`; studio and image optimisation suites run unchanged: [log](legacy-browser-free-merge.txt).
+- **45 additional non-browser tests pass**: P1 10, P2 8, images-off 9, and six existing files 18: [P1](p1-merge.tap), [P2](p2-merge.tap), [images-off](images-off-merge.tap), [existing test details](existing-tests-merge-detail.tap), [combined eight-file invocation](existing-tests-merge.tap).
+- Full `npm test` reaches legacy integration and is blocked by `listen EPERM`: [log](npm-test-merge.txt). Main's P2 browser geometry test cannot create a page (`Target closed`): [log](browser-blocker-merge.tap). Artifact-media has 2 passing tests and 7 blocked by Chromium launch (`crashpad setsockopt: Operation not permitted`): [log](artifact-media-blocker-merge.tap). Export HTTP also fails in this sandbox: [four-file invocation](sandbox-blockers-merge.tap). Full npm/browser/HTTP verification and visual screenshots remain for the operator outside the sandbox.
+- Renderer/theme syntax checks and conflict-marker scan pass. No commit, staging, push, abort, checkout, stash, reset or rebase was performed; node_modules was untouched. Git's index deliberately still reports the three conflicted paths until the operator runs `git add` and commits the merge.
+
+### Merge box verification (outside the Codex sandbox)
+
+The sandbox `listen EPERM`, `Target closed` and crashpad failures above do not apply on the box. On 25 Oct 2026 the full `npm test` for the merged tree passed with Chromium: 74/74 S7 tests, all 3,483 legacy assertions (including `cardLiveSuite()` and `integrationSuite()`), and 56/56 tests across main's P1, P2, images-off and publishing files ([summary](npm-test-merge-box.txt)). `scripts/render-212-s7.js` passed its offline visual audit (24 PNGs) and `scripts/render-212-s7b.js` re-rendered the B3 Sunday note; the PNGs in [212-s7-renders](../212-s7-renders/) are from this merged tree.

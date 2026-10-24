@@ -1,0 +1,42 @@
+
+> my-email-builder@1.0.0 test
+> node --test test/212-s7.test.js && node test/run.js && node --test --test-concurrency=1 test/45-images-off.test.js test/207-p2.test.js test/207-p2-render.test.js test/207-p1.test.js test/artifact.test.js test/publish-assembly.test.js test/export-http.test.js test/artifact-media.test.js test/fixture-compatibility.test.js test/publishing-handoff.test.js test/notion-revision.test.js test/selected-design.test.js
+
+TAP version 13
+# Subtest: /workspace/wt/eb212-s7/test/212-s7.test.js
+ok 1 - /workspace/wt/eb212-s7/test/212-s7.test.js
+  ---
+  duration_ms: 3235.844595
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3240.403009
+node:events:502
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: listen EPERM: operation not permitted 0.0.0.0
+    at Server.setupListenHandle [as _listen2] (node:net:1883:21)
+    at listenInCluster (node:net:1962:12)
+    at Server.listen (node:net:2064:7)
+    at /workspace/wt/eb212-s7/test/run.js:2414:51
+    at new Promise (<anonymous>)
+    at integrationSuite (/workspace/wt/eb212-s7/test/run.js:2414:11)
+    at /workspace/wt/eb212-s7/test/run.js:2561:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Emitted 'error' event on Server instance at:
+    at emitErrorNT (node:net:1941:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  code: 'EPERM',
+  errno: -1,
+  syscall: 'listen',
+  address: '0.0.0.0'
+}
+
+Node.js v20.19.2

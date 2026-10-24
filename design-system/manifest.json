@@ -23,7 +23,10 @@
       "divider-whitespace",
       "full-width-image",
       "promo-code",
-      "card-live"
+      "card-live",
+      "card-feature",
+      "text-band",
+      "top-line"
     ],
     "slice_components": [
       "header",
@@ -45,7 +48,6 @@
       "body-copy",
       "section-headline",
       "products (1-5)",
-      "trust-bar",
       "footer"
     ],
     "optional_positions": {
@@ -56,7 +58,10 @@
       "upsell-noir": "Near bottom \u2014 closing beat. After promo-code.",
       "delivery-cutoffs": "After upsell, before trust-bar.",
       "three-column-steps-*": "After body-copy or after products. Use when a step-by-step partner flow (e.g. card creation) needs explaining. Max one per email. Choose variant by background: -beige (warm off-white), -50clay (50% clay, token clay_50, #EBE5DF), -clay (brand clay), or -white (silk white).",
-      "journal-tile": "After products, before upsell \u2014 a 'From the Journal' row of 2\u20133 linked posts."
+      "journal-tile": "After products, before upsell — a 'From the Journal' row of 2–3 linked posts.",
+      "card-feature": "After body copy, before bands and the main button.",
+      "text-band": "Between body copy and button; max two per email.",
+      "top-line": "Slim notice above the hero (after header if present). Optional."
     },
     "header_replacing_heroes": {
       "components": [
@@ -66,7 +71,8 @@
       ],
       "rule": "hero-b-* render their OWN logo bar, tinted to the band colour, so they take the place of `header`. Put one at index 0 and do not precede it with `header` \u2014 the email would show two stacked logo bars about 60px apart. /api/validate reports this as `duplicate_logo_bar`.",
       "instead": "Want the standard white logo bar? Use `header` with any other hero (heroes/hero-a, hero-c1*, hero-c2*, hero-d-*)."
-    }
+    },
+    "_note": "trust-bar returns to required when the new artwork lands."
   },
   "components": {
     "header": {
@@ -412,6 +418,37 @@
         "token_defaults": {
           "BTN_WIDTH": "auto"
         }
+      },
+      "card-feature": {
+        "file": "templates/products/card-feature.html",
+        "classification": "html-safe",
+        "description": "Live HTML 4:5 image and copy with independent alt text, linked title/label and markdown link row. Optional button; image left/right.",
+        "token_defaults": {
+          "SUPER_LABEL": "",
+          "LINK_LABEL": "",
+          "BODY_P2": "",
+          "LINK_ROW": "",
+          "CTA_TEXT": "",
+          "IMG_SIDE": "left",
+          "BTN_WIDTH": "auto"
+        },
+        "tokens": [
+          "IMAGE_URL",
+          "IMAGE_ALT",
+          "LINK_URL",
+          "SUPER_LABEL",
+          "TITLE",
+          "LINK_LABEL",
+          "BODY_P1",
+          "BODY_P2",
+          "LINK_ROW",
+          "CTA_TEXT",
+          "BTN_WIDTH",
+          "IMG_SIDE"
+        ],
+        "plain_text_tokens": [
+          "IMAGE_ALT"
+        ]
       }
     },
     "sections": {
@@ -427,13 +464,40 @@
       },
       "body-copy-plain": {
         "file": "templates/sections/body-copy-plain.html",
-        "description": "Body copy without illustration. Rendered as inline HTML \u2014 text stays selectable, accessible, and responsive. Preferred when no accent illustration is needed.",
+        "description": "Plain body copy; ALIGN/MOBILE_ALIGN, TOP_RULE and padding controls. Blank lines in BODY_P1/BODY_P2 create any number of paragraphs, with inline markdown.",
         "tokens": [
           "SUPER_LABEL",
           "HEADLINE",
           "BODY_P1",
-          "BODY_P2"
-        ]
+          "BODY_P2",
+          "ALIGN",
+          "MOBILE_ALIGN",
+          "TOP_RULE",
+          "PADDING_TOP",
+          "PADDING_BOTTOM",
+          "PADDING_X",
+          "MOBILE_PADDING_X"
+        ],
+        "token_defaults": {
+          "ALIGN": "center",
+          "MOBILE_ALIGN": "inherit",
+          "TOP_RULE": "on",
+          "PADDING_TOP": "44px",
+          "PADDING_BOTTOM": "44px",
+          "PADDING_X": "64px",
+          "MOBILE_PADDING_X": "24px"
+        },
+        "token_descriptions": {
+          "ALIGN": "Alignment lever: \"center\" or \"left\".",
+          "MOBILE_ALIGN": "Mobile alignment lever: \"inherit\" or \"left\" or \"center\".",
+          "TOP_RULE": "Top rule lever: \"on\" or \"off\".",
+          "PADDING_TOP": "Top padding in px, e.g. \"44px\".",
+          "PADDING_BOTTOM": "Bottom padding in px, e.g. \"44px\".",
+          "PADDING_X": "Horizontal padding in px, e.g. \"64px\".",
+          "MOBILE_PADDING_X": "Mobile horizontal padding in px, e.g. \"24px\".",
+          "BODY_P1": "First paragraph, markdown; blank lines create any number of separate paragraphs.",
+          "BODY_P2": "Optional continuation, markdown; blank lines create additional paragraphs."
+        }
       },
       "section-headline": {
         "file": "templates/sections/section-headline.html",
@@ -469,8 +533,18 @@
         "tokens": [
           "IMAGE_URL",
           "ALT_TEXT",
-          "LINK_URL"
-        ]
+          "LINK_URL",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ],
+        "token_defaults": {
+          "PADDING_TOP": "0",
+          "PADDING_BOTTOM": "0"
+        },
+        "token_descriptions": {
+          "PADDING_TOP": "Padding in px, e.g. \"24px\"; 24px becomes 16px below 600px, zero preserves existing HTML.",
+          "PADDING_BOTTOM": "Padding in px, e.g. \"24px\"; 24px becomes 16px below 600px, zero preserves existing HTML."
+        }
       },
       "opt-out": {
         "file": "templates/sections/opt-out.html",
@@ -541,8 +615,8 @@
       "trust-bar": {
         "file": "templates/sections/trust-bar.html",
         "static": true,
-        "status": "draft \u2014 blocked on new artwork",
-        "blocked_reason": "The flattened CDN PNG reads 'Fresh Daily Flowers \u00b7 Perfect for Every Occasion \u00b7 Australia-Wide Service \u00b7 Same Day Delivery \u00b7 Order Before 1pm'. 'Perfect for Every Occasion' is banned language, and the same-day cut-off is a delivery claim requiring sign-off. Both are baked into the image, so no token can disable them. The alt text has been corrected; the pixels have not. Omit the trust bar from campaigns until replacement artwork ('Fresh Daily Flowers \u00b7 Australia-Wide Service') is uploaded to the CDN. NOTE: both seed exemplars still include this component \u2014 decide whether to strip it from them and from ordering_rules.required while the artwork is pending.",
+        "status": "draft — blocked on new artwork",
+        "blocked_reason": "The flattened CDN PNG reads 'Fresh Daily Flowers · Perfect for Every Occasion · Australia-Wide Service · Same Day Delivery · Order Before 1pm'. 'Perfect for Every Occasion' is banned language, and the same-day cut-off is a delivery claim requiring sign-off. Both are baked into the image, so no token can disable them. The alt text has been corrected; the pixels have not. Omit the trust bar from campaigns until replacement artwork ('Fresh Daily Flowers · Australia-Wide Service') is uploaded to the CDN. NOTE: both seed exemplars still include this draft component. ordering_rules.required omits it until replacement artwork lands.",
         "tokens": []
       },
       "three-column-steps-beige": {
@@ -660,6 +734,48 @@
           "PANEL_BG": "Blank/omitted resolves at assembly to the background of the PRECEDING block, falling back to the campaign bodyBg. Set it explicitly only to deliberately break from the block above.",
           "BTN_WIDTH": "Outlook-only. \"auto\" sizes the VML roundrect to the label instead of a hard-coded width; every other client shrink-wraps the live <a> regardless."
         }
+      },
+      "text-band": {
+        "file": "templates/sections/text-band.html",
+        "classification": "html-safe",
+        "description": "Type-only palette band. Max two per email.",
+        "token_defaults": {
+          "HEADLINE": "",
+          "BODY_P2": "",
+          "LINK_ROW": "",
+          "LINK_TEXT": "",
+          "LINK_URL": "",
+          "ALIGN": "center",
+          "PANEL_BG": "#D8CCBE",
+          "PANEL_TEXT": "#000000",
+          "PADDING_TOP": "32px",
+          "PADDING_BOTTOM": "32px"
+        },
+        "tokens": [
+          "HEADLINE",
+          "LINK_ROW",
+          "BODY_P1",
+          "BODY_P2",
+          "LINK_TEXT",
+          "LINK_URL",
+          "ALIGN",
+          "PANEL_BG",
+          "PANEL_TEXT",
+          "PADDING_TOP",
+          "PADDING_BOTTOM"
+        ]
+      },
+      "top-line": {
+        "file": "templates/sections/top-line.html",
+        "classification": "html-safe",
+        "description": "Editable plain-text notice above hero; fixed 50clay tint, no link or rule.",
+        "token_defaults": {},
+        "tokens": [
+          "TEXT"
+        ],
+        "plain_text_tokens": [
+          "TEXT"
+        ]
       }
     },
     "dividers": {
@@ -1357,6 +1473,7 @@
         "products/card-horizontal-reversed",
         "products/card-lifestyle-studio",
         "products/card-live",
+        "products/card-feature",
         "products/card-single-testimonial",
         "sections/body-copy",
         "sections/body-copy-plain",
@@ -1367,6 +1484,8 @@
         "sections/promo-code",
         "sections/section-headline",
         "sections/testimonial",
+        "sections/text-band",
+        "sections/top-line",
         "sections/three-column-steps-50clay",
         "sections/three-column-steps-beige",
         "sections/three-column-steps-clay",
