@@ -1,0 +1,9 @@
+npm test on the box (outside the Codex sandbox), 25 Oct 2026 09:15 AEDT, CHROMIUM_PATH=chromium-1248
+# tests 70
+# pass 70
+# fail 0
+✓ all 3331 assertions passed (studio driver: disk)
+# tests 28
+# pass 28
+# fail 0
+TEST_EXIT=0

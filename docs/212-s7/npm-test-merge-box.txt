@@ -1,0 +1,9 @@
+npm test on the box (outside the Codex sandbox), 25 Oct 2026 09:39 AEDT, merged tree on main 2cb23d5, CHROMIUM_PATH=chromium-1248
+# tests 74
+# pass 74
+# fail 0
+✓ all 3483 assertions passed (studio driver: disk)
+# tests 56
+# pass 56
+# fail 0
+TEST_EXIT=0

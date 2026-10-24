@@ -73,7 +73,9 @@ for (const [component, token] of [['heroes/hero-image-only', 'HERO_LINK_URL'], [
 test('all other component samples are byte-identical to the pre-fix baseline', () => {
   const changed = [];
   for (const record of require('./fixtures/207-p1-baseline.json')) {
-    const hash = crypto.createHash('sha256').update(blockHtml(record.campaign)).digest('hex');
+    // S7b's sole approved light-byte delta; preserve the pre-P1 hash control otherwise.
+    const html = blockHtml(record.campaign).replace(/color:#4d4d4d/gi, 'color:#aaaaaa');
+    const hash = crypto.createHash('sha256').update(html).digest('hex');
     if (hash !== record.sha256) changed.push(record.component);
   }
   assert.deepEqual(changed.sort(), ['footer', 'heroes/hero-image-only']);

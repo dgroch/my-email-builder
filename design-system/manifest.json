@@ -1,6 +1,6 @@
 {
   "version": "4.0",
-  "description": "Fig & Bloom email template library. Agent selects templates and injects content tokens. No HTML is generated — only token values.",
+  "description": "Fig & Bloom email template library. Agent selects templates and injects content tokens. No HTML is generated \u2014 only token values.",
   "assembly": {
     "shell_preview": "shell/shell-preview.html",
     "shell_production": "shell/shell-production.html",
@@ -8,7 +8,7 @@
       "CAMPAIGN_NAME": "Email subject line or campaign name",
       "BODY_BG": "Body background colour (default: #2c2825)",
       "FONT_CDN_LINK": "Production only: <link> tag for hosted font CSS. Omit if not configured.",
-      "COMPONENTS": "Assembled component HTML — injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->",
+      "COMPONENTS": "Assembled component HTML \u2014 injected between <!-- COMPONENTS_START --> and <!-- COMPONENTS_END -->",
       "PREHEADER": "Hidden inbox-preview (preheader) div, baked from the campaign's previewText at assembly/push time. Klaviyo does not inject preview_text into CODE-editor templates, so this is the only thing that controls the Gmail/Apple Mail snippet. Filled automatically; blank-safe."
     },
     "method": "1. Select components. 2. Fill all {{TOKEN}} values. 3. Read each template file. 4. Replace tokens. 5. Concatenate. 6. Inject into shell between markers. 7. Validate no {{}} remain.",
@@ -39,11 +39,11 @@
       "trust-bar",
       "divider-illo-*"
     ],
-    "note": "body-copy (with HandRose illustration) is sliced because the position:absolute illustration does not render in email clients as inline HTML. For pure typographic body copy without an illustration, use body-copy-plain (HTML-safe). Prefer body-copy-plain when no accent illustration is desired — keeps text selectable, accessible, and responsive."
+    "note": "body-copy (with HandRose illustration) is sliced because the position:absolute illustration does not render in email clients as inline HTML. For pure typographic body copy without an illustration, use body-copy-plain (HTML-safe). Prefer body-copy-plain when no accent illustration is desired \u2014 keeps text selectable, accessible, and responsive."
   },
   "ordering_rules": {
     "required": [
-      "header (omit when the hero is a header-replacing hero-b-* — see header_replacing_heroes)",
+      "header (omit when the hero is a header-replacing hero-b-* \u2014 see header_replacing_heroes)",
       "hero (one)",
       "body-copy",
       "section-headline",
@@ -51,11 +51,11 @@
       "footer"
     ],
     "optional_positions": {
-      "opt-out": "Immediately after hero — position 3. Required for: Mothers Day, Fathers Day, Valentines Day, pregnancy/baby, memorial.",
+      "opt-out": "Immediately after hero \u2014 position 3. Required for: Mothers Day, Fathers Day, Valentines Day, pregnancy/baby, memorial.",
       "divider": "Max one non-line divider per email. Between body-copy and products.",
       "testimonial": "After products, before promo-code.",
       "promo-code": "After testimonial, before upsell.",
-      "upsell-noir": "Near bottom — closing beat. After promo-code.",
+      "upsell-noir": "Near bottom \u2014 closing beat. After promo-code.",
       "delivery-cutoffs": "After upsell, before trust-bar.",
       "three-column-steps-*": "After body-copy or after products. Use when a step-by-step partner flow (e.g. card creation) needs explaining. Max one per email. Choose variant by background: -beige (warm off-white), -50clay (50% clay, token clay_50, #EBE5DF), -clay (brand clay), or -white (silk white).",
       "journal-tile": "After products, before upsell — a 'From the Journal' row of 2–3 linked posts.",
@@ -69,7 +69,7 @@
         "heroes/hero-b-clay",
         "heroes/hero-b-noir"
       ],
-      "rule": "hero-b-* render their OWN logo bar, tinted to the band colour, so they take the place of `header`. Put one at index 0 and do not precede it with `header` — the email would show two stacked logo bars about 60px apart. /api/validate reports this as `duplicate_logo_bar`.",
+      "rule": "hero-b-* render their OWN logo bar, tinted to the band colour, so they take the place of `header`. Put one at index 0 and do not precede it with `header` \u2014 the email would show two stacked logo bars about 60px apart. /api/validate reports this as `duplicate_logo_bar`.",
       "instead": "Want the standard white logo bar? Use `header` with any other hero (heroes/hero-a, hero-c1*, hero-c2*, hero-d-*)."
     },
     "_note": "trust-bar returns to required when the new artwork lands."
@@ -96,6 +96,20 @@
           "SUBHEADLINE",
           "CTA_TEXT",
           "CTA_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_FONT": "cervanttis"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_FONT",
+            "type": "enum",
+            "enumOptions": [
+              "cervanttis",
+              "lust"
+            ],
+            "desc": "Headline face: cervanttis (lowercase script, default) or lust (display serif, copy preserved exactly as typed)."
+          }
         ]
       },
       "hero-b-white": {
@@ -132,6 +146,26 @@
           "CTA_TEXT",
           "CTA_URL",
           "HERO_IMAGE_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "hero-c1": {
@@ -192,6 +226,26 @@
           "SUBHEADLINE",
           "CTA_TEXT",
           "CTA_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "hero-c2-noir": {
@@ -204,6 +258,26 @@
           "SUBHEADLINE",
           "CTA_TEXT",
           "CTA_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "hero-d-noir": {
@@ -215,6 +289,26 @@
           "SUBHEADLINE",
           "CTA_TEXT",
           "CTA_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "hero-d-clay": {
@@ -241,7 +335,7 @@
       },
       "hero-image-only": {
         "file": "templates/heroes/hero-image-only.html",
-        "description": "Full-bleed image hero with no text overlay or button. 600×750px (4:5 ratio). Used when the image tells the story — mascot creative, lifestyle photography. Slice-to-PNG classification.",
+        "description": "Full-bleed image hero with no text overlay or button. 600\u00d7750px (4:5 ratio). Used when the image tells the story \u2014 mascot creative, lifestyle photography. Slice-to-PNG classification.",
         "classification": "slice",
         "tokens": [
           "HERO_IMAGE_URL",
@@ -410,11 +504,31 @@
         "tokens": [
           "SUPER_LABEL",
           "HEADLINE"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "full-width-image": {
         "file": "templates/sections/full-width-image.html",
-        "description": "A single full-width (600px) image, edge to edge, with an optional click-through link. LIVE HTML — not sliced — so it keeps its own link and an animated GIF keeps animating (listed in assembly.html_only_components). Any aspect ratio: the image's natural height is kept. For a fixed 4:5 photo hero use heroes/hero-image-only; for a short 180px lifestyle pause use dividers/divider-image.",
+        "description": "A single full-width (600px) image, edge to edge, with an optional click-through link. LIVE HTML \u2014 not sliced \u2014 so it keeps its own link and an animated GIF keeps animating (listed in assembly.html_only_components). Any aspect ratio: the image's natural height is kept. For a fixed 4:5 photo hero use heroes/hero-image-only; for a short 180px lifestyle pause use dividers/divider-image.",
         "classification": "html-safe",
         "tokens": [
           "IMAGE_URL",
@@ -466,6 +580,26 @@
           "BODY",
           "CTA_TEXT",
           "CTA_URL"
+        ],
+        "token_defaults": {
+          "HEADLINE_STYLE": "default",
+          "HEADLINE_LETTER_SPACING": "0.06em"
+        },
+        "token_controls": [
+          {
+            "name": "HEADLINE_STYLE",
+            "type": "enum",
+            "enumOptions": [
+              "default",
+              "caps"
+            ],
+            "desc": "Headline face: default or caps; caps uses Lust and preserves the supplied case."
+          },
+          {
+            "name": "HEADLINE_LETTER_SPACING",
+            "type": "length",
+            "desc": "Caps headline tracking as a CSS length, e.g. 0.06em."
+          }
         ]
       },
       "delivery-cutoffs": {
@@ -487,7 +621,7 @@
       },
       "three-column-steps-beige": {
         "file": "templates/sections/three-column-steps-beige.html",
-        "description": "Headline + 3-col numbered steps + CTA. Beige background (#faf5f0). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "description": "Headline + 3-col numbered steps + CTA. Beige background (#faf5f0). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe \u2014 no slicing.",
         "classification": "html-safe",
         "tokens": [
           "HEADLINE",
@@ -509,7 +643,7 @@
       },
       "three-column-steps-clay": {
         "file": "templates/sections/three-column-steps-clay.html",
-        "description": "Headline + 3-col numbered steps + CTA. Clay background (#D8CCBE). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "description": "Headline + 3-col numbered steps + CTA. Clay background (#D8CCBE). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe \u2014 no slicing.",
         "classification": "html-safe",
         "tokens": [
           "HEADLINE",
@@ -531,7 +665,7 @@
       },
       "three-column-steps-50clay": {
         "file": "templates/sections/three-column-steps-50clay.html",
-        "description": "Headline + 3-col numbered steps + CTA. 50% clay background (#EBE5DF, token clay_50). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing.",
+        "description": "Headline + 3-col numbered steps + CTA. 50% clay background (#EBE5DF, token clay_50). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe \u2014 no slicing.",
         "classification": "html-safe",
         "tokens": [
           "HEADLINE",
@@ -553,7 +687,7 @@
       },
       "three-column-steps-white": {
         "file": "templates/sections/three-column-steps-white.html",
-        "description": "Headline + 3-col numbered steps + CTA. White background (#ffffff). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe — no slicing. Add divider-line if adjacent to another white section.",
+        "description": "Headline + 3-col numbered steps + CTA. White background (#ffffff). Lust font for headline/numbers; NeuzeitGro Light for step text. Primary black button. HTML-safe \u2014 no slicing. Add divider-line if adjacent to another white section.",
         "classification": "html-safe",
         "tokens": [
           "HEADLINE",
@@ -576,8 +710,8 @@
       "button": {
         "file": "templates/sections/button.html",
         "classification": "html-safe",
-        "description": "A call-to-action button on its own — square, NeuzeitGro Bold caps label, on a palette-preset panel. Outlook gets a VML roundrect so the button survives the Word renderer instead of collapsing to underlined text.",
-        "when_to_use": "When a text section needs its own call to action, or the closing beat is a button alone. Does not replace the CTA already built into heroes, offer-panel or three-column-steps — use those when the button belongs to that component.",
+        "description": "A call-to-action button on its own \u2014 square, NeuzeitGro Bold caps label, on a palette-preset panel. Outlook gets a VML roundrect so the button survives the Word renderer instead of collapsing to underlined text.",
+        "when_to_use": "When a text section needs its own call to action, or the closing beat is a button alone. Does not replace the CTA already built into heroes, offer-panel or three-column-steps \u2014 use those when the button belongs to that component.",
         "tokens": [
           "CTA_TEXT",
           "CTA_URL",
@@ -691,13 +825,13 @@
       }
     },
     "blocks": {
-      "_about": "Designed blocks are graphic-designed, fully-composed image blocks (600px wide, variable height) that are ALWAYS sliced to PNG. Because they are rasterised, they may use rich CSS — transform:rotate, position:absolute layering, box-shadow, negative-margin overlap — that does not survive as live email HTML. They drop into the single 600px column exactly like any other sliced component. Tokens are filled, then the block is rendered via the puppeteer slicer (Step 5). Fonts, illustrations and palette are locked, identical to the rest of the v4 system: Cervanttis (lowercase script), Lust (sentence-case display), NeuzeitGro (sans), Noir/Clay(#D8CCBE)/White, square black buttons. MULTI-REGION SLICING: a block whose HTML marks descendants with data-eb-slice=\"<name>\" (optionally data-eb-href=\"<url token>\" and data-eb-alt=\"<text token>\") is NOT flattened to one image — the slicer emits one PNG slice per region, in DOM order, and each slice can carry its own link and alt. The regions tile the block's full height with no gaps, so they stack back seamlessly. This is how blocks/journal-tile keeps 2–3 distinct per-tile links (each tile slice wrapped in its own <a href>) while still rasterising to brand-font images.",
+      "_about": "Designed blocks are graphic-designed, fully-composed image blocks (600px wide, variable height) that are ALWAYS sliced to PNG. Because they are rasterised, they may use rich CSS \u2014 transform:rotate, position:absolute layering, box-shadow, negative-margin overlap \u2014 that does not survive as live email HTML. They drop into the single 600px column exactly like any other sliced component. Tokens are filled, then the block is rendered via the puppeteer slicer (Step 5). Fonts, illustrations and palette are locked, identical to the rest of the v4 system: Cervanttis (lowercase script), Lust (sentence-case display), NeuzeitGro (sans), Noir/Clay(#D8CCBE)/White, square black buttons. MULTI-REGION SLICING: a block whose HTML marks descendants with data-eb-slice=\"<name>\" (optionally data-eb-href=\"<url token>\" and data-eb-alt=\"<text token>\") is NOT flattened to one image \u2014 the slicer emits one PNG slice per region, in DOM order, and each slice can carry its own link and alt. The regions tile the block's full height with no gaps, so they stack back seamlessly. This is how blocks/journal-tile keeps 2\u20133 distinct per-tile links (each tile slice wrapped in its own <a href>) while still rasterising to brand-font images.",
       "journal-tile": {
         "file": "templates/blocks/journal-tile.html",
         "classification": "slice",
-        "description": "\"From the Journal\" row of 2–3 linked article tiles (image, eyebrow, title, teaser, link per tile). SLICED as a multi-region block: rasterises to brand-font PNGs like every designed block, but emits one slice per region — a header slice plus one slice per tile — so all 2–3 distinct per-tile links survive (each tile slice is wrapped in its own <a href>). Uses the generic data-eb-slice / data-eb-href mechanism (see blocks._about). Brand fonts (Lust titles, NeuzeitGro eyebrow/teaser). Editorial only: no price field, no PANEL_* palette.",
+        "description": "\"From the Journal\" row of 2\u20133 linked article tiles (image, eyebrow, title, teaser, link per tile). SLICED as a multi-region block: rasterises to brand-font PNGs like every designed block, but emits one slice per region \u2014 a header slice plus one slice per tile \u2014 so all 2\u20133 distinct per-tile links survive (each tile slice is wrapped in its own <a href>). Uses the generic data-eb-slice / data-eb-href mechanism (see blocks._about). Brand fonts (Lust titles, NeuzeitGro eyebrow/teaser). Editorial only: no price field, no PANEL_* palette.",
         "when_to_use": "A secondary 'more reading' module for editorial / digest / lifecycle sends. After products, before the closing upsell. Set TILE_3_* to \"\" for a 2-up row; fill it for 3-up.",
-        "assets_needed": "Two or three 4:5 article photos (~200×250 display). No illustration assets.",
+        "assets_needed": "Two or three 4:5 article photos (~200\u00d7250 display). No illustration assets.",
         "tokens": [
           "SECTION_LABEL",
           "SECTION_HEADLINE",
@@ -722,10 +856,10 @@
         "file": "templates/blocks/image-text.html",
         "classification": "slice",
         "description": "A 2/3-width image paired with a text column (super-label, Lust headline, supporting paragraph) and a square button. The IMAGE_SIDE lever flips the image left or right. The everyday image-and-copy beat for spotlighting a product, range or story moment with a single clear CTA.",
-        "when_to_use": "When one image plus a short headline, paragraph and one CTA tell the beat — product/range spotlight, value prop, occasion. Mid-email. Alternate IMAGE_SIDE='left' / 'right' across consecutive image-text blocks for rhythm.",
-        "assets_needed": "One 4:5 photo (400×500 display, 800×1000 source min). No illustration assets.",
+        "when_to_use": "When one image plus a short headline, paragraph and one CTA tell the beat \u2014 product/range spotlight, value prop, occasion. Mid-email. Alternate IMAGE_SIDE='left' / 'right' across consecutive image-text blocks for rhythm.",
+        "assets_needed": "One 4:5 photo (400\u00d7500 display, 800\u00d71000 source min). No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
           "layout": "IMG_SIDE = left (image left, text right) or right (image right, text left)"
         },
         "levers": {
@@ -750,7 +884,7 @@
         "classification": "slice",
         "description": "Photo + serif (Lust) headline + Cervanttis script accent + square button on a white plate that overlaps the photo (the 'layering'). The most editorial hero. Use as the opening beat of an engagement/editorial send when a single strong photo carries the story.",
         "when_to_use": "Opening beat for editorial/engagement campaigns (not promo). One per email. Pair with a normal header component above it.",
-        "assets_needed": "One full-bleed lifestyle photo (600×440 display). No illustration assets.",
+        "assets_needed": "One full-bleed lifestyle photo (600\u00d7440 display). No illustration assets.",
         "levers": {
           "TYPE_SCALE": "regular | oversized (headline scale)",
           "ACCENT_ILLO": "on | off (faint brand-illustration accent)"
@@ -771,8 +905,8 @@
         "file": "templates/blocks/feature-list.html",
         "classification": "slice",
         "description": "Tilted polaroid (left) + icon-bullet feature list (right): Lust headline, three clay disc bullets with bold title + light one-liner, square button. Cervanttis polaroid caption.",
-        "when_to_use": "When explaining 2–4 reasons-to-believe or value props beside a single product polaroid. Mid-email, after the hero/body. Max one per email.",
-        "assets_needed": "One square-crop product/lifestyle photo (192×216 display). Clay disc bullets are CSS-drawn — no icon assets.",
+        "when_to_use": "When explaining 2\u20134 reasons-to-believe or value props beside a single product polaroid. Mid-email, after the hero/body. Max one per email.",
+        "assets_needed": "One square-crop product/lifestyle photo (192\u00d7216 display). Clay disc bullets are CSS-drawn \u2014 no icon assets.",
         "tokens": [
           "SECTION_SUPER",
           "HEADLINE",
@@ -791,9 +925,9 @@
       "polaroid-collage": {
         "file": "templates/blocks/polaroid-collage.html",
         "classification": "slice",
-        "description": "Three tilted, overlapping polaroids (angles -7°/+2°/+8°) on a Clay panel, each with a Cervanttis caption, above a Lust pull-quote + attribution. Warm, scrapbook/social-proof beat.",
+        "description": "Three tilted, overlapping polaroids (angles -7\u00b0/+2\u00b0/+8\u00b0) on a Clay panel, each with a Cervanttis caption, above a Lust pull-quote + attribution. Warm, scrapbook/social-proof beat.",
         "when_to_use": "Social-proof or 'in their words' moment, or a multi-occasion montage. After products, before the closing beat. Max one per email.",
-        "assets_needed": "Three square-crop photos (168–176px display). No illustration assets. The collage region is a fixed 340px so the absolutely-positioned polaroids are captured by the slicer.",
+        "assets_needed": "Three square-crop photos (168\u2013176px display). No illustration assets. The collage region is a fixed 340px so the absolutely-positioned polaroids are captured by the slicer.",
         "levers": {
           "DENSITY": "tight | regular | airy (collage spacing)",
           "ROTATION": "flat | subtle | jaunty (polaroid tilt)",
@@ -827,7 +961,7 @@
         "when_to_use": "When an event, launch or shoot has more good photos than one hero can hold. Mid-email, after the story beat, often before a journal CTA. Max one gallery per email. Default LAYOUT='masonry-6', DENSITY='regular'; reach for masonry-8 only when the set is strong enough to hold at thumbnail size on a phone.",
         "assets_needed": "5, 6 or 8 portrait (2:3) photos, per LAYOUT. Crops favour the upper third. No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)"
         },
         "levers": {
           "LAYOUT": "mosaic-5 | masonry-6 | masonry-8 (grid shape and photo count)",
@@ -874,9 +1008,9 @@
         "when_to_use": "Opening beat when one photo carries the story and the message is a short caption, not a paragraph. Differs from editorial-hero (which adds a Lust headline + plate). One per email; pair with a normal header above it.",
         "assets_needed": "One full-bleed photo (600 wide; height = IMG_HEIGHT, 600 square or 440 editorial). For an ANIMATED hero, supply frames and render via slice-gif.js (see SKILL Step 5e).",
         "parametrised": {
-          "palette": "white | clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "palette": "white | clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
           "layout": "IMG_HEIGHT = 600 (square) or 440 (editorial 3:2)",
-          "animated": "yes — first-class GIF-hero candidate (see gif_hero below)"
+          "animated": "yes \u2014 first-class GIF-hero candidate (see gif_hero below)"
         },
         "tokens": [
           "HERO_IMAGE_URL",
@@ -896,9 +1030,9 @@
         "classification": "slice",
         "description": "Tilted-polaroid portrait (left) + narrative copy (right): NeuzeitGro super-label, Lust headline, two Neuzeit paragraphs, Cervanttis lowercase script signature, square button. Founder / behind-the-scenes / editorial 'note' beat. ~18% of sampled emails.",
         "when_to_use": "Founder or brand-story moment (e.g. 'from the founders', an interview, a values note). Mid-email, usually after the hero. Max one per email.",
-        "assets_needed": "One portrait / behind-the-scenes photo (square crop, 240×300 display). No illustration assets.",
+        "assets_needed": "One portrait / behind-the-scenes photo (square crop, 240\u00d7300 display). No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
           "layout": "portrait-left, text-right (locked to the corpus norm)"
         },
         "levers": {
@@ -928,10 +1062,10 @@
         "file": "templates/blocks/designed-product-card.html",
         "classification": "slice",
         "description": "Rich product spotlight: photo with a tilted Cervanttis badge ribbon (bestseller / low stock / new), Lust product name, Neuzeit occasion line, Lust price, square button. The designed alternative to the plain products/card-* components. ~48% of sampled emails carry a designed spotlight.",
-        "when_to_use": "A single hero/spotlight product that needs a designed treatment (badge, big serif name + price). For plain 3–5 product grids keep using products/card-horizontal / card-lifestyle-studio. Max one designed-product-card per email.",
-        "assets_needed": "One product photo (4:5 crop, 280×350 display). Badge ribbon is CSS-drawn — no icon assets. Set BADGE_TEXT to \"\" to hide the ribbon.",
+        "when_to_use": "A single hero/spotlight product that needs a designed treatment (badge, big serif name + price). For plain 3\u20135 product grids keep using products/card-horizontal / card-lifestyle-studio. Max one designed-product-card per email.",
+        "assets_needed": "One product photo (4:5 crop, 280\u00d7350 display). Badge ribbon is CSS-drawn \u2014 no icon assets. Set BADGE_TEXT to \"\" to hide the ribbon.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
           "badge": "BADGE_TEXT lowercase Cervanttis, or \"\" to hide"
         },
         "levers": {
@@ -960,14 +1094,14 @@
       "offer-panel": {
         "file": "templates/blocks/offer-panel.html",
         "classification": "slice",
-        "description": "Bold designed offer / promo HERO: NeuzeitGro caps super-label, huge Lust offer value, Lust supporting line, terms, a dashed promo-code box, a rotated Cervanttis 'sticker' ribbon, and a square button. The designed (sliced) hero version of an offer — distinct from the small inline sections/promo-code component. Confirmed across the 157-email review as the recurring promo/sale/free-ship/rewards beat (~17% of corpus).",
-        "when_to_use": "Promo / sale / flash / Black Friday / free-shipping / rewards sends — as the OPEN beat or a strong CLOSE beat. One per email. For a GIVEAWAY, use GIVEAWAY MODE (PROMO_CODE=\"\", prize in OFFER_VALUE, mechanic in SUBHEADLINE).",
-        "assets_needed": "None — type + dashed box + CSS ribbon only. No photo or illustration assets.",
+        "description": "Bold designed offer / promo HERO: NeuzeitGro caps super-label, huge Lust offer value, Lust supporting line, terms, a dashed promo-code box, a rotated Cervanttis 'sticker' ribbon, and a square button. The designed (sliced) hero version of an offer \u2014 distinct from the small inline sections/promo-code component. Confirmed across the 157-email review as the recurring promo/sale/free-ship/rewards beat (~17% of corpus).",
+        "when_to_use": "Promo / sale / flash / Black Friday / free-shipping / rewards sends \u2014 as the OPEN beat or a strong CLOSE beat. One per email. For a GIVEAWAY, use GIVEAWAY MODE (PROMO_CODE=\"\", prize in OFFER_VALUE, mechanic in SUBHEADLINE).",
+        "assets_needed": "None \u2014 type + dashed box + CSS ribbon only. No photo or illustration assets.",
         "parametrised": {
           "palette": "white | clay | 50clay | noir (PANEL_* tokens), or a seasonal campaign accent on PANEL_BG for occasion/promo only",
           "code_box": "PROMO_CODE text, or \"\" to hide the whole code box",
           "ribbon": "ACCENT_RIBBON lowercase Cervanttis, or \"\" to hide",
-          "animated": "yes — sale/urgency flash GIF candidate (see gif_hero)"
+          "animated": "yes \u2014 sale/urgency flash GIF candidate (see gif_hero)"
         },
         "tokens": [
           "SUPER_LABEL",
@@ -988,12 +1122,12 @@
       "howto-steps": {
         "file": "templates/blocks/howto-steps.html",
         "classification": "slice",
-        "description": "Vertical numbered how-to / care sequence: super-label, Lust headline, intro, then exactly three steps (oversized Lust numeral + NeuzeitGro caps title + body + a tilted framed step photo, alternating sides), and a square button. The corpus's care/how-to beat (~5-7%) — refresh, dry, make-last, eucalyptus, arranging, home-spots.",
+        "description": "Vertical numbered how-to / care sequence: super-label, Lust headline, intro, then exactly three steps (oversized Lust numeral + NeuzeitGro caps title + body + a tilted framed step photo, alternating sides), and a square button. The corpus's care/how-to beat (~5-7%) \u2014 refresh, dry, make-last, eucalyptus, arranging, home-spots.",
         "when_to_use": "Editorial care / how-to / ritual sends that teach a 3-step method with an image per step. Mid-email. One per email. NOT for a compact horizontal partner-flow (use sections/three-column-steps-*) or reasons-to-believe bullets (use blocks/feature-list).",
-        "assets_needed": "Three square step photos (108×108 display). No illustration assets.",
+        "assets_needed": "Three square step photos (108\u00d7108 display). No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
-          "layout": "fixed 3-step alternating rhythm (number-left/photo-right ↔ photo-left/number-right)"
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
+          "layout": "fixed 3-step alternating rhythm (number-left/photo-right \u2194 photo-left/number-right)"
         },
         "tokens": [
           "SUPER_LABEL",
@@ -1024,11 +1158,11 @@
         "classification": "slice",
         "description": "Side-by-side 'vs' comparison: super-label, Lust headline, two square photos with caps labels + captions, and a circular Cervanttis 'vs' badge straddling the columns. The right/'us'/'after' photo carries a black border; the left photo is desaturated only when LEFT_TREATMENT='grayscale' (default 'none', so a neutral A-vs-B comparison keeps both photos in full colour). The corpus's us-vs-them / what-we-bought-vs-got / before-after beat (niche, ~1-2%).",
         "when_to_use": "A direct before/after or us-vs-them contrast. Mid-email. One per email.",
-        "assets_needed": "Two square photos (210×210 display). No illustration assets.",
+        "assets_needed": "Two square photos (210\u00d7210 display). No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)",
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)",
           "layout": "symmetric two-column (left = before/others, right = after/us)",
-          "left_treatment": "none | grayscale (LEFT_TREATMENT — desaturate the left photo; use grayscale only for an us-vs-them framing)"
+          "left_treatment": "none | grayscale (LEFT_TREATMENT \u2014 desaturate the left photo; use grayscale only for an us-vs-them framing)"
         },
         "tokens": [
           "SUPER_LABEL",
@@ -1056,12 +1190,12 @@
         "file": "templates/blocks/editorial-collage.html",
         "classification": "slice",
         "status": "draft",
-        "notes": "DRAFT — pending design review. Layered/collage art-direction draft (Task C2): 3 overlapping tilted frames + Cervanttis accent + Lust pull-quote. Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
+        "notes": "DRAFT \u2014 pending design review. Layered/collage art-direction draft (Task C2): 3 overlapping tilted frames + Cervanttis accent + Lust pull-quote. Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
         "description": "Three overlapping tilted photo frames on a palette panel, with a NeuzeitGro super-label, a Cervanttis script accent, a Lust pull-quote and a square button. A more art-directed editorial/collage opener or affirm beat.",
         "when_to_use": "DRAFT. Editorial / newsletter sends wanting a more layered, gallery-wall feel than polaroid-collage. Mid-email or opening beat. Max one collage block per email.",
-        "assets_needed": "Three crop photos (frames 1–2 at 196×232, frame 3 at 220×264 display). No illustration assets.",
+        "assets_needed": "Three crop photos (frames 1\u20132 at 196\u00d7232, frame 3 at 220\u00d7264 display). No illustration assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)"
         },
         "levers": {
           "ROTATION": "flat | subtle | jaunty (frame tilt)"
@@ -1086,12 +1220,12 @@
         "file": "templates/blocks/annotated-product.html",
         "classification": "slice",
         "status": "draft",
-        "notes": "DRAFT — pending design review. Annotated art-direction draft (Task C2): product photo with hand-drawn-style Cervanttis callout chips (rotated, overlapping, shadowed). Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
+        "notes": "DRAFT \u2014 pending design review. Annotated art-direction draft (Task C2): product photo with hand-drawn-style Cervanttis callout chips (rotated, overlapping, shadowed). Palette-parametrised, locked fonts. Not ship-ready until a designer signs off.",
         "description": "Product spotlight with three rotated, overlapping hand-written Cervanttis callout chips pinned around the photo, plus a Lust name + price and a square button. A more playful, annotated alternative to designed-product-card.",
-        "when_to_use": "DRAFT. A single hero product where 2–3 reasons-to-believe read best as hand-written callouts on the photo. Mid-email. Max one annotated-product per email.",
-        "assets_needed": "One product photo (4:5 crop, 300×375 display). Chips are CSS-drawn — no icon assets.",
+        "when_to_use": "DRAFT. A single hero product where 2\u20133 reasons-to-believe read best as hand-written callouts on the photo. Mid-email. Max one annotated-product per email.",
+        "assets_needed": "One product photo (4:5 crop, 300\u00d7375 display). Chips are CSS-drawn \u2014 no icon assets.",
         "parametrised": {
-          "palette": "white | clay | 50clay | noir (PANEL_* tokens — copy a preset row verbatim)"
+          "palette": "white | clay | 50clay | noir (PANEL_* tokens \u2014 copy a preset row verbatim)"
         },
         "levers": {
           "ROTATION": "flat | subtle | jaunty (chip tilt)"
@@ -1116,7 +1250,7 @@
       }
     },
     "block_palette_presets": {
-      "_about": "Designed blocks are PARAMETRISED on palette via four PANEL_* tokens. Fill all four by copying ONE preset row verbatim — the agent never invents hex. Keeps every variation inside the locked Noir/Clay/White system. Buttons stay square black on light presets; on the noir preset swap the button to white-on-black.",
+      "_about": "Designed blocks are PARAMETRISED on palette via four PANEL_* tokens. Fill all four by copying ONE preset row verbatim \u2014 the agent never invents hex. Keeps every variation inside the locked Noir/Clay/White system. Buttons stay square black on light presets; on the noir preset swap the button to white-on-black.",
       "white": {
         "PANEL_BG": "#ffffff",
         "PANEL_TEXT": "#444444",
@@ -1144,7 +1278,7 @@
       }
     },
     "variation_rules": {
-      "_about": "Derived from the corpus mine (references/research/freq.json). Goal: consecutive sends must not feel same-y, while every variation stays inside the locked system. Variation comes from (1) which designed block opens/affirms/closes, (2) the palette preset, and (3) the layout lever — NOT from new colours, fonts or illustrations.",
+      "_about": "Derived from the corpus mine (references/research/freq.json). Goal: consecutive sends must not feel same-y, while every variation stays inside the locked system. Variation comes from (1) which designed block opens/affirms/closes, (2) the palette preset, and (3) the layout lever \u2014 NOT from new colours, fonts or illustrations.",
       "beats": {
         "OPEN": [
           "editorial-hero",
@@ -1175,17 +1309,17 @@
       },
       "rotation": "Across a campaign series, rotate the OPEN block and its palette so no two consecutive sends repeat the same opener+palette pair. Track the last send's (open_block, palette) and pick a different combination. Editorial/newsletter sends (the corpus's largest bucket, 25.5%) should lean on caption-bar-hero + story; promo sends on editorial-hero + designed-product-card. Care-guide / how-to sends affirm with howto-steps; us-vs-them / before-after sends affirm with comparison-vs.",
       "levers": {
-        "_about": "Layout levers on the designed blocks (editorial-hero, story, polaroid-collage, designed-product-card, and the draft editorial-collage / annotated-product) add a third axis of variation beyond (open_block, palette): composition. Values are locked enums only — no free hex/px — so variation never escapes the system.",
+        "_about": "Layout levers on the designed blocks (editorial-hero, story, polaroid-collage, designed-product-card, and the draft editorial-collage / annotated-product) add a third axis of variation beyond (open_block, palette): composition. Values are locked enums only \u2014 no free hex/px \u2014 so variation never escapes the system.",
         "available": {
-          "TYPE_SCALE": "regular | oversized — headline / name scale",
-          "ROTATION": "flat | subtle | jaunty — tilt of polaroids, badges, frames, chips. Never on a hero: the editorial-hero plate is always upright and has no ROTATION lever.",
-          "DENSITY": "tight | regular | airy — collage spacing (polaroid-collage), photo gutter (event-gallery)",
-          "LAYOUT": "mosaic-5 | masonry-6 | masonry-8 — grid shape and photo count (blocks/event-gallery)",
-          "ACCENT_ILLO": "on | off — faint brand-illustration accent",
-          "IMG_SIDE": "left | right — which side the image sits (blocks/image-text)",
-          "LEFT_TREATMENT": "none | grayscale — desaturate the left photo (blocks/comparison-vs)"
+          "TYPE_SCALE": "regular | oversized \u2014 headline / name scale",
+          "ROTATION": "flat | subtle | jaunty \u2014 tilt of polaroids, badges, frames, chips. Never on a hero: the editorial-hero plate is always upright and has no ROTATION lever.",
+          "DENSITY": "tight | regular | airy \u2014 collage spacing (polaroid-collage), photo gutter (event-gallery)",
+          "LAYOUT": "mosaic-5 | masonry-6 | masonry-8 \u2014 grid shape and photo count (blocks/event-gallery)",
+          "ACCENT_ILLO": "on | off \u2014 faint brand-illustration accent",
+          "IMG_SIDE": "left | right \u2014 which side the image sits (blocks/image-text)",
+          "LEFT_TREATMENT": "none | grayscale \u2014 desaturate the left photo (blocks/comparison-vs)"
         },
-        "rotation": "Across a series, vary the composition levers — not just the palette — so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent — restraint over loudness."
+        "rotation": "Across a series, vary the composition levers \u2014 not just the palette \u2014 so consecutive sends feel distinct. Track the last send's (open_block, palette, TYPE_SCALE) and pick a different combination. Default to ROTATION='subtle', TYPE_SCALE='regular', DENSITY='regular', ACCENT_ILLO='off'; reach for 'oversized' / 'jaunty' / 'airy' / 'on' as the deliberate, occasional accent \u2014 restraint over loudness."
       },
       "no_repeat": [
         "Do not use the same designed block twice in one email (each is 'max one per email').",
@@ -1193,36 +1327,36 @@
         "Do not repeat the same palette preset on the OPEN block in consecutive sends of a series.",
         "Do not repeat the same TYPE_SCALE on the OPEN block in consecutive sends of a series.",
         "Never tilt a hero. The OPEN block is always upright; ROTATION belongs to mid-email collage pieces only.",
-        "Accent colour (non-mono) only on occasion/promo sends, only as a panel/border — never type."
+        "Accent colour (non-mono) only on occasion/promo sends, only as a panel/border \u2014 never type."
       ]
     },
     "gif_hero": {
       "_about": "Animated GIF heroes are FIRST-CLASS: ~31% of the corpus ships one, and image/gif ALWAYS means an animated hero (see research/freq.json). The static slicer (slice.js) emits PNG; the animated path uses slice-gif.js in the puppeteer skill.",
-      "when": "Use a GIF hero for reveal moments (flower-of-the-month / product reveals, 2–4 frames), UGC / review carousels (8–18 frames), or sale/urgency flashes (4–5 frames).",
+      "when": "Use a GIF hero for reveal moments (flower-of-the-month / product reveals, 2\u20134 frames), UGC / review carousels (8\u201318 frames), or sale/urgency flashes (4\u20135 frames).",
       "applies_to_blocks": [
         "caption-bar-hero",
         "editorial-hero",
         "hero-image-only"
       ],
-      "workflow_ref": "SKILL.md Step 5e — produce N frame HTML states of the SAME block, render to one looping GIF via reference/reference-puppeteer/references/scripts/slice-gif.js, then upload/link like any other slice.",
-      "slicer": "scripts/slice-gif.js (deps: gifenc, pngjs — installed by the same npm install as slice.js)"
+      "workflow_ref": "SKILL.md Step 5e \u2014 produce N frame HTML states of the SAME block, render to one looping GIF via reference/reference-puppeteer/references/scripts/slice-gif.js, then upload/link like any other slice.",
+      "slicer": "scripts/slice-gif.js (deps: gifenc, pngjs \u2014 installed by the same npm install as slice.js)"
     }
   },
   "token_rules": {
-    "HEADLINE": "Case depends on font: CERVANTTIS templates (heroes, upsell-noir, opt-out) → MUST be lowercase. LUST templates (body-copy, section-headline, products) → Sentence case. Check the template comment to confirm which font is used before writing the value.",
-    "OPT_OUT_HEADLINE": "Cervanttis font — MUST be lowercase. e.g. 'a gentle note'.",
-    "UNSUBSCRIBE_URL": "Use exact Klaviyo syntax: {{ unsubscribe_url }} — single braces, with spaces inside.",
-    "REVIEW_STARS": "Use actual Unicode star characters: ★★★★★",
-    "PRODUCT_IMAGE_URL": "Must be 4:5 ratio (1000×1250px source min). Hosted on Klaviyo media library.",
+    "HEADLINE": "Case depends on font: CERVANTTIS templates (heroes, upsell-noir, opt-out) \u2192 MUST be lowercase. LUST templates (body-copy, section-headline, products) \u2192 Sentence case. Check the template comment to confirm which font is used before writing the value.",
+    "OPT_OUT_HEADLINE": "Cervanttis font \u2014 MUST be lowercase. e.g. 'a gentle note'.",
+    "UNSUBSCRIBE_URL": "Use exact Klaviyo syntax: {{ unsubscribe_url }} \u2014 single braces, with spaces inside.",
+    "REVIEW_STARS": "Use actual Unicode star characters: \u2605\u2605\u2605\u2605\u2605",
+    "PRODUCT_IMAGE_URL": "Must be 4:5 ratio (1000\u00d71250px source min). Hosted on Klaviyo media library.",
     "HERO_IMAGE_URL": "Hosted on Klaviyo media library. Lifestyle photography preferred.",
     "BODY_P2": "Leave empty string if only one paragraph needed.",
-    "PRODUCT_NAME": "Lust font — sentence case. e.g. 'Blush & Wild', 'Garden Natives'.",
-    "ACCENT_SCRIPT": "Designed-block Cervanttis script accent (editorial-hero) — MUST be lowercase. e.g. 'with love,'.",
-    "POLAROID_CAPTION": "Designed-block Cervanttis polaroid caption (feature-list) — MUST be lowercase. e.g. 'osaka, our bestseller'.",
-    "PHOTO_1_CAPTION / PHOTO_2_CAPTION / PHOTO_3_CAPTION": "Designed-block Cervanttis polaroid captions (polaroid-collage) — MUST be lowercase.",
-    "QUOTE_ACCENT": "Designed-block Cervanttis accent line (polaroid-collage) — MUST be lowercase. e.g. 'in their words'.",
-    "PULL_QUOTE": "Designed-block Lust pull-quote (polaroid-collage) — sentence case.",
-    "designed_block_HEADLINE": "In designed blocks (editorial-hero, feature-list) HEADLINE is Lust → sentence case. The Cervanttis accent lives in a separate token (ACCENT_SCRIPT), which is lowercase."
+    "PRODUCT_NAME": "Lust font \u2014 sentence case. e.g. 'Blush & Wild', 'Garden Natives'.",
+    "ACCENT_SCRIPT": "Designed-block Cervanttis script accent (editorial-hero) \u2014 MUST be lowercase. e.g. 'with love,'.",
+    "POLAROID_CAPTION": "Designed-block Cervanttis polaroid caption (feature-list) \u2014 MUST be lowercase. e.g. 'osaka, our bestseller'.",
+    "PHOTO_1_CAPTION / PHOTO_2_CAPTION / PHOTO_3_CAPTION": "Designed-block Cervanttis polaroid captions (polaroid-collage) \u2014 MUST be lowercase.",
+    "QUOTE_ACCENT": "Designed-block Cervanttis accent line (polaroid-collage) \u2014 MUST be lowercase. e.g. 'in their words'.",
+    "PULL_QUOTE": "Designed-block Lust pull-quote (polaroid-collage) \u2014 sentence case.",
+    "designed_block_HEADLINE": "In designed blocks (editorial-hero, feature-list) HEADLINE is Lust \u2192 sentence case. The Cervanttis accent lives in a separate token (ACCENT_SCRIPT), which is lowercase."
   },
   "locked_styles": {
     "note": "The following are baked into templates. Do not attempt to override via tokens.",
@@ -1234,7 +1368,7 @@
       "primary": "#000000",
       "body": "#444444",
       "secondary": "#666666",
-      "fine_print": "#aaaaaa",
+      "fine_print": "#4d4d4d",
       "stars": "#C8A888",
       "clay": "#D8CCBE",
       "clay_50": "#EBE5DF",
@@ -1243,7 +1377,7 @@
     "body_background": "#2c2825"
   },
   "font_cdn": {
-    "status": "complete — all fonts confirmed on Shopify CDN",
+    "status": "complete \u2014 all fonts confirmed on Shopify CDN",
     "cervanttis": {
       "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/cervanttis.ttf",
       "format": "truetype",
@@ -1289,5 +1423,84 @@
     }
   },
   "logo_cdn_url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/F_B_Logo_Horizontal_BLK_914x200_0eb09d11-e91b-4f05-8ef4-9e54a99cb903.png",
-  "logo_dimensions": "914×200px source, displayed at 120×26px in email"
+  "logo_dimensions": "914\u00d7200px source, displayed at 120\u00d726px in email",
+  "campaign_themes": {
+    "default": "light",
+    "options": [
+      "light",
+      "dark"
+    ],
+    "dark": {
+      "components": [
+        "blocks/annotated-product",
+        "blocks/caption-bar-hero",
+        "blocks/comparison-vs",
+        "blocks/designed-product-card",
+        "blocks/editorial-collage",
+        "blocks/editorial-hero",
+        "blocks/event-gallery",
+        "blocks/feature-list",
+        "blocks/howto-steps",
+        "blocks/image-text",
+        "blocks/journal-tile",
+        "blocks/offer-panel",
+        "blocks/polaroid-collage",
+        "blocks/story",
+        "dividers/divider-illo-50clay",
+        "dividers/divider-illo-clay",
+        "dividers/divider-illo-noir",
+        "dividers/divider-illo-white",
+        "dividers/divider-image",
+        "dividers/divider-line",
+        "dividers/divider-whitespace",
+        "footer",
+        "header",
+        "heroes/hero-a",
+        "heroes/hero-b-clay",
+        "heroes/hero-b-noir",
+        "heroes/hero-b-white",
+        "heroes/hero-c1",
+        "heroes/hero-c1-clay",
+        "heroes/hero-c1-noir",
+        "heroes/hero-c2",
+        "heroes/hero-c2-clay",
+        "heroes/hero-c2-noir",
+        "heroes/hero-d-clay",
+        "heroes/hero-d-noir",
+        "heroes/hero-d-white",
+        "heroes/hero-image-only",
+        "products/card-horizontal",
+        "products/card-horizontal-reversed",
+        "products/card-lifestyle-studio",
+        "products/card-live",
+        "products/card-feature",
+        "products/card-single-testimonial",
+        "sections/body-copy",
+        "sections/body-copy-plain",
+        "sections/button",
+        "sections/delivery-cutoffs",
+        "sections/full-width-image",
+        "sections/opt-out",
+        "sections/promo-code",
+        "sections/section-headline",
+        "sections/testimonial",
+        "sections/text-band",
+        "sections/top-line",
+        "sections/three-column-steps-50clay",
+        "sections/three-column-steps-beige",
+        "sections/three-column-steps-clay",
+        "sections/three-column-steps-white",
+        "sections/trust-bar",
+        "sections/upsell-noir"
+      ],
+      "token_defaults": {
+        "DARK_LOGO_URL": "{{ASSETS_BASE}}/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "DARK_FACEBOOK_URL": "{{ASSETS_BASE}}/F_B_Social_Facebook_CREAM_300x120.png",
+        "DARK_INSTAGRAM_URL": "{{ASSETS_BASE}}/F_B_Social_Instagram_CREAM_300x120.png",
+        "DARK_PINTEREST_URL": "{{ASSETS_BASE}}/F_B_Social_Pinterest_CREAM_300x120.png",
+        "DARK_YOUTUBE_URL": "{{ASSETS_BASE}}/F_B_Social_Youtube_CREAM_300x120.png"
+      },
+      "token_location": "campaign.themeTokens; each URL is swappable; ASSETS_BASE follows existing asset hosting"
+    }
+  }
 }

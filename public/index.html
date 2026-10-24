@@ -18,8 +18,10 @@
     <label>Campaign <input id="campaignName" type="text" placeholder="Internal campaign name"></label>
     <label>Subject <input id="subjectLine" type="text" placeholder="Email subject"></label>
     <label>Preview text <input id="previewText" type="text" placeholder="Inbox preview"></label>
+    <label>Theme <select id="campaignTheme"><option value="light">Light</option><option value="dark">Dark</option></select></label>
     <label>Body bg <input id="bodyBg" type="text" value="#2c2825" class="hex"></label>
   </div>
+  <details id="darkThemeAssets" hidden><summary>Dark theme logo and social assets</summary><div id="darkThemeAssetFields" class="campaign-meta"></div></details>
   <div class="actions">
     <button id="btnCreate" class="primary" title="Generate a campaign from a free-form brief using the brand-aware campaign generator">Create campaign</button>
     <button id="btnSample" class="ghost" title="Load the “card is the hard part” sample">Sample</button>

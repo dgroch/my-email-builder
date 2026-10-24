@@ -1,0 +1,26 @@
+TAP version 13
+# Subtest: 600/390 browser geometry
+not ok 1 - 600/390 browser geometry
+  ---
+  duration_ms: 281.656401
+  location: '/workspace/wt/eb212-s7/test/207-p2-render.test.js:4:1'
+  failureType: 'testCodeFailure'
+  error: 'Protocol error (Target.setDiscoverTargets): Target closed'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TargetCloseError'
+  stack: |-
+    CallbackRegistry.clear (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/puppeteer-core/lib/cjs/puppeteer/common/CallbackRegistry.js:82:36)
+    #onClose (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/Connection.js:188:25)
+    Socket.<anonymous> (/home/box/.ScreamingFrogSEOSpider/node/5.10/node_modules/puppeteer-core/lib/cjs/puppeteer/node/PipeTransport.js:29:30)
+    Socket.emit (node:events:536:35)
+    Pipe.<anonymous> (node:net:345:12)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 289.088744

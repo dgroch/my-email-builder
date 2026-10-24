@@ -125,7 +125,9 @@ test('every existing component keeps exact sample, current sample and empty/defa
     const original = render.assembleBlocks(record.campaign).blocks[0].html;
     const current = render.assembleBlocks(campaign(record.component)).blocks[0].html;
     const defaults = render.assembleBlocks({blocks:[{component:record.component,tokens:{}}]}).blocks[0].html;
-    if (original !== record.html || current !== record.html || defaults !== record.defaultsHtml) changed.push(record.component);
+    // Preserve P2's exact-byte control with only the approved S7b fine_print correction.
+    const muted = html => html.replace(/color:#aaaaaa/gi, 'color:#4d4d4d');
+    if (original !== muted(record.html) || current !== muted(record.html) || defaults !== muted(record.defaultsHtml)) changed.push(record.component);
   }
   assert.deepEqual(changed, []);
 });

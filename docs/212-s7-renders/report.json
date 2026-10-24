@@ -1,0 +1,2124 @@
+{
+  "offline": true,
+  "browserRun": true,
+  "validation": {
+    "dark-test": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "blocks": [
+        {
+          "index": 0,
+          "component": "header",
+          "valid": true
+        },
+        {
+          "index": 1,
+          "component": "heroes/hero-d-noir",
+          "valid": true
+        },
+        {
+          "index": 2,
+          "component": "sections/body-copy-plain",
+          "valid": true
+        },
+        {
+          "index": 3,
+          "component": "sections/button",
+          "valid": true
+        },
+        {
+          "index": 4,
+          "component": "sections/upsell-noir",
+          "valid": true
+        },
+        {
+          "index": 5,
+          "component": "footer",
+          "valid": true
+        }
+      ],
+      "issues": []
+    },
+    "dark-test-caps": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "blocks": [
+        {
+          "index": 0,
+          "component": "header",
+          "valid": true
+        },
+        {
+          "index": 1,
+          "component": "heroes/hero-d-noir",
+          "valid": true
+        },
+        {
+          "index": 2,
+          "component": "sections/body-copy-plain",
+          "valid": true
+        },
+        {
+          "index": 3,
+          "component": "sections/button",
+          "valid": true
+        },
+        {
+          "index": 4,
+          "component": "sections/upsell-noir",
+          "valid": true
+        },
+        {
+          "index": 5,
+          "component": "footer",
+          "valid": true
+        }
+      ],
+      "issues": []
+    },
+    "caps-specimens": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0,
+      "blocks": [
+        {
+          "index": 0,
+          "component": "heroes/hero-b-noir",
+          "valid": true
+        },
+        {
+          "index": 1,
+          "component": "heroes/hero-c1-noir",
+          "valid": true
+        },
+        {
+          "index": 2,
+          "component": "heroes/hero-c2-noir",
+          "valid": true
+        },
+        {
+          "index": 3,
+          "component": "heroes/hero-d-noir",
+          "valid": true
+        },
+        {
+          "index": 4,
+          "component": "sections/section-headline",
+          "valid": true
+        },
+        {
+          "index": 5,
+          "component": "sections/upsell-noir",
+          "valid": true
+        },
+        {
+          "index": 6,
+          "component": "footer",
+          "valid": true
+        }
+      ],
+      "issues": []
+    }
+  },
+  "runs": [
+    {
+      "name": "dark-test",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "dark-test-600-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "dark-test-600-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "dark-test-600-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "dark-test-600-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "dark-test-390-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "dark-test-390-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "dark-test-390-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "dark-test-390-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "dark-test-caps-600-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "dark-test-caps-600-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "dark-test-caps-600-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "dark-test-caps-600-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "dark-test-caps-390-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "dark-test-caps-390-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "dark-test-caps-390-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "dark-test-caps",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "dark-test-caps-390-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "caps-specimens-600-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.32px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "file": "design-system/assets/BodyFlower_White_wide.png"
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "file": "test/fixtures/campaign-assets/placeholder-hero.jpg"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 600,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "caps-specimens-600-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.32px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "file": "design-system/assets/BodyFlower_White_wide.png"
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "file": "test/fixtures/campaign-assets/placeholder-hero.jpg"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "caps-specimens-600-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.32px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+        "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 600,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "caps-specimens-600-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "2.28px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.32px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.68px"
+        }
+      ],
+      "documentWidth": 600,
+      "containerWidth": 600,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+        "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "light",
+      "filename": "caps-specimens-390-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "file": "design-system/assets/BodyFlower_White_wide.png"
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "file": "test/fixtures/campaign-assets/placeholder-hero.jpg"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 390,
+      "imagesOff": false,
+      "clientMode": "dark",
+      "filename": "caps-specimens-390-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "file": "design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "file": "design-system/assets/BodyFlower_White_wide.png"
+        },
+        {
+          "url": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "file": "test/fixtures/campaign-assets/placeholder-hero.jpg"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "file": "design-system/assets/HandRose_White.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Facebook_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Instagram_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png"
+        },
+        {
+          "url": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "file": "design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+        }
+      ],
+      "abortedImages": [],
+      "expectedBrokenImages": false,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "light",
+      "filename": "caps-specimens-390-images-off-light.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+        "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    },
+    {
+      "name": "caps-specimens",
+      "width": 390,
+      "imagesOff": true,
+      "clientMode": "dark",
+      "filename": "caps-specimens-390-images-off-dark.png",
+      "blueText": [],
+      "nonNoirBackgrounds": [],
+      "brokenImages": [
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+          "alt": ""
+        },
+        {
+          "src": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+          "alt": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+          "alt": ""
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+          "alt": "Fig & Bloom"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+          "alt": "Facebook"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+          "alt": "Instagram"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+          "alt": "Pinterest"
+        },
+        {
+          "src": "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png",
+          "alt": "Youtube"
+        }
+      ],
+      "caps": [
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "hh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H1",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "sh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        },
+        {
+          "tag": "H2",
+          "class": "uh",
+          "text": "AFTER DARK / BLACK FRIDAY IS ABOUT TO BLOOM",
+          "font": "Lust, Didot, \"Bodoni MT\", Georgia, serif",
+          "transform": "none",
+          "letterSpacing": "1.8px"
+        }
+      ],
+      "documentWidth": 390,
+      "containerWidth": 390,
+      "missingCaps": [],
+      "deniedRequests": [],
+      "stubbedImages": [],
+      "abortedImages": [
+        "https://eb212s7.invalid/design-system/assets/F_B_Logo_Horizontal_CREAM_914x200.png",
+        "https://eb212s7.invalid/design-system/assets/BodyFlower_White_wide.png",
+        "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+        "https://eb212s7.invalid/design-system/assets/HandRose_White.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Facebook_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Instagram_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Pinterest_CREAM_300x120.png",
+        "https://eb212s7.invalid/design-system/assets/F_B_Social_Youtube_CREAM_300x120.png"
+      ],
+      "expectedBrokenImages": true,
+      "failed": false
+    }
+  ],
+  "failed": false
+}

@@ -1,0 +1,57 @@
+{
+  "campaignName": "After dark — recovered S7 test",
+  "bodyBg": "#000000",
+  "blocks": [
+    {
+      "component": "header",
+      "tokens": {}
+    },
+    {
+      "component": "heroes/hero-d-noir",
+      "tokens": {
+        "SUPER_LABEL": "Black Friday",
+        "HEADLINE": "after dark",
+        "SUBHEADLINE": "Test subheadline.",
+        "CTA_TEXT": "Test",
+        "CTA_URL": "https://figandbloom.com"
+      }
+    },
+    {
+      "component": "sections/body-copy-plain",
+      "tokens": {
+        "SUPER_LABEL": "",
+        "HEADLINE": "Test headline",
+        "BODY_P1": "Body copy on the dark shell.",
+        "BODY_P2": ""
+      }
+    },
+    {
+      "component": "sections/button",
+      "tokens": {
+        "CTA_TEXT": "Shop",
+        "CTA_URL": "https://figandbloom.com",
+        "ALIGN": "center",
+        "BTN_WIDTH": "260px",
+        "PADDING_TOP": "32px",
+        "PADDING_BOTTOM": "40px",
+        "PANEL_BG": "#000000",
+        "BTN_BG": "#000000",
+        "BTN_TEXT": "#ffffff"
+      }
+    },
+    {
+      "component": "sections/upsell-noir",
+      "tokens": {
+        "SUPER_LABEL": "Test",
+        "HEADLINE": "last call",
+        "BODY": "Test body.",
+        "CTA_TEXT": "Shop",
+        "CTA_URL": "https://figandbloom.com"
+      }
+    },
+    {
+      "component": "footer",
+      "tokens": {}
+    }
+  ]
+}
