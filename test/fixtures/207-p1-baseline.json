@@ -1,0 +1,1255 @@
+[
+  {
+    "component": "blocks/annotated-product",
+    "campaign": {
+      "campaignName": "blocks/annotated-product — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/annotated-product",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "PRODUCT_LABEL": "SPOTLIGHT",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_PRICE": "From $105",
+            "CHIP_1_TEXT": "locally grown",
+            "CHIP_2_TEXT": "lasts 10+ days",
+            "CHIP_3_TEXT": "hand-tied",
+            "CTA_TEXT": "Shop Lucerne",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "ROTATION": "flat",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#666666",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "36418495bc6bd93d9307107ad263fc2a4e0c45b34deead166cccfdb98b8476dc"
+  },
+  {
+    "component": "blocks/caption-bar-hero",
+    "campaign": {
+      "campaignName": "blocks/caption-bar-hero — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/caption-bar-hero",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "IMG_HEIGHT": "600",
+            "SUPER_LABEL": "FLOWER OF THE MONTH",
+            "CAPTION": "peonies are back",
+            "CTA_TEXT": "Shop the bloom",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#000000",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "668fd65b2318c4b805ebef55689c771dd438188c7503aa896e0ba8b1d61c6d2b"
+  },
+  {
+    "component": "blocks/comparison-vs",
+    "campaign": {
+      "campaignName": "blocks/comparison-vs — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/comparison-vs",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "The difference is in the details",
+            "LEFT_LABEL": "SUPERMARKET",
+            "LEFT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "LEFT_CAPTION": "wrapped in plastic",
+            "VS_ACCENT": "vs",
+            "RIGHT_LABEL": "FIG & BLOOM",
+            "RIGHT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "RIGHT_CAPTION": "hand-tied, by name",
+            "CTA_TEXT": "See the difference",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "LEFT_TREATMENT": "none",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#666666",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "033af084d836ca5d431b98370a8231681c49cece40633abcf37cde6bbcc4b5cb"
+  },
+  {
+    "component": "blocks/designed-product-card",
+    "campaign": {
+      "campaignName": "blocks/designed-product-card — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/designed-product-card",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "BADGE_TEXT": "bestseller",
+            "PRODUCT_LABEL": "SPOTLIGHT",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_PRICE": "From $105",
+            "CTA_TEXT": "Shop Lucerne",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "TYPE_SCALE": "regular",
+            "ROTATION": "flat",
+            "ACCENT_ILLO": "on",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#666666",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "948d62dd355c68b20fc688580739ea8efec7400ed112259084d260d065eec908"
+  },
+  {
+    "component": "blocks/editorial-collage",
+    "campaign": {
+      "campaignName": "blocks/editorial-collage — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/editorial-collage",
+          "tokens": {
+            "FRAME_1_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "FRAME_2_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/TulipGreetingCard.jpg?v=1732250184",
+            "FRAME_3_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/ThinkingofYouDoveGreetingCard.jpg?v=1732250194",
+            "SUPER_LABEL": "THE EDIT",
+            "ACCENT_SCRIPT": "this month,",
+            "PULL_QUOTE": "Three frames, one quiet story about slowing down with flowers.",
+            "CTA_TEXT": "Read the edit",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "ROTATION": "flat",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#444444",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "04600c9e559a9660927dd4270bc4fcd986f1835c6e8ee5608b15d2f84cd18df0"
+  },
+  {
+    "component": "blocks/editorial-hero",
+    "campaign": {
+      "campaignName": "blocks/editorial-hero — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/editorial-hero",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "ACCENT_SCRIPT": "with love,",
+            "HEADLINE": "When the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened. Here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/blogs/news/what-to-write-on-flower-card",
+            "TYPE_SCALE": "regular",
+            "ACCENT_ILLO": "on"
+          }
+        }
+      ]
+    },
+    "sha256": "c5986cf68fd47b861499ef8fe86e5535cd32f846e3d2576ccbdc446f478f13d6"
+  },
+  {
+    "component": "blocks/event-gallery",
+    "campaign": {
+      "campaignName": "blocks/event-gallery — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/event-gallery",
+          "tokens": {
+            "SUPER_LABEL": "AT RESTAURANT HUBERT",
+            "ACCENT_SCRIPT": "the afternoon,",
+            "HEADLINE": "Three designs, one long table",
+            "LAYOUT": "masonry-6",
+            "DENSITY": "regular",
+            "PHOTO_1_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-mpu0h4.jpg",
+            "PHOTO_2_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-3bf5ay.jpg",
+            "PHOTO_3_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-2ruq29.jpg",
+            "PHOTO_4_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-2k8do1.jpg",
+            "PHOTO_5_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-1m79x1.jpg",
+            "PHOTO_6_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-36cn8r.jpg",
+            "PHOTO_7_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-2xmuta.jpg",
+            "PHOTO_8_URL": "https://brand-cdn.figandbloom.workers.dev/figandbloom/asset-manifest/high-floral-design-launch-event-photo-25-sep-2026-3gyhkv.jpg",
+            "GALLERY_ALT": "Guests, florals and the long table at the High Floral Design launch, Restaurant Hubert",
+            "CTA_TEXT": "Read the launch story",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#444444",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "4280d36af49963c8a10fc046b42cfee6176bdd1e99a33cd5f60aacf956f5d176"
+  },
+  {
+    "component": "blocks/feature-list",
+    "campaign": {
+      "campaignName": "blocks/feature-list — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/feature-list",
+          "tokens": {
+            "SECTION_SUPER": "WHY THE WORDS MATTER",
+            "HEADLINE": "A few words they will keep",
+            "FEATURE_1_TITLE": "THE RIGHT WORDS",
+            "FEATURE_1_TEXT": "Message ideas for every occasion, ready to make your own.",
+            "FEATURE_2_TITLE": "HANDWRITTEN, FREE",
+            "FEATURE_2_TEXT": "We write your note by hand on a quality card with every order.",
+            "FEATURE_3_TITLE": "SAME-DAY DELIVERY",
+            "FEATURE_3_TEXT": "Order before 1pm for same-day delivery across the city.",
+            "POLAROID_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "POLAROID_CAPTION": "with love,",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "f80558fd640c40e40b42915a246971d9af258c7c77309e140a536e38e1791cba"
+  },
+  {
+    "component": "blocks/howto-steps",
+    "campaign": {
+      "campaignName": "blocks/howto-steps — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/howto-steps",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "When the card is the hard part",
+            "INTRO": "Stuck at the message box? Decide what you want them to feel, then keep it this simple.",
+            "STEP_1_NUMBER": "1",
+            "STEP_1_TITLE": "NAME THEM",
+            "STEP_1_TEXT": "Open with their name — it makes the note feel meant for them.",
+            "STEP_1_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/SingleStemCardCU.jpg?v=1726026290",
+            "STEP_2_NUMBER": "2",
+            "STEP_2_TITLE": "SAY WHY",
+            "STEP_2_TEXT": "One honest reason: celebrating you, thinking of you, thank you.",
+            "STEP_2_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/TulipGreetingCard.jpg?v=1732250184",
+            "STEP_3_NUMBER": "3",
+            "STEP_3_TITLE": "ADD ONE TRUE THOUGHT",
+            "STEP_3_TEXT": "A single specific line they’ll remember, then sign off in your own voice.",
+            "STEP_3_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/FlowersCardCU.jpg?v=1726026071",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#666666",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "9309ef31946556b59c054e41184e14cf3ea7ff6d862299a3b8554674b38dcc6a"
+  },
+  {
+    "component": "blocks/image-text",
+    "campaign": {
+      "campaignName": "blocks/image-text — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/image-text",
+          "tokens": {
+            "IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "IMG_SIDE": "left",
+            "SUPER_LABEL": "NEW THIS WEEK",
+            "HEADLINE": "A closer look at this week’s bloom",
+            "BODY": "Hand-tied the morning it’s sent, with stems chosen to last — and a note we’ll write by hand.",
+            "CTA_TEXT": "Shop the bloom",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#444444",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "26d4b42c8abe51ecd6fe20dd135b3fe485b1241c5a3732ca8bd28c168b63dcb4"
+  },
+  {
+    "component": "blocks/journal-tile",
+    "campaign": {
+      "campaignName": "blocks/journal-tile — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/journal-tile",
+          "tokens": {
+            "SECTION_LABEL": "FROM THE JOURNAL",
+            "SECTION_HEADLINE": "More from Kellie",
+            "TILE_1_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "TILE_1_EYEBROW": "KELLIE",
+            "TILE_1_TITLE": "Against the dozen red roses",
+            "TILE_1_TEASER": "The thing florists aren’t supposed to say.",
+            "TILE_1_LINK_URL": "https://figandbloom.com/blogs/news/against-the-dozen-red-roses",
+            "TILE_2_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/TulipGreetingCard.jpg?v=1732250184",
+            "TILE_2_EYEBROW": "KELLIE",
+            "TILE_2_TITLE": "Why every bouquet is named after a place",
+            "TILE_2_TEASER": "The design process, from a room to a bouquet.",
+            "TILE_2_LINK_URL": "https://figandbloom.com/blogs/news/our-design-process-zanzibar-bouquet",
+            "TILE_3_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/ThinkingofYouDoveGreetingCard.jpg?v=1732250194",
+            "TILE_3_EYEBROW": "KELLIE",
+            "TILE_3_TITLE": "Why I’m particular about pink",
+            "TILE_3_TEASER": "A fashion eye, brought to one difficult colour.",
+            "TILE_3_LINK_URL": "https://figandbloom.com/blogs/news/why-is-pink-so-popular"
+          }
+        }
+      ]
+    },
+    "sha256": "0cbbda9d75fa40d1737183f28d254b00b5bb5d32a744e4c1c59ca1ef697c53b2"
+  },
+  {
+    "component": "blocks/offer-panel",
+    "campaign": {
+      "campaignName": "blocks/offer-panel — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/offer-panel",
+          "tokens": {
+            "SUPER_LABEL": "A LITTLE THANK-YOU",
+            "OFFER_VALUE": "Free delivery",
+            "HEADLINE": "On us, this week",
+            "SUBHEADLINE": "Our small way of saying thanks for being here.",
+            "ACCENT_RIBBON": "this week only",
+            "CODE_LABEL": "USE CODE AT CHECKOUT",
+            "PROMO_CODE": "BLOOM",
+            "CTA_TEXT": "Send flowers",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#444444",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "72197ec49e7b15eb6c25e7035c7f9ff481da277eb558d0e0cc382ff98d842101"
+  },
+  {
+    "component": "blocks/polaroid-collage",
+    "campaign": {
+      "campaignName": "blocks/polaroid-collage — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/polaroid-collage",
+          "tokens": {
+            "PHOTO_1_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/GreetingCard-ThankYou.webp?v=1709067806",
+            "PHOTO_1_CAPTION": "thank you,",
+            "PHOTO_2_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/TulipGreetingCard.jpg?v=1732250184",
+            "PHOTO_2_CAPTION": "with love,",
+            "PHOTO_3_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/ThinkingofYouDoveGreetingCard.jpg?v=1732250194",
+            "PHOTO_3_CAPTION": "thinking of you,",
+            "QUOTE_ACCENT": "in their words",
+            "PULL_QUOTE": "The flowers were beautiful, and the card said exactly what I couldn’t.",
+            "QUOTE_ATTRIBUTION": "— Sarah, Brisbane",
+            "DENSITY": "tight",
+            "ROTATION": "flat",
+            "ACCENT_ILLO": "on",
+            "PADDING_TOP": "40px",
+            "PADDING_BOTTOM": "50px"
+          }
+        }
+      ]
+    },
+    "sha256": "3a0e277cb4a7e60406ffe0054d4c2b191b30babe46f0bfaadfb5a5c8f19bd265"
+  },
+  {
+    "component": "blocks/story",
+    "campaign": {
+      "campaignName": "blocks/story — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "blocks/story",
+          "tokens": {
+            "PORTRAIT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCardCU.jpg?v=1771723389",
+            "SUPER_LABEL": "FROM THE FOUNDERS",
+            "HEADLINE": "A note from our family to yours",
+            "BODY_P1": "Retiring a range we love is never easy, but it’s how we keep every bouquet feeling fresh and seasonal for you.",
+            "BODY_P2": "Something new is already on the bench — a little glow-up we can’t wait to show you.",
+            "SIGNATURE": "— dan & kellie",
+            "CTA_TEXT": "Read our note",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "TYPE_SCALE": "regular",
+            "ROTATION": "flat",
+            "ACCENT_ILLO": "on",
+            "PANEL_BG": "#ffffff",
+            "PANEL_TEXT": "#444444",
+            "PANEL_SUB": "#aaaaaa",
+            "PANEL_BORDER": "#e8e2da"
+          }
+        }
+      ]
+    },
+    "sha256": "466f2b5ddd2b2b6ac342ffb7b77ec021e1790f33db5697753a4bff9d43c51db6"
+  },
+  {
+    "component": "dividers/divider-illo-50clay",
+    "campaign": {
+      "campaignName": "dividers/divider-illo-50clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-illo-50clay",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "b9766d5485c6e8b816a0f708626714ef223c431f74b1aea6de72cf4e14a2de82"
+  },
+  {
+    "component": "dividers/divider-illo-clay",
+    "campaign": {
+      "campaignName": "dividers/divider-illo-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-illo-clay",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "dd0174b78c086844026136254ec45991b3fa1a0c79305be20191b032b065a89a"
+  },
+  {
+    "component": "dividers/divider-illo-noir",
+    "campaign": {
+      "campaignName": "dividers/divider-illo-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-illo-noir",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "550fae011b8c97ec40986af7bee6825f688c9b2737f3f0a9e6a4cc9bc2d057f9"
+  },
+  {
+    "component": "dividers/divider-illo-white",
+    "campaign": {
+      "campaignName": "dividers/divider-illo-white — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-illo-white",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "c5a471b05a314cff456f4fdaed75bef08b53f51de3046231725e5860b2a6c608"
+  },
+  {
+    "component": "dividers/divider-image",
+    "campaign": {
+      "campaignName": "dividers/divider-image — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-image",
+          "tokens": {
+            "DIVIDER_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389"
+          }
+        }
+      ]
+    },
+    "sha256": "18a35d321a36a96ab4b9c47f4223e28ff801462abe1cbe3a5700080705173e73"
+  },
+  {
+    "component": "dividers/divider-line",
+    "campaign": {
+      "campaignName": "dividers/divider-line — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-line",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "c39af991cc4ffce84ffddc0877c327c16d0d3da4e4f28ff3082733410a3e3245"
+  },
+  {
+    "component": "dividers/divider-whitespace",
+    "campaign": {
+      "campaignName": "dividers/divider-whitespace — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "dividers/divider-whitespace",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "ec336bf6bf87da3552135a1b284d187dde729d186cc37584a831775e8caee7fa"
+  },
+  {
+    "component": "footer",
+    "campaign": {
+      "campaignName": "footer — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "footer",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "f78c97ca46e0f9d1e489f29ff1e668ab19731c86c5a8a6aa43497fee5d0f3d36"
+  },
+  {
+    "component": "header",
+    "campaign": {
+      "campaignName": "header — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "header",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "1dc6f133d3b5c4c73bf85712c8fe65b62e3d2d7f57edc9420f6e89f22c33a7de"
+  },
+  {
+    "component": "heroes/hero-a",
+    "campaign": {
+      "campaignName": "heroes/hero-a — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-a",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "4817f78d7df3811419fe64aa929df2824b3492365ed359bf1d88d2824fc1bf59"
+  },
+  {
+    "component": "heroes/hero-b-clay",
+    "campaign": {
+      "campaignName": "heroes/hero-b-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-b-clay",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389"
+          }
+        }
+      ]
+    },
+    "sha256": "ceb17d4f9411a019906431b5c99b4180329700e88624047aa743d91a00f2f268"
+  },
+  {
+    "component": "heroes/hero-b-noir",
+    "campaign": {
+      "campaignName": "heroes/hero-b-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-b-noir",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389"
+          }
+        }
+      ]
+    },
+    "sha256": "d1e4380b074625dccbe6bc22ac4fc459aab261f8b7c4dac20586fd43fd52e1e4"
+  },
+  {
+    "component": "heroes/hero-b-white",
+    "campaign": {
+      "campaignName": "heroes/hero-b-white — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-b-white",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389"
+          }
+        }
+      ]
+    },
+    "sha256": "1a65a15f18aa650bed20a58abfa7de4556cbac200c108e8f6ada0ff6dfe94a39"
+  },
+  {
+    "component": "heroes/hero-c1",
+    "campaign": {
+      "campaignName": "heroes/hero-c1 — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c1",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "5c0b8f5bd2faa80049ec1a6365852cc462aa31a8af32d6e275ce91cfae888929"
+  },
+  {
+    "component": "heroes/hero-c1-clay",
+    "campaign": {
+      "campaignName": "heroes/hero-c1-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c1-clay",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "b32e33fc8d49c5ff13ec0c12f9f94a51457e95511f68b54630f172cdd0c9ecb6"
+  },
+  {
+    "component": "heroes/hero-c1-noir",
+    "campaign": {
+      "campaignName": "heroes/hero-c1-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c1-noir",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "a2c23e449943254123b110ec4b65a5d9c7fb81ad13506ba29ddf8052ea7f6e57"
+  },
+  {
+    "component": "heroes/hero-c2",
+    "campaign": {
+      "campaignName": "heroes/hero-c2 — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c2",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "b685dadd854cff0902d17a2c3bf6e8f39eb0b5fa07ba5df58e93f95847993dc4"
+  },
+  {
+    "component": "heroes/hero-c2-clay",
+    "campaign": {
+      "campaignName": "heroes/hero-c2-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c2-clay",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "f82359b2e6229b5182c0932b676e4472af2acf5efd3b15a448b8640739ef5557"
+  },
+  {
+    "component": "heroes/hero-c2-noir",
+    "campaign": {
+      "campaignName": "heroes/hero-c2-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-c2-noir",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "a70505f127192f2c11885486de3e7391f17dc2da17dd70a90f3ce472f8eb34d7"
+  },
+  {
+    "component": "heroes/hero-d-clay",
+    "campaign": {
+      "campaignName": "heroes/hero-d-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-d-clay",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "ea493202131cce302891902592087323f022cee32618fbf32ec01049441bbcf5"
+  },
+  {
+    "component": "heroes/hero-d-noir",
+    "campaign": {
+      "campaignName": "heroes/hero-d-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-d-noir",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "dd9d430cd40b83944ffbbde45368097a86f530d689401902335ee91aeb114e01"
+  },
+  {
+    "component": "heroes/hero-d-white",
+    "campaign": {
+      "campaignName": "heroes/hero-d-white — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-d-white",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "when the card is the hard part",
+            "SUBHEADLINE": "The flowers say a great deal before the card is even opened — here is how to write the few words they keep.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "362c4fa2639036cd64b636ba406845cda0b6809408f3794c80870333b76e4782"
+  },
+  {
+    "component": "heroes/hero-image-only",
+    "campaign": {
+      "campaignName": "heroes/hero-image-only — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "heroes/hero-image-only",
+          "tokens": {
+            "HERO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "HERO_IMAGE_ALT": "Fig & Bloom",
+            "HERO_LINK_URL": "https://figandbloom.com/blogs/news/what-to-write-on-flower-card"
+          }
+        }
+      ]
+    },
+    "sha256": "42ae5fead1bead5176cdcfec18ba526dfb3f59272a70cf27f4a722b61e32ddad"
+  },
+  {
+    "component": "products/card-horizontal",
+    "campaign": {
+      "campaignName": "products/card-horizontal — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "products/card-horizontal",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "PRODUCT_LABEL": "SYMPATHY · THANK YOU",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_PRICE": "From $105",
+            "PRODUCT_URL": "https://figandbloom.com/products/lucerne"
+          }
+        }
+      ]
+    },
+    "sha256": "82fd5d74b211df6541103bfc1c712305d7c90290a779621ddc8c83bc2efc929f"
+  },
+  {
+    "component": "products/card-horizontal-reversed",
+    "campaign": {
+      "campaignName": "products/card-horizontal-reversed — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "products/card-horizontal-reversed",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "PRODUCT_LABEL": "SYMPATHY · THANK YOU",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_PRICE": "From $105",
+            "PRODUCT_URL": "https://figandbloom.com/products/lucerne"
+          }
+        }
+      ]
+    },
+    "sha256": "5650088f1f73a0f062e9a7af2408ff70a4702f8f433c62f7b9fa89199f98441f"
+  },
+  {
+    "component": "products/card-lifestyle-studio",
+    "campaign": {
+      "campaignName": "products/card-lifestyle-studio — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "products/card-lifestyle-studio",
+          "tokens": {
+            "SECTION_SUPER": "WHY THE WORDS MATTER",
+            "SECTION_HEADLINE": "Fig & Bloom",
+            "LIFESTYLE_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "STUDIO_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "PRODUCT_LABEL": "SYMPATHY · THANK YOU",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_DESC": "Hand-tied by our florists the morning it’s sent, with stems chosen to last.",
+            "PRODUCT_PRICE": "From $105",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "ef96cd3eeab090514b51371f86bb67f5a2fc04f1dba2ad422668a39db48cff5a"
+  },
+  {
+    "component": "products/card-live",
+    "campaign": {
+      "campaignName": "products/card-live — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "products/card-live",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Savoie-Large-Bouquet.jpg?v=1764283935&width=560&height=700",
+            "PRODUCT_LABEL": "BACK IN STOCK",
+            "PRODUCT_NAME": "Savoie bouquet",
+            "PRODUCT_NOTE": "Choose your day at checkout, and we’ll take care of the rest.",
+            "PRODUCT_PRICE": "Signature · $195.00",
+            "CTA_TEXT": "See it again",
+            "PRODUCT_URL": "https://figandbloom.com/products/savoie",
+            "BTN_WIDTH": "auto"
+          }
+        }
+      ]
+    },
+    "sha256": "c6c02fa216f711086ef6dec5b6e0795725472b54c4ef217708a92024f488bebb"
+  },
+  {
+    "component": "products/card-single-testimonial",
+    "campaign": {
+      "campaignName": "products/card-single-testimonial — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "products/card-single-testimonial",
+          "tokens": {
+            "PRODUCT_IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/Lucerne-Large_2.jpg?v=1764283956",
+            "PRODUCT_LABEL": "SYMPATHY · THANK YOU",
+            "PRODUCT_NAME": "Lucerne",
+            "PRODUCT_OCCASION": "Contemporary white blooms for the gentlest moments.",
+            "PRODUCT_PRICE": "From $105",
+            "PRODUCT_URL": "https://figandbloom.com/products/lucerne",
+            "REVIEW_STARS": "★★★★★",
+            "REVIEW_TEXT": "Ordered from interstate for my mum and they were perfect — the note made her cry (the good kind).",
+            "REVIEWER_NAME": "— Sarah, Brisbane"
+          }
+        }
+      ]
+    },
+    "sha256": "3350906cb42aaf6c93b7301e48e68a946e7c7b5731946df5b9d9829db707d38a"
+  },
+  {
+    "component": "sections/body-copy",
+    "campaign": {
+      "campaignName": "sections/body-copy — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/body-copy",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "When the card is the hard part",
+            "BODY_P1": "When we first dreamed this up, we wanted it to feel like a slow Sunday morning — soft, generous and a little wild.",
+            "BODY_P2": "This is your gentle reminder to send the ones you have been meaning to."
+          }
+        }
+      ]
+    },
+    "sha256": "66a2bda24ee47f55a6774ffa117bf83083ca31ce6c9db12393b3f8a10ab7f6bd"
+  },
+  {
+    "component": "sections/body-copy-plain",
+    "campaign": {
+      "campaignName": "sections/body-copy-plain — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/body-copy-plain",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "When the card is the hard part",
+            "BODY_P1": "When we first dreamed this up, we wanted it to feel like a slow Sunday morning — soft, generous and a little wild.",
+            "BODY_P2": "This is your gentle reminder to send the ones you have been meaning to."
+          }
+        }
+      ]
+    },
+    "sha256": "bf305692bd4ecce673ddbcb38e478c9e8773221331f35247eaac63240d875f06"
+  },
+  {
+    "component": "sections/button",
+    "campaign": {
+      "campaignName": "sections/button — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/button",
+          "tokens": {
+            "CTA_TEXT": "Shop the collection",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "ALIGN": "center",
+            "BTN_WIDTH": "260px",
+            "PADDING_TOP": "32px",
+            "PADDING_BOTTOM": "40px",
+            "PANEL_BG": "#ffffff",
+            "BTN_BG": "#000000",
+            "BTN_TEXT": "#ffffff"
+          }
+        }
+      ]
+    },
+    "sha256": "d25190d17b3226d5ce60cb827bacc994d7af13e2c3b696ca3ff2667bcf561881"
+  },
+  {
+    "component": "sections/delivery-cutoffs",
+    "campaign": {
+      "campaignName": "sections/delivery-cutoffs — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/delivery-cutoffs",
+          "tokens": {
+            "REGION_1": "METRO",
+            "CUTOFF_1": "Order by 1pm for same-day",
+            "REGION_2": "NATIONWIDE",
+            "CUTOFF_2": "Allow 2–3 days",
+            "CUTOFF_NOTE": "Cut-offs tighten in peak weeks — order early where you can."
+          }
+        }
+      ]
+    },
+    "sha256": "9abb022e80c4cfd5d2582a5c71fd60d2eafe8cb9aff2b68792783facc4c6dcd3"
+  },
+  {
+    "component": "sections/full-width-image",
+    "campaign": {
+      "campaignName": "sections/full-width-image — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/full-width-image",
+          "tokens": {
+            "IMAGE_URL": "https://cdn.shopify.com/s/files/1/0657/8723/2489/files/WithLoveCard.jpg?v=1771723389",
+            "ALT_TEXT": "A hand-tied seasonal bouquet, photographed in soft morning light.",
+            "LINK_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "03c893eb202fa757f858f08baf6c9b5e0906474e543c0b1bd6f4ea50d5c239f2"
+  },
+  {
+    "component": "sections/opt-out",
+    "campaign": {
+      "campaignName": "sections/opt-out — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/opt-out",
+          "tokens": {
+            "OPT_OUT_HEADLINE": "a gentle note",
+            "OPT_OUT_BODY": "This send touches on a tender occasion. If it’s not the right time, you can step out of just this series — no hard feelings.",
+            "UNSUBSCRIBE_URL": "{{ unsubscribe_url }}"
+          }
+        }
+      ]
+    },
+    "sha256": "18216e5ffb9a09a551b2d5d7f9b7334c344709ef9db74e3587a1d78eb98ae704"
+  },
+  {
+    "component": "sections/promo-code",
+    "campaign": {
+      "campaignName": "sections/promo-code — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/promo-code",
+          "tokens": {
+            "PROMO_LABEL": "A LITTLE THANK-YOU",
+            "PROMO_CODE": "BLOOM",
+            "PROMO_TERMS": "One use per customer. Excludes same-day. Ends Sunday.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "cee9c1bbc943a6c10be46f0dc9220ef984d54d207c487530618d43c0a6cabd8d"
+  },
+  {
+    "component": "sections/section-headline",
+    "campaign": {
+      "campaignName": "sections/section-headline — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/section-headline",
+          "tokens": {
+            "SUPER_LABEL": "FIG & BLOOM · NOTES",
+            "HEADLINE": "When the card is the hard part"
+          }
+        }
+      ]
+    },
+    "sha256": "1d84543f888f6db1577e052891a4aff9da06b0e8804bf6ca0b013afb64441e4a"
+  },
+  {
+    "component": "sections/testimonial",
+    "campaign": {
+      "campaignName": "sections/testimonial — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/testimonial",
+          "tokens": {
+            "REVIEW_STARS": "★★★★★",
+            "REVIEW_TEXT": "Ordered from interstate and they were perfect — the note made her cry (the good kind).",
+            "REVIEWER_NAME": "— Sarah, Brisbane"
+          }
+        }
+      ]
+    },
+    "sha256": "1ae3aaa213f42bd98897247b60c11eb0a8c4e7964ca3fead0cf1cc73c1694823"
+  },
+  {
+    "component": "sections/three-column-steps-50clay",
+    "campaign": {
+      "campaignName": "sections/three-column-steps-50clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/three-column-steps-50clay",
+          "tokens": {
+            "HEADLINE": "When the card is the hard part",
+            "STEP_1_NUMBER": "1",
+            "STEP_1_TEXT": "Open with their name — it makes the note feel meant for them.",
+            "STEP_2_NUMBER": "2",
+            "STEP_2_TEXT": "One honest reason: celebrating you, thinking of you, thank you.",
+            "STEP_3_NUMBER": "3",
+            "STEP_3_TEXT": "A single specific line they’ll remember, then sign off in your own voice.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PADDING_TOP": "48px",
+            "PADDING_BOTTOM": "48px"
+          }
+        }
+      ]
+    },
+    "sha256": "8dabc17a1c44b919a4309d3d5ccb98035c31cd8ea479d1a626017b0153566075"
+  },
+  {
+    "component": "sections/three-column-steps-beige",
+    "campaign": {
+      "campaignName": "sections/three-column-steps-beige — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/three-column-steps-beige",
+          "tokens": {
+            "HEADLINE": "When the card is the hard part",
+            "STEP_1_NUMBER": "1",
+            "STEP_1_TEXT": "Open with their name — it makes the note feel meant for them.",
+            "STEP_2_NUMBER": "2",
+            "STEP_2_TEXT": "One honest reason: celebrating you, thinking of you, thank you.",
+            "STEP_3_NUMBER": "3",
+            "STEP_3_TEXT": "A single specific line they’ll remember, then sign off in your own voice.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PADDING_TOP": "48px",
+            "PADDING_BOTTOM": "48px"
+          }
+        }
+      ]
+    },
+    "sha256": "263a31bf4f0830c7f25770ddbf9cc77fa14827d54083c11e6c0d0fe420e2d637"
+  },
+  {
+    "component": "sections/three-column-steps-clay",
+    "campaign": {
+      "campaignName": "sections/three-column-steps-clay — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/three-column-steps-clay",
+          "tokens": {
+            "HEADLINE": "When the card is the hard part",
+            "STEP_1_NUMBER": "1",
+            "STEP_1_TEXT": "Open with their name — it makes the note feel meant for them.",
+            "STEP_2_NUMBER": "2",
+            "STEP_2_TEXT": "One honest reason: celebrating you, thinking of you, thank you.",
+            "STEP_3_NUMBER": "3",
+            "STEP_3_TEXT": "A single specific line they’ll remember, then sign off in your own voice.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PADDING_TOP": "48px",
+            "PADDING_BOTTOM": "48px"
+          }
+        }
+      ]
+    },
+    "sha256": "6a4f3ba584cd1634f2c7b281ac3a22a1844122472f5ad6e27270c632873631ab"
+  },
+  {
+    "component": "sections/three-column-steps-white",
+    "campaign": {
+      "campaignName": "sections/three-column-steps-white — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/three-column-steps-white",
+          "tokens": {
+            "HEADLINE": "When the card is the hard part",
+            "STEP_1_NUMBER": "1",
+            "STEP_1_TEXT": "Open with their name — it makes the note feel meant for them.",
+            "STEP_2_NUMBER": "2",
+            "STEP_2_TEXT": "One honest reason: celebrating you, thinking of you, thank you.",
+            "STEP_3_NUMBER": "3",
+            "STEP_3_TEXT": "A single specific line they’ll remember, then sign off in your own voice.",
+            "CTA_TEXT": "Read the guide",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets",
+            "PADDING_TOP": "48px",
+            "PADDING_BOTTOM": "48px"
+          }
+        }
+      ]
+    },
+    "sha256": "53f9ca4bd08d46bc5897c9bfa331fa4fd737f5e8827d3f544ad92877ca78c991"
+  },
+  {
+    "component": "sections/trust-bar",
+    "campaign": {
+      "campaignName": "sections/trust-bar — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/trust-bar",
+          "tokens": {}
+        }
+      ]
+    },
+    "sha256": "0271eea388e249cb365b7a739d6b93682e9501b14edc41e924451f0a0516835a"
+  },
+  {
+    "component": "sections/upsell-noir",
+    "campaign": {
+      "campaignName": "sections/upsell-noir — sample",
+      "bodyBg": "#2c2825",
+      "blocks": [
+        {
+          "component": "sections/upsell-noir",
+          "tokens": {
+            "SUPER_LABEL": "READY WHEN YOU ARE",
+            "HEADLINE": "for the moment they feel what you meant",
+            "BODY": "Choose the flowers, add your note at checkout, and we hand-write it onto a card — free with every order.",
+            "CTA_TEXT": "Send with a note",
+            "CTA_URL": "https://figandbloom.com/collections/bouquets"
+          }
+        }
+      ]
+    },
+    "sha256": "fa01bc1d4320441a78779f1c01bd26943873a66bc72d734f41f3aac16b6c8048"
+  }
+]

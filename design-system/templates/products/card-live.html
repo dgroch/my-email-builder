@@ -37,7 +37,7 @@ RULES:
       <h3 class="pn" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-style:normal;font-size:22px;color:#000000;line-height:1.15;margin:0 0 10px 0;"><a href="{{PRODUCT_URL}}" target="_blank" style="color:#000000;text-decoration:none;">{{PRODUCT_NAME}}</a></h3>
       {{#PRODUCT_NOTE}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.6;margin:0 0 14px 0;">{{PRODUCT_NOTE}}</p>{{/PRODUCT_NOTE}}
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:13px;color:#000000;line-height:1.4;margin:0 0 22px 0;">{{PRODUCT_PRICE}}</p>
-      <!--[if gte mso 9]>
+      {{#CTA_TEXT}}<!--[if gte mso 9]>
       <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
                    href="{{PRODUCT_URL}}" arcsize="0%" stroke="f" fillcolor="#000000"
                    style="height:40px;width:{{BTN_WIDTH}};v-text-anchor:middle;">
@@ -47,7 +47,7 @@ RULES:
       <![endif]-->
       <!--[if !gte mso 9]><!-->
       <a class="cl-btn" href="{{PRODUCT_URL}}" target="_blank" style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;text-transform:uppercase;background:#000000;color:#ffffff;text-decoration:none;padding:14px 28px;display:inline-block;">{{CTA_TEXT}}</a>
-      <!--<![endif]-->
+      <!--<![endif]-->{{/CTA_TEXT}}
     </td>
   </tr>
 </table>
