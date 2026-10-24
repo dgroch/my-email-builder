@@ -1,12 +1,10 @@
-Source restored temporarily to main 2782d75 using git show; test files unchanged.
-Command: node test/212-s1.test.js
-Exit: 1
-
+Source restored temporarily to main 2cb23d57 (merged base) using git show for: design-system/manifest.json design-system/templates/sections/delivery-cutoffs.html lib/render.js lib/validate.js; test files and regenerated baseline unchanged.
+Command: node --test test/212-s1.test.js
 TAP version 13
 # Subtest: third-slot manifest contract and real GET /api/schema handler expose optional tokens
 not ok 1 - third-slot manifest contract and real GET /api/schema handler expose optional tokens
   ---
-  duration_ms: 83.459536
+  duration_ms: 80.850143
   location: '/workspace/wt/eb212-s1/test/212-s1.test.js:21:1'
   failureType: 'testCodeFailure'
   error: 'manifest must declare REGION_3'
@@ -23,7 +21,7 @@ not ok 1 - third-slot manifest contract and real GET /api/schema handler expose 
 # Subtest: three equal email-safe columns; all main sample/default HTML and blank third-slot HTML stay byte-identical
 not ok 2 - three equal email-safe columns; all main sample/default HTML and blank third-slot HTML stay byte-identical
   ---
-  duration_ms: 14.409211
+  duration_ms: 16.876511
   location: '/workspace/wt/eb212-s1/test/212-s1.test.js:39:1'
   failureType: 'testCodeFailure'
   error: |-
@@ -48,7 +46,7 @@ not ok 2 - three equal email-safe columns; all main sample/default HTML and blan
 # Subtest: half-filled slot 3 names CUTOFF_3, while two and three complete slots validate
 not ok 3 - half-filled slot 3 names CUTOFF_3, while two and three complete slots validate
   ---
-  duration_ms: 1.409058
+  duration_ms: 1.517518
   location: '/workspace/wt/eb212-s1/test/212-s1.test.js:72:3'
   failureType: 'testCodeFailure'
   error: |-
@@ -73,7 +71,7 @@ not ok 3 - half-filled slot 3 names CUTOFF_3, while two and three complete slots
 # Subtest: half-filled slot 3 names REGION_3, while two and three complete slots validate
 not ok 4 - half-filled slot 3 names REGION_3, while two and three complete slots validate
   ---
-  duration_ms: 0.445048
+  duration_ms: 0.445647
   location: '/workspace/wt/eb212-s1/test/212-s1.test.js:72:3'
   failureType: 'testCodeFailure'
   error: |-
@@ -103,4 +101,5 @@ not ok 4 - half-filled slot 3 names REGION_3, while two and three complete slots
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 112.863528
+# duration_ms 292.193331
+Exit: 1

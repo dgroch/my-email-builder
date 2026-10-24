@@ -113,7 +113,7 @@ const mdHtml = render.assemble({ blocks: [{ component: 'blocks/editorial-hero', 
 } }] }, { assetsBase: '/a' }).html;
 ok(/<h1[^>]*>The last of the <strong>Rosehaven<\/strong> blooms<\/h1>/.test(mdHtml), 'bold renders in body text');
 ok(/<em>now<\/em>/.test(mdHtml), 'italic renders in body text');
-ok(/<a href="https:\/\/figandbloom\.com\/x">they go<\/a>/.test(mdHtml), 'link renders in body text');
+ok(/<a href="https:\/\/figandbloom\.com\/x"[^>]*>they go<\/a>/.test(mdHtml), 'link renders in body text');
 // The same token in an alt="" attribute must stay plain text (no tags leak into attributes).
 ok(/alt="The last of the Rosehaven blooms"/.test(mdHtml), 'markdown is flattened inside attributes');
 // Schema advertises markdown support on text tokens only.
