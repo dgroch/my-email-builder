@@ -401,8 +401,14 @@
           "CUTOFF_1",
           "REGION_2",
           "CUTOFF_2",
+          "REGION_3",
+          "CUTOFF_3",
           "CUTOFF_NOTE"
-        ]
+        ],
+        "token_defaults": {
+          "REGION_3": "",
+          "CUTOFF_3": ""
+        }
       },
       "trust-bar": {
         "file": "templates/sections/trust-bar.html",

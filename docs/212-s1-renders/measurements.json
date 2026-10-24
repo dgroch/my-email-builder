@@ -1,0 +1,167 @@
+{
+  "measurements": [
+    {
+      "name": "2-slot",
+      "viewport": 600,
+      "documentWidth": 600,
+      "container": {
+        "x": 24,
+        "y": 68,
+        "width": 552,
+        "height": 140.59375,
+        "right": 576,
+        "bottom": 208.59375
+      },
+      "columns": [
+        {
+          "x": 24,
+          "y": 68,
+          "width": 552,
+          "height": 70.796875,
+          "right": 576,
+          "bottom": 138.796875
+        },
+        {
+          "x": 24,
+          "y": 138.796875,
+          "width": 552,
+          "height": 69.796875,
+          "right": 576,
+          "bottom": 208.59375
+        }
+      ],
+      "displays": [
+        "block",
+        "block"
+      ],
+      "errors": []
+    },
+    {
+      "name": "2-slot",
+      "viewport": 390,
+      "documentWidth": 390,
+      "container": {
+        "x": 24,
+        "y": 68,
+        "width": 342,
+        "height": 140.59375,
+        "right": 366,
+        "bottom": 208.59375
+      },
+      "columns": [
+        {
+          "x": 24,
+          "y": 68,
+          "width": 342,
+          "height": 70.796875,
+          "right": 366,
+          "bottom": 138.796875
+        },
+        {
+          "x": 24,
+          "y": 138.796875,
+          "width": 342,
+          "height": 69.796875,
+          "right": 366,
+          "bottom": 208.59375
+        }
+      ],
+      "displays": [
+        "block",
+        "block"
+      ],
+      "errors": []
+    },
+    {
+      "name": "3-slot",
+      "viewport": 600,
+      "documentWidth": 600,
+      "container": {
+        "x": 48,
+        "y": 68,
+        "width": 504,
+        "height": 37.796875,
+        "right": 552,
+        "bottom": 105.796875
+      },
+      "columns": [
+        {
+          "x": 48,
+          "y": 68,
+          "width": 168,
+          "height": 37.796875,
+          "right": 216,
+          "bottom": 105.796875
+        },
+        {
+          "x": 216,
+          "y": 68,
+          "width": 168,
+          "height": 37.796875,
+          "right": 384,
+          "bottom": 105.796875
+        },
+        {
+          "x": 384,
+          "y": 68,
+          "width": 168,
+          "height": 37.796875,
+          "right": 552,
+          "bottom": 105.796875
+        }
+      ],
+      "displays": [
+        "table-cell",
+        "table-cell",
+        "table-cell"
+      ],
+      "errors": []
+    },
+    {
+      "name": "3-slot",
+      "viewport": 390,
+      "documentWidth": 390,
+      "container": {
+        "x": 24,
+        "y": 68,
+        "width": 342,
+        "height": 211.390625,
+        "right": 366,
+        "bottom": 279.390625
+      },
+      "columns": [
+        {
+          "x": 24,
+          "y": 68,
+          "width": 342,
+          "height": 70.796875,
+          "right": 366,
+          "bottom": 138.796875
+        },
+        {
+          "x": 24,
+          "y": 138.796875,
+          "width": 342,
+          "height": 70.796875,
+          "right": 366,
+          "bottom": 209.59375
+        },
+        {
+          "x": 24,
+          "y": 209.59375,
+          "width": 342,
+          "height": 69.796875,
+          "right": 366,
+          "bottom": 279.390625
+        }
+      ],
+      "displays": [
+        "block",
+        "block",
+        "block"
+      ],
+      "errors": []
+    }
+  ],
+  "failures": []
+}
