@@ -1,0 +1,28 @@
+<!-- COMPONENT: sections/text-band | TYPE ONLY PALETTE BAND (HTML-SAFE)
+TOKENS:
+  {{HEADLINE}} — optional Lust headline, sentence case.
+  {{LINK_ROW}} — optional markdown links separated by /.
+  {{BODY_P1}} — required paragraph, markdown.
+  {{BODY_P2}} — optional paragraph, markdown.
+  {{LINK_TEXT}} — optional final text link label.
+  {{LINK_URL}} — optional final link URL, supplied with LINK_TEXT.
+  {{ALIGN}} — alignment lever: "center" or "left".
+  {{PANEL_BG}} — palette background.
+  {{PANEL_TEXT}} — palette text.
+  {{PADDING_TOP}} — padding in px, e.g. "32px".
+  {{PADDING_BOTTOM}} — padding in px, e.g. "32px".
+PALETTE PRESETS:
+  clay : PANEL_BG=#D8CCBE PANEL_TEXT=#000000
+  50clay : PANEL_BG=#EBE5DF PANEL_TEXT=#000000
+  white : PANEL_BG=#ffffff PANEL_TEXT=#000000
+  noir : PANEL_BG=#000000 PANEL_TEXT=#ffffff
+RULES:
+  - Between body copy and button. Maximum two per email.
+-->
+<tr><td class="sp" align="{{ALIGN}}" bgcolor="{{PANEL_BG}}" style="background:{{PANEL_BG}};color:{{PANEL_TEXT}};text-align:{{ALIGN}};padding:{{PADDING_TOP}} 64px {{PADDING_BOTTOM}};">
+{{#HEADLINE}}<h2 class="sh" style="font-family:'Lust',Georgia,'Times New Roman',serif;font-weight:normal;font-size:28px;line-height:1.2;color:{{PANEL_TEXT}};margin:0 0 20px;">{{HEADLINE}}</h2>{{/HEADLINE}}
+{{#LINK_ROW}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:{{PANEL_TEXT}};margin:0 0 14px;">{{LINK_ROW}}</p>{{/LINK_ROW}}
+<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:{{PANEL_TEXT}};margin:0;">{{BODY_P1}}</p>
+{{#BODY_P2}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:{{PANEL_TEXT}};margin:14px 0 0;">{{BODY_P2}}</p>{{/BODY_P2}}
+{{#LINK_TEXT}}<p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;line-height:1.85;color:{{PANEL_TEXT}};margin:14px 0 0;"><a href="{{LINK_URL}}" target="_blank" style="color:{{PANEL_TEXT}};text-decoration:underline;">{{LINK_TEXT}}</a></p>{{/LINK_TEXT}}
+</td></tr>
