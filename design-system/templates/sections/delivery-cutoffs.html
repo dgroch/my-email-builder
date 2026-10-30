@@ -1,4 +1,48 @@
-<!-- COMPONENT: sections/delivery-cutoffs | TWO-COLUMN CUTOFF INFO
+{{#REGION_3}}<!-- COMPONENT: sections/delivery-cutoffs | OPTIONAL THREE-COLUMN CUTOFF INFO
+TOKENS:
+  {{REGION_1}}    — e.g. "Metro Melbourne"
+  {{CUTOFF_1}}    — e.g. "Order by 1pm Thursday May 8"
+  {{REGION_2}}    — e.g. "Regional Victoria"
+  {{CUTOFF_2}}    — e.g. "Order by 1pm Monday May 5"
+  {{REGION_3}}    — Optional third region; supply with CUTOFF_3, blank to keep two columns
+  {{CUTOFF_3}}    — Optional third deadline; supply with REGION_3
+  {{CUTOFF_NOTE}} — e.g. "We also deliver Australia-wide. Delivery times vary by region."
+-->
+<tr><td class="dc3">
+<!--[if !mso]><!-->
+<style>
+/* Keep three columns at 600px; below 600px the shell's .cc mobile stack applies. */
+@media only screen and (min-width:600px){
+  .dc3 .sp{padding-left:48px!important;padding-right:48px!important;}
+  .dc3 .cc{display:table-cell!important;width:33.33%!important;padding:0!important;border-bottom:none!important;}
+}
+</style>
+<!--<![endif]-->
+<table class="f600" width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
+  <tr>
+    <td class="sp" align="center" style="padding:36px 48px;background:#ffffff;text-align:center;">
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#aaaaaa;margin:0 0 20px 0;">Order Deadlines</p>
+      <table width="504" cellpadding="0" cellspacing="0" border="0" class="fm" role="presentation" style="width:100%;table-layout:fixed;">
+        <tr>
+          <td class="cc" width="168" align="center" style="width:33.33%;padding:0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;color:#000000;letter-spacing:.04em;margin:0 0 4px 0;">{{REGION_1}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.6;margin:0;">{{CUTOFF_1}}</p>
+          </td>
+          <td class="cc" width="168" align="center" style="width:33.33%;padding:0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;color:#000000;letter-spacing:.04em;margin:0 0 4px 0;">{{REGION_2}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.6;margin:0;">{{CUTOFF_2}}</p>
+          </td>
+          <td class="cc" width="168" align="center" style="width:33.33%;padding:0;vertical-align:top;">
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;color:#000000;letter-spacing:.04em;margin:0 0 4px 0;">{{REGION_3}}</p>
+            <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:13px;color:#444444;line-height:1.6;margin:0;">{{CUTOFF_3}}</p>
+          </td>
+        </tr>
+      </table>
+      <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:11px;color:#aaaaaa;margin:18px 0 0 0;">{{CUTOFF_NOTE}}</p>
+    </td>
+  </tr>
+</table>
+</td></tr>{{/REGION_3}}{{^REGION_3}}<!-- COMPONENT: sections/delivery-cutoffs | TWO-COLUMN CUTOFF INFO
 TOKENS:
   {{REGION_1}}    — e.g. "Metro Melbourne"
   {{CUTOFF_1}}    — e.g. "Order by 1pm Thursday May 8"
@@ -27,4 +71,4 @@ TOKENS:
     </td>
   </tr>
 </table>
-</td></tr>
+</td></tr>{{/REGION_3}}

@@ -1,0 +1,105 @@
+Source restored temporarily to main 2cb23d57 (merged base) using git show for: design-system/manifest.json design-system/templates/sections/delivery-cutoffs.html lib/render.js lib/validate.js; test files and regenerated baseline unchanged.
+Command: node --test test/212-s1.test.js
+TAP version 13
+# Subtest: third-slot manifest contract and real GET /api/schema handler expose optional tokens
+not ok 1 - third-slot manifest contract and real GET /api/schema handler expose optional tokens
+  ---
+  duration_ms: 80.850143
+  location: '/workspace/wt/eb212-s1/test/212-s1.test.js:21:1'
+  failureType: 'testCodeFailure'
+  error: 'manifest must declare REGION_3'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (/workspace/wt/eb212-s1/test/212-s1.test.js:34:12)
+    async Test.run (node:internal/test_runner/test:797:9)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: three equal email-safe columns; all main sample/default HTML and blank third-slot HTML stay byte-identical
+not ok 2 - three equal email-safe columns; all main sample/default HTML and blank third-slot HTML stay byte-identical
+  ---
+  duration_ms: 16.876511
+  location: '/workspace/wt/eb212-s1/test/212-s1.test.js:39:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 3
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 3
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/wt/eb212-s1/test/212-s1.test.js:45:12)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: half-filled slot 3 names CUTOFF_3, while two and three complete slots validate
+not ok 3 - half-filled slot 3 names CUTOFF_3, while two and three complete slots validate
+  ---
+  duration_ms: 1.517518
+  location: '/workspace/wt/eb212-s1/test/212-s1.test.js:72:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/wt/eb212-s1/test/212-s1.test.js:78:14)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+# Subtest: half-filled slot 3 names REGION_3, while two and three complete slots validate
+not ok 4 - half-filled slot 3 names REGION_3, while two and three complete slots validate
+  ---
+  duration_ms: 0.445647
+  location: '/workspace/wt/eb212-s1/test/212-s1.test.js:72:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (/workspace/wt/eb212-s1/test/212-s1.test.js:78:14)
+    Test.runInAsyncScope (node:async_hooks:206:9)
+    Test.run (node:internal/test_runner/test:796:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+    Test.postRun (node:internal/test_runner/test:889:19)
+    Test.run (node:internal/test_runner/test:835:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:526:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 0
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 292.193331
+Exit: 1
