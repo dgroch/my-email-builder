@@ -1,0 +1,18 @@
+{
+  "testedAt": "2026-11-02T02:48:48.315Z",
+  "mode": "synthetic local browser, no provider writes",
+  "passed": 10,
+  "cases": [
+    "Unauthenticated shell contains no results",
+    "Overview shows two campaigns, Shopify net AUD 100, metrics, coverage, window and refresh",
+    "Campaign detail funnel and role-restricted order evidence",
+    "Authorised order evidence shows winning click, refund and definition",
+    "Send-date filter does not reattribute globally winning order",
+    "Sent-content preview sandbox blocks scripts",
+    "390px responsive page has no outer overflow",
+    "Missing Shopify coverage displays Unavailable instead of zero",
+    "Refresh failure hides stale detail and states no zero inferred",
+    "Lock invalidates an in-flight refresh and clears all evidence"
+  ],
+  "pageErrors": []
+}

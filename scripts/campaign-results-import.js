@@ -1,0 +1,5 @@
+'use strict';
+// Explicit local import only. No scheduler and no HTTP writes.
+const fs=require('fs');const path=require('path');const crypto=require('crypto');const {validate,project}=require('../lib/campaignResults');
+function importSnapshot(input,directory){const snapshot=validate(JSON.parse(fs.readFileSync(input,'utf8')));project(snapshot);fs.mkdirSync(directory,{recursive:true,mode:0o700});const bytes=JSON.stringify(snapshot,null,2)+'\n';const hash=crypto.createHash('sha256').update(bytes).digest('hex');const archive=path.join(directory,hash+'.json');if(!fs.existsSync(archive))fs.writeFileSync(archive,bytes,{flag:'wx',mode:0o600});const temp=path.join(directory,'.latest-'+crypto.randomUUID());fs.writeFileSync(temp,bytes,{flag:'wx',mode:0o600});fs.renameSync(temp,path.join(directory,'latest.json'));return {hash,file:path.join(directory,'latest.json')};}
+module.exports={importSnapshot};if(require.main===module){if(process.argv.length!==4)throw new Error('Usage: node scripts/campaign-results-import.js INPUT_JSON PRIVATE_DIRECTORY');console.log(JSON.stringify(importSnapshot(process.argv[2],process.argv[3])));}
