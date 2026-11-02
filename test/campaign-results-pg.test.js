@@ -67,3 +67,20 @@ test('provider aggregate durable import preserves observed coverage and never cr
  const s=require('./fixtures/campaign-results-recovered-receipts')();await store.save(s,db);const restored=await store.read(s.tenantId,db);assert.deepEqual(restored,s);
  const r=require('../lib/campaignResults').project(restored,{now:Date.parse(s.refreshedAt)}).rows[0];assert.equal(r.delivered,31202);assert.equal(r.revenueMinor,null);assert.deepEqual(r.evidence,[]);
 });
+
+test('PostgreSQL importer rejects every contradictory endpoint without head or archive mutation and accepts partial unknowns',async()=>{
+ const extrema=require('./fixtures/campaign-results-receipt-extrema');
+ const s=require('./fixtures/campaign-results-recovered-receipts')();await store.save(s,db);
+ const heads=(await db.query('SELECT * FROM campaign_results_heads ORDER BY tenant_id')).rows;
+ const archives=(await db.query('SELECT * FROM campaign_results_snapshots ORDER BY tenant_id,hash')).rows;
+ for(const {name,snapshot} of extrema.invalid()){
+  await assert.rejects(store.save(snapshot,db),/outside retained extrema/,name);
+  assert.deepEqual(await store.read(s.tenantId,db),s,name);
+  assert.deepEqual((await db.query('SELECT * FROM campaign_results_heads ORDER BY tenant_id')).rows,heads,name);
+  assert.deepEqual((await db.query('SELECT * FROM campaign_results_snapshots ORDER BY tenant_id,hash')).rows,archives,name);
+ }
+ for(const [i,partial] of extrema.valid().entries()){
+  partial.refreshedAt=new Date(Date.parse(partial.refreshedAt)+(i+1)*1000).toISOString();partial.campaigns[0].providerReceipts.asOf=partial.refreshedAt;
+  await store.save(partial,db);assert.deepEqual(await store.read(partial.tenantId,db),partial);
+ }
+});

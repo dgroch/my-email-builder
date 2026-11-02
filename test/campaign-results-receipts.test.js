@@ -17,3 +17,29 @@ test('observed aggregate imports round-trip without adding personal data or fabr
 test('read acquisition scopes parameters and uses one read-only transaction without identity queries',async()=>{const s=fixture(),p=s.campaigns[0].providerReceipts,calls=[];let released=false;const db={connect:async()=>({query:async(sql,args)=>{calls.push([sql,args]);if(sql.includes('transaction_timestamp'))return {rows:[{at:p.asOf}]};if(sql===SQL)return {rows:p.retained.map(r=>({scope:'retained',status:r.status,messages:r.messages??0,first_at:r.firstAt,last_at:r.lastAt}))};return {rows:[]};},release:()=>{released=true;}})};const got=await readProviderReceipts({db,tenantId:s.tenantId,account:p.account,broadcastId:p.broadcastId});assert.equal(row(got).sent,31245);assert.match(calls[0][0],/REPEATABLE READ READ ONLY/);assert.deepEqual(calls.find(c=>c[0]===SQL)[1],[s.tenantId,p.account,p.broadcastId,p.asOf,null,null]);assert.equal(calls.at(-1)[0],'COMMIT');assert.ok(released);});
 test('failed acquisition rolls back and releases without partial candidates',async()=>{const s=fixture(),p=s.campaigns[0].providerReceipts,calls=[];let released=false;const db={connect:async()=>({query:async(sql)=>{calls.push(sql);if(sql===SQL)throw Error('source unavailable');return {rows:[{at:p.asOf}]};},release:()=>{released=true;}})};await assert.rejects(readProviderReceipts({db,tenantId:s.tenantId,account:p.account,broadcastId:p.broadcastId}),/source unavailable/);assert.equal(calls.at(-1),'ROLLBACK');assert.ok(released);});
 test('incomplete or reversed occurrence bounds fail before opening database',async()=>{const s=fixture(),p=s.campaigns[0].providerReceipts;const opts={db:{connect:()=>assert.fail('must not connect')},tenantId:s.tenantId,account:p.account,broadcastId:p.broadcastId,from:p.window.from};await assert.rejects(readProviderReceipts(opts),/Both/);await assert.rejects(readProviderReceipts({...opts,to:opts.from}),/Invalid receipt window/);});
+
+const extrema=require('./fixtures/campaign-results-receipt-extrema');
+test('every status rejects either window endpoint beyond either known retained bound',()=>{
+ for(const {name,snapshot} of extrema.invalid())assert.throws(()=>validate(snapshot),/outside retained extrema/,name);
+});
+test('partial extrema, equality and unknown recovered values remain valid without fabrication',()=>{
+ for(const s of extrema.valid()){const before=structuredClone(s);assert.deepEqual(validate(s),before);}
+});
+test('file importer rejects contradictory extrema without changing head or archives and accepts partial unknowns',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'receipt-extrema-'));
+ const input=path.join(dir,'input.json'),reports=path.join(dir,'reports');
+ const {importSnapshot}=require('../scripts/campaign-results-import');
+ const install=s=>{fs.writeFileSync(input,JSON.stringify(s));return importSnapshot(input,reports);};
+ try{
+  const {file}=install(fixture()),before=fs.readFileSync(file,'utf8'),files=fs.readdirSync(reports).sort();
+  for(const {name,snapshot} of extrema.invalid()){
+   assert.throws(()=>install(snapshot),/outside retained extrema/,name);
+   assert.equal(fs.readFileSync(file,'utf8'),before,name);
+   assert.deepEqual(fs.readdirSync(reports).sort(),files,name);
+  }
+  for(const [i,s] of extrema.valid().entries()){
+   s.refreshedAt=new Date(Date.parse(s.refreshedAt)+(i+1)*1000).toISOString();s.campaigns[0].providerReceipts.asOf=s.refreshedAt;
+   assert.deepEqual(JSON.parse(fs.readFileSync(install(s).file)),s);
+  }
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
