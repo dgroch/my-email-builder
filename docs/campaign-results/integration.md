@@ -1,5 +1,7 @@
 # Native integration and deployment proposal
 
+Update, 2 November 2026: allowed-network read-only acquisition has since succeeded. Native publication records were empty for the recovered broadcast. The separate [observed provider-receipt adapter](provider-receipts.md) supports its retained ledger without inventing native bindings. The read-route section below is historical investigation evidence, not the current network blocker. No deployment or live import is implied.
+
 Issue business-os#258. Prepared 2 November 2026. Local code only, no deployment, source import, sends, scheduling or paid service creation. Definition remains explicitly provisional.
 
 ## Verified contracts, not invented events

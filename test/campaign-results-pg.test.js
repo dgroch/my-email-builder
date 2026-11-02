@@ -34,3 +34,36 @@ test('native SQL excludes other tenants, wrong source and merged identities',asy
 test('native observations exclude merged and deleted members while retaining historical send',async()=>{for(const column of ['merged_into','deleted_at']){await db.query('UPDATE customers SET merged_into=NULL,deleted_at=NULL');await db.query('UPDATE customers SET '+column+'=$1',[column==='merged_into'?ids[0]:'2026-10-01']);const r=await readCee({db,tenantId:tenant,shopifySourceId:'verified-shopify'});assert.equal(r.snapshot.campaigns.length,1);assert.equal(r.snapshot.campaigns[0].nativeObservations.length,0);assert.equal(r.snapshot.events.length,0);assert.deepEqual(Object.keys(r.identityMap),[]);}await db.query('UPDATE customers SET merged_into=NULL,deleted_at=NULL');});
 test('accepted anchor rejects inconsistent publication, contact and missing frozen membership',async()=>{for(const field of ['publication_id','contact_id']){await db.query('UPDATE broadcast_email_bindings SET '+field+'=$1',[ids[6]]);assert.equal((await readCee({db,tenantId:tenant,shopifySourceId:'verified-shopify'})).snapshot.campaigns.length,0);await db.query('UPDATE broadcast_email_bindings SET '+field+'=$1',[field==='publication_id'?ids[0]:ids[4]]);}await db.query('UPDATE broadcast_members SET contact_id=$1',[ids[6]]);assert.equal((await readCee({db,tenantId:tenant,shopifySourceId:'verified-shopify'})).snapshot.campaigns.length,0);await db.query('UPDATE broadcast_members SET contact_id=$1',[ids[4]]);});
 test('operation send anchors require matching attempt and observation lineage',async()=>{await db.query("UPDATE broadcast_outcomes SET status='delivered'");await db.query('INSERT INTO broadcast_operation_attempts VALUES($1,$2,$3,$4,$5,$6,$7)',[tenant,ids[6],ids[0],'send','account-fixture',ids[1],ids[0]]);await db.query('INSERT INTO broadcast_operation_observations VALUES($1,$2,$3,$4,$5,$6)',[tenant,ids[6],'account-fixture',ids[0],'sent','2026-10-01']);const read=()=>readCee({db,tenantId:tenant,shopifySourceId:'verified-shopify'});assert.equal((await read()).snapshot.campaigns.length,1);for(const [field,valid] of [['campaign_id',ids[1]],['provider_broadcast_id',ids[0]],['publication_id',ids[0]],['account','account-fixture']]){await db.query('UPDATE broadcast_operation_attempts SET '+field+'=$1',[field==='account'?'wrong':ids[5]]);assert.equal((await read()).snapshot.campaigns.length,0,field);await db.query('UPDATE broadcast_operation_attempts SET '+field+'=$1',[valid]);}await db.query('UPDATE broadcast_operation_observations SET provider_broadcast_id=$1',[ids[5]]);assert.equal((await read()).snapshot.campaigns.length,0);});
+
+const receipts=require('../lib/campaignResultsReceipts');
+const receiptAccount='receipt-synthetic-account',receiptBroadcast='30000000-0000-4000-8000-000000000001';
+// Actual retained column types/PK from CEE migrations 005,016,020,038,150.
+// No destinations, webhook bodies, identities or native joins are needed/read.
+test('provider SQL counts distinct messages per overlapping status with exact tenant/account/broadcast isolation',async()=>{
+ await db.query(`CREATE TABLE provider_receipts(tenant_id uuid NOT NULL,event_id text NOT NULL,provider text NOT NULL,provider_id text NOT NULL,status text NOT NULL,occurred_at timestamptz NOT NULL,hash text NOT NULL,intent_id uuid,account text NOT NULL,semantic_key text,received_at timestamptz NOT NULL,broadcast_id uuid,destinations jsonb NOT NULL DEFAULT '[]',PRIMARY KEY(tenant_id,provider,account,event_id))`);
+ let n=0;
+ const add=async(status,message,at,overrides={})=>{const v={tenant,account:receiptAccount,broadcast:receiptBroadcast,provider:'resend',received:'2026-10-02T00:00:00Z',...overrides};await db.query('INSERT INTO provider_receipts(tenant_id,event_id,provider,provider_id,status,occurred_at,hash,intent_id,account,received_at,broadcast_id) VALUES($1,$2,$3,$4,$5,$6,$7,NULL,$8,$9,$10)',[v.tenant,'synthetic-event-'+(++n),v.provider,message,status,at,'synthetic-hash',v.account,v.received,v.broadcast]);};
+ for(const status of ['accepted','delivered','bounced','complained'])await add(status,'message-overlap','2026-10-01T00:00:00Z');
+ await add('delivered','message-overlap','2026-10-01T00:01:00Z'); // second event, same status/message
+ await add('delivered','message-before','2026-09-30T23:59:59.999Z');
+ await add('delivered','message-end','2026-10-02T00:00:00Z');
+ await add('delivered','message-at-watermark','2026-10-03T00:00:00Z',{received:'2026-10-03T00:00:00Z'});
+ await add('delivered','message-after-watermark','2026-10-03T00:00:00.001Z');
+ await add('delivered','message-received-later','2026-10-01T00:00:00Z',{received:'2026-10-03T00:00:00.001Z'});
+ for(const overrides of [{tenant:'10000000-0000-4000-8000-000000000002'},{account:'wrong'},{broadcast:ids[0]},{broadcast:null},{provider:'fake'}])await add('delivered','excluded-message','2026-10-01T00:00:00Z',overrides);
+ const rows=(await db.query(receipts.SQL,[tenant,receiptAccount,receiptBroadcast,'2026-10-03T00:00:00Z','2026-10-01T00:00:00Z','2026-10-02T00:00:00Z'])).rows;
+ const count=(scope,status)=>Number(rows.find(r=>r.scope===scope&&r.status===status).messages);
+ assert.equal(count('retained','delivered'),4);assert.equal(count('window','delivered'),1);
+ for(const status of ['accepted','bounced','complained'])assert.equal(count('window',status),1);
+ assert.equal(count('retained','suppressed'),0);assert.equal(rows.length,10);
+});
+test('receipt acquisition needs no native publication, intent, customer or Shopify binding; empty exact scopes stay empty',async()=>{
+ const s=await receipts.readProviderReceipts({db,tenantId:tenant,account:receiptAccount,broadcastId:receiptBroadcast});
+ assert.equal(s.campaigns.length,1);assert.equal(s.events.length,0);assert.equal(s.orders.length,0);
+ const r=require('../lib/campaignResults').project(s).rows[0];assert.equal(r.sent,1);assert.equal(r.revenueMinor,null);assert.equal(r.audienceSize,null);assert.equal(r.subject,null);assert.equal(r.providerReceipts.window,null);
+ for(const options of [{tenantId:'10000000-0000-4000-8000-000000000003'},{account:'absent'},{broadcastId:ids[5]}])assert.equal((await receipts.readProviderReceipts({db,tenantId:tenant,account:receiptAccount,broadcastId:receiptBroadcast,...options})).campaigns.length,0);
+});
+test('provider aggregate durable import preserves observed coverage and never creates order evidence',async()=>{
+ const s=require('./fixtures/campaign-results-recovered-receipts')();await store.save(s,db);const restored=await store.read(s.tenantId,db);assert.deepEqual(restored,s);
+ const r=require('../lib/campaignResults').project(restored,{now:Date.parse(s.refreshedAt)}).rows[0];assert.equal(r.delivered,31202);assert.equal(r.revenueMinor,null);assert.deepEqual(r.evidence,[]);
+});
