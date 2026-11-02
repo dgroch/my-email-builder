@@ -34,7 +34,7 @@ Run explicitly, **not scheduled**:
 node scripts/campaign-results-import.js /protected/normalised-snapshot.json /protected/reporting-history
 ```
 
-Validation and full projection occur before replacement. Content-addressed immutable snapshots retain their definition; the private `latest.json` is atomically replaced. Replaying identical input is idempotent. No HTTP write/import endpoint is exposed. This file boundary is intentional: no speculative native engine endpoint or undocumented provider schema is trusted. Native send/click acquisition and protected identity-map provisioning are still **unconnected** pending real source access.
+Validation and full projection occur before replacement. Content-addressed immutable snapshots retain their definition; the private `latest.json` is atomically replaced. Replaying identical input is idempotent. No HTTP write/import endpoint is exposed. This file boundary is intentional: no speculative native engine endpoint or undocumented provider schema is trusted. The native CEE read-only adapter and exact source-identity join are now implemented, but remain **unconnected** to production. See [integration and deployment proposal](integration.md). Native recipient click observations lack qualifying-event evidence and remain separate directional counts.
 
 Shopify read adapter, optional explicit operator use with protected existing credentials:
 
@@ -42,7 +42,7 @@ Shopify read adapter, optional explicit operator use with protected existing cre
 node scripts/campaign-results-shopify-read.js /protected/shopify-customer-to-person.json 2026-10-25T00:00:00Z /protected/shopify-delta.json
 ```
 
-Uses `SHOPIFY_STORE_DOMAIN` (`*.myshopify.com`) and `SHOPIFY_ADMIN_API_TOKEN`. All requests are GET, bounded timeout, pagination constrained to same origin/API version with redirects rejected. Reads order transaction history, not mutable current price minus refunds twice. Authorisations/failed refunds excluded. Currency precision is exact. Returned updated-since delta is **partial**, not import-ready or full recovery. Reconcile by order ID against retained orders, preserve historical refunds and declare coverage separately before snapshot import. No automatic engine, Resend or Klaviyo ingestion is claimed. Production source credentials never enter the browser or reporting snapshot.
+Uses `SHOPIFY_STORE_DOMAIN` (`*.myshopify.com`) and `SHOPIFY_ADMIN_API_TOKEN`. All requests are GET, bounded timeout, pagination constrained to same origin/API version with redirects rejected. Reads order transaction history, not mutable current price minus refunds twice. Authorisations/failed refunds excluded. Currency precision is exact. Returned updated-since delta is **partial**, not import-ready or full recovery. Reconcile by order ID against retained orders, preserve historical refunds and declare coverage separately before snapshot import. No automatic provider acquisition is enabled. Explicit CEE read-only acquisition is described in [integration.md](integration.md); it cannot infer qualifying clicks from recipient observations. Production source credentials never enter the browser or reporting snapshot.
 
 ## UI and scope
 
@@ -57,3 +57,7 @@ Uses `SHOPIFY_STORE_DOMAIN` (`*.myshopify.com`) and `SHOPIFY_ADMIN_API_TOKEN`. A
 The loopback NO_PROXY override is necessary because this execution host proxies Node fetch by default; the unchanged export HTTP test reproduced the same transport failure before loopback was configured. External service proxy configuration stays intact.
 
 See `recovery-20261102.md`: real read-only application mapping and Shopify aggregate source coverage recovered, but exact 1 November sent campaign, receipts and qualifying click ledger remain unverified. Do not infer missing data is permanently unrecoverable or turn store-wide order totals into campaign revenue. Resend authenticated access and engine staff record access need CTO/CMO resolution; no attribution business result is claimed.
+
+## Integration follow-up
+
+[Native source contracts, verified storage and staff-access deployment proposal](integration.md) describes the opt-in PostgreSQL store, manual acquisition/import commands and exact access gaps. `npm run test:results` now includes native contract tests. `RESULTS_TEST_DATABASE_URL` must target a scratch localhost PostgreSQL database for `npm run test:results:pg`. No source reads or schema migrations run on page load.
