@@ -72,3 +72,7 @@ Rollback: restore prior builder deployment and remove the reporting environment 
 - Shopify aggregate read access was previously verified. This follow-up does not need new Shopify credentials and has not recovered actual Shopify-to-CEE identity rows.
 
 The specific1 November send, customer identity coverage and qualifying click history remain **unverified**, not proven irrecoverable. Local fixture replay replaces identities with synthetic values and verifies real source column/response contracts. It is not a redacted live campaign replay, because no native customer ledger was acquired. Parent retains the goal and dispatches exact-SHA independent review separately.
+
+### Retained local file importer
+
+File imports serialise through an atomic `.import-lock` directory, recheck the current tenant and watermark while locked, reject stale/equal-conflicting candidates and preserve the prior head on failed publication. Concurrent importers wait up to five seconds, then fail without publishing; retry explicitly. A crashed importer may leave the lock: confirm no importer is running before manually removing that directory. Locks are never automatically stolen. A corrupt current head fails closed; restore a verified archive explicitly before importing. This backend is intended for a local filesystem with atomic directory creation and rename, not distributed/network filesystems. PostgreSQL remains the durable deployment proposal.
