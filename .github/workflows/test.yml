@@ -77,3 +77,9 @@ jobs:
           # Only the Postgres leg gets a DATABASE_URL; without it the app and the suite both
           # fall back to the local-disk store, which is exactly what the other leg exercises.
           DATABASE_URL: ${{ matrix.store == 'postgres' && 'postgres://postgres:postgres@localhost:5432/postgres' || '' }}
+
+      - name: Verify reporting PostgreSQL storage
+        if: matrix.store == 'postgres'
+        run: npm run test:results:pg
+        env:
+          RESULTS_TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres

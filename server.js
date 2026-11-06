@@ -21,6 +21,7 @@ const examples = require('./lib/examples');
 const sampleData = require('./lib/sampleData');
 const campaignGenerator = require('./lib/campaignGenerator');
 const liveContext = require('./lib/liveContext');
+const campaignResultsHttp = require('./lib/campaignResultsHttp');
 // ── Studio: the designer-facing authoring surface ────────────────────────────
 const componentStore = require('./lib/componentStore');
 const layoutStore = require('./lib/layoutStore');
@@ -110,6 +111,9 @@ const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://localhost:${PORT}`);
   const p = u.pathname;
   try {
+    if (await campaignResultsHttp.handle(req, res, u)) return;
+    if (req.method === 'GET' && p === '/results') return serveFile(res, path.join(ROOT, 'public', 'results.html'));
+    if (req.method === 'GET' && ['/results.js', '/results.css'].includes(p)) return serveFile(res, path.join(ROOT, 'public', p.slice(1)));
     // The render path resolves components and brand colours synchronously, so the Studio's
     // published library is held in memory. Refresh it here — a no-op while warm — so a
     // publish made by another instance is picked up within the cache TTL rather than

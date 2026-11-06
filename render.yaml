@@ -13,6 +13,7 @@ databases:
 services:
   - type: web
     name: my-email-builder
+    branch: main
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
