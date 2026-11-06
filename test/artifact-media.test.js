@@ -1,6 +1,70 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const sharp = require("sharp");
 const assembly = require("../lib/publishAssembly");
+const templateSource = require("../lib/templateSource");
+
+// CRC32 for the PNG tEXt chunk used to pad a valid PNG to an exact byte length.
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++)
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+function crc32(buffer) {
+  let c = 0xffffffff;
+  for (const byte of buffer)
+    c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+// A real PNG of an exact byte size: insert an ancillary tEXt chunk before IEND. The tag keeps
+// same-sized images byte-distinct so they remain separate captured resources.
+async function pngOfSize(size, tag = "") {
+  const base = await sharp({
+    create: { width: 4, height: 4, channels: 3, background: "#123456" },
+  })
+    .png()
+    .toBuffer();
+  const tagBytes = Buffer.from(String(tag));
+  assert.ok(
+    size >= base.length + 14 + tagBytes.length,
+    "padding target must fit the PNG",
+  );
+  const data = Buffer.concat([
+    Buffer.from("p"),
+    Buffer.from([0]),
+    tagBytes,
+    Buffer.alloc(size - base.length - 14 - tagBytes.length, 0x78),
+  ]);
+  const type = Buffer.from("tEXt");
+  const chunk = Buffer.alloc(12 + data.length);
+  chunk.writeUInt32BE(data.length, 0);
+  type.copy(chunk, 4);
+  data.copy(chunk, 8);
+  chunk.writeUInt32BE(crc32(Buffer.concat([type, data])), 8 + data.length);
+  return Buffer.concat([
+    base.subarray(0, base.length - 12),
+    chunk,
+    base.subarray(base.length - 12),
+  ]);
+}
+function fixtureDesign(blocks, id = "fixture-design") {
+  return {
+    id,
+    updatedAt: "2026-11-07T00:00:00Z",
+    name: "Fixture",
+    subjectLine: "Fixture subject",
+    previewText: "Fixture preview",
+    campaign: { blocks },
+  };
+}
+function imageBlock(name, index) {
+  return { component: name, tokens: { IMAGE_INDEX: String(index) } };
+}
 test("snapshot captures GIF bytes before rendering instead of retaining mutable image URL", async () => {
   const gif = Buffer.from(
     "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
@@ -385,7 +449,280 @@ test("frozen inline GIF survives persistence and publishes its original bytes", 
     assert.equal(result.artifact.assets[0].mime, "image/gif");
     assert.equal(result.media[0].base64, base64);
     await assert.rejects(assembly.freezeSavedDesign(design, options("data:image/gif;base64,%%%")), /INLINE_IMAGE_ENCODING/);
-    await assert.rejects(assembly.freezeSavedDesign(design, options("data:image/gif;base64," + Buffer.alloc(1048577).toString("base64"))), /CAPTURED_IMAGE_BUDGET/);
+    await assert.rejects(assembly.freezeSavedDesign(design, options("data:image/gif;base64," + Buffer.alloc(assembly.CAPTURED_IMAGE_BUDGET + 1).toString("base64"))), /CAPTURED_IMAGE_BUDGET/);
+  } finally {
+    await require("../lib/render").closeBrowser();
+  }
+});
+
+
+test("capture budget accepts exactly 2 MiB and rejects one byte over", async () => {
+  const BUDGET = assembly.CAPTURED_IMAGE_BUDGET;
+  assert.equal(BUDGET, 2 * 1024 * 1024);
+  const atBudget = await pngOfSize(BUDGET);
+  const overBudget = await pngOfSize(BUDGET + 1);
+  const design = fixtureDesign([
+    { component: "blocks/boundary", tokens: {} },
+    { component: "footer", tokens: {} },
+  ], "budget-boundary");
+  const options = (bytes) => ({
+    brand: { colours: {}, baseline: {} },
+    resolve: (name) => ({
+      html:
+        name === "footer"
+          ? "<tr><td>{% unsubscribe %}</td></tr>"
+          : '<tr><td><img src="https://cdn.shopify.com/boundary.png"></td></tr>',
+    }),
+    loadImage: async () => bytes,
+  });
+  const frozen = await assembly.freezeSavedDesign(design, options(atBudget));
+  assert.equal(Object.keys(frozen.capturedMedia).length, 1);
+  assert.equal(
+    Object.values(frozen.capturedMedia)[0].base64,
+    atBudget.toString("base64"),
+  );
+  await assert.rejects(
+    assembly.freezeSavedDesign(design, options(overBudget)),
+    /CAPTURED_IMAGE_BUDGET/,
+  );
+});
+
+test("six original images summing just over the old 1 MiB cap are captured intact", async () => {
+  const sizes = [175000, 175000, 175000, 175000, 175000, 178458];
+  const originals = [];
+  for (let i = 0; i < sizes.length; i++)
+    originals.push(await pngOfSize(sizes[i], "six-" + i));
+  const total = originals.reduce((n, b) => n + b.length, 0);
+  assert.equal(total, 1053458);
+  assert.ok(total > 1048576 && total <= assembly.CAPTURED_IMAGE_BUDGET);
+  const design = fixtureDesign(
+    [
+      ...originals.map((_, i) => imageBlock("blocks/after-dark-" + i, i)),
+      { component: "footer", tokens: {} },
+    ],
+    "six-originals",
+  );
+  const byUrl = new Map(
+    originals.map((b, i) => ["https://cdn.shopify.com/after-dark/" + i + ".png", b]),
+  );
+  const frozen = await assembly.freezeSavedDesign(design, {
+    brand: { colours: {}, baseline: {} },
+    resolve: (name) => {
+      if (name === "footer")
+        return { html: "<tr><td>{% unsubscribe %}</td></tr>" };
+      const i = Number(name.split("-").pop());
+      return {
+        html:
+          '<tr><td><img src="https://cdn.shopify.com/after-dark/' +
+          i +
+          '.png" alt="After Dark image ' +
+          i +
+          '"></td></tr>',
+      };
+    },
+    loadImage: async (url) => byUrl.get(url),
+  });
+  assert.equal(Object.keys(frozen.capturedMedia).length, 6);
+  const captured = new Set(
+    Object.values(frozen.capturedMedia).map((media) => media.base64),
+  );
+  for (const original of originals)
+    assert.ok(captured.has(original.toString("base64")));
+});
+
+test("live html-only card-feature rewrites its captured image to a data URL", async () => {
+  const png = await pngOfSize(60000);
+  const card = templateSource.resolve("products/card-feature");
+  const link =
+    "https://figandbloom.com/collections/after-dark?utm_source=resend&utm_medium=email&utm_campaign=after_dark_launch_20261107&utm_content=feature";
+  const design = fixtureDesign(
+    [
+      { component: "blocks/live-copy-0", tokens: {} },
+      { component: "blocks/live-copy-1", tokens: {} },
+      { component: "blocks/live-copy-2", tokens: {} },
+      { component: "blocks/live-copy-3", tokens: {} },
+      {
+        component: "products/card-feature",
+        tokens: {
+          IMAGE_URL: "https://cdn.shopify.com/card-feature.png",
+          IMAGE_ALT: "After Dark feature card",
+          LINK_URL: link,
+          TITLE: "After Dark",
+          BODY_P1: "A feature card that stays live HTML.",
+        },
+      },
+      { component: "footer", tokens: {} },
+    ],
+    "live-card-feature",
+  );
+  const frozen = await assembly.freezeSavedDesign(design, {
+    brand: { colours: {}, baseline: {} },
+    resolve: (name) => {
+      if (name === "footer")
+        return { html: "<tr><td>{{{RESEND_UNSUBSCRIBE_URL}}}</td></tr>" };
+      if (name === "products/card-feature") return card;
+      return { html: "<tr><td>Live copy " + name + "</td></tr>" };
+    },
+    loadImage: async (url) => {
+      assert.equal(url, "https://cdn.shopify.com/card-feature.png");
+      return png;
+    },
+  });
+  assert.equal(frozen.rendered.blocks[4].component, "products/card-feature");
+  assert.equal(frozen.rendered.blocks[4].live, true);
+  assert.equal(Object.keys(frozen.capturedMedia).length, 1);
+  assert.equal(
+    Object.values(frozen.capturedMedia)[0].base64,
+    png.toString("base64"),
+  );
+  try {
+    const result = await assembly.renderFrozenArtifact(
+      frozen,
+      new AbortController().signal,
+    );
+    const live = result.artifact.rows.find((row) => row.kind === "live");
+    assert.ok(live, JSON.stringify(result.artifact.rows));
+    assert.ok(
+      live.html.includes("data:image/png;base64," + png.toString("base64")),
+    );
+    assert.doesNotMatch(live.html, /cdn\.shopify\.com/);
+    assert.doesNotMatch(live.html, /frozen-asset:/);
+
+    const uncaptured = JSON.parse(JSON.stringify(frozen));
+    uncaptured.rendered.blocks[4].html =
+      '<tr><td><img src="https://cdn.shopify.com/uncaptured.png"></td></tr>';
+    await assert.rejects(
+      assembly.renderFrozenArtifact(uncaptured, new AbortController().signal),
+      /LIVE_ASSET_CAPTURE_REQUIRED_4/,
+    );
+
+    const dangling = JSON.parse(JSON.stringify(frozen));
+    dangling.rendered.blocks[4].html =
+      '<tr><td><img src="frozen-asset:not-captured"></td></tr>';
+    await assert.rejects(
+      assembly.renderFrozenArtifact(dangling, new AbortController().signal),
+      /LIVE_ASSET_CAPTURE_REQUIRED_4/,
+    );
+  } finally {
+    await require("../lib/render").closeBrowser();
+  }
+});
+
+test("After Dark-shaped fixture keeps six UTM links and the native Resend unsubscribe token", async () => {
+  const sizes = [175000, 175000, 175000, 175000, 175000, 178458];
+  const originals = [];
+  for (let i = 0; i < sizes.length; i++)
+    originals.push(await pngOfSize(sizes[i], "after-dark-" + i));
+  assert.equal(
+    originals.reduce((n, b) => n + b.length, 0),
+    1053458,
+  );
+  const link = (content) =>
+    "https://figandbloom.com/collections/after-dark?utm_source=resend&utm_medium=email&utm_campaign=after_dark_launch_20261107&utm_content=" +
+    content;
+  const contents = ["hero", "product-a", "product-b", "product-c", "feature", "cta"];
+  const blocks = [
+    { component: "blocks/after-dark-hero", tokens: { UTM_CONTENT: "hero" } },
+    { component: "blocks/after-dark-product-a", tokens: { UTM_CONTENT: "product-a" } },
+    { component: "blocks/after-dark-product-b", tokens: { UTM_CONTENT: "product-b" } },
+    { component: "blocks/after-dark-product-c", tokens: { UTM_CONTENT: "product-c" } },
+    {
+      component: "products/card-feature",
+      tokens: {
+        IMAGE_URL: "https://cdn.shopify.com/after-dark/feature.png",
+        IMAGE_ALT: "After Dark feature card",
+        LINK_URL: link("feature"),
+        TITLE: "After Dark",
+        BODY_P1: "Six original images, one live feature card.",
+      },
+    },
+    { component: "blocks/after-dark-cta", tokens: { UTM_CONTENT: "cta" } },
+    { component: "footer", tokens: {} },
+  ];
+  // Index 0..3 and 5 are simple image links; index 4 is the live card-feature.
+  const byUrl = new Map([
+    ["https://cdn.shopify.com/after-dark/hero.png", originals[0]],
+    ["https://cdn.shopify.com/after-dark/product-a.png", originals[1]],
+    ["https://cdn.shopify.com/after-dark/product-b.png", originals[2]],
+    ["https://cdn.shopify.com/after-dark/product-c.png", originals[3]],
+    ["https://cdn.shopify.com/after-dark/cta.png", originals[5]],
+  ]);
+  byUrl.set(
+    "https://cdn.shopify.com/after-dark/feature.png",
+    originals[4],
+  );
+  const frozen = await assembly.freezeSavedDesign(
+    fixtureDesign(blocks, "after-dark-acceptance"),
+    {
+      brand: { colours: {}, baseline: {} },
+      resolve: (name) => {
+        if (name === "footer")
+          return {
+            html:
+              "<tr><td>No longer want these? {{{RESEND_UNSUBSCRIBE_URL}}}</td></tr>",
+          };
+        if (name === "products/card-feature")
+          return templateSource.resolve("products/card-feature");
+        const content = name.slice("blocks/after-dark-".length);
+        return {
+          html:
+            '<tr><td><a href="' +
+            link(content) +
+            '"><img src="https://cdn.shopify.com/after-dark/' +
+            content +
+            '.png" alt="After Dark ' +
+            content +
+            '" width="600"></a></td></tr>',
+        };
+      },
+      loadImage: async (url) => byUrl.get(url),
+    },
+  );
+  assert.equal(Object.keys(frozen.capturedMedia).length, 6);
+  assert.equal(frozen.rendered.blocks.at(-1).footer, true);
+  assert.match(
+    frozen.rendered.blocks.at(-1).html,
+    /\{\{\{RESEND_UNSUBSCRIBE_URL\}\}\}/,
+  );
+  assert.match(frozen.rendered.html, /\{\{\{RESEND_UNSUBSCRIBE_URL\}\}\}/);
+  const hrefs = [
+    ...frozen.rendered.html.matchAll(/href="([^"]*)"/g),
+  ].map((match) => match[1].replace(/&amp;/g, "&"));
+  for (const content of contents) {
+    const expected = link(content);
+    assert.ok(hrefs.includes(expected), "missing " + expected);
+    const parsed = new URL(expected);
+    assert.equal(parsed.searchParams.get("utm_source"), "resend");
+    assert.equal(parsed.searchParams.get("utm_medium"), "email");
+    assert.equal(parsed.searchParams.get("utm_campaign"), "after_dark_launch_20261107");
+    assert.equal(parsed.searchParams.get("utm_content"), content);
+  }
+  const campaignLinks = hrefs.filter((href) =>
+    href.includes("utm_campaign=after_dark_launch_20261107"),
+  );
+  assert.deepEqual(
+    [...new Set(campaignLinks.map((href) => new URL(href).searchParams.get("utm_content")))].sort(),
+    [...contents].sort(),
+  );
+  assert.equal(
+    Object.values(frozen.capturedMedia).filter((media) =>
+      originals.some((original) => original.toString("base64") === media.base64),
+    ).length,
+    6,
+  );
+  try {
+    const result = await assembly.renderFrozenArtifact(
+      frozen,
+      new AbortController().signal,
+    );
+    const live = result.artifact.rows.find((row) => row.kind === "live");
+    assert.ok(live, JSON.stringify(result.artifact.rows));
+    assert.ok(
+      live.html.includes(
+        "data:image/png;base64," + originals[4].toString("base64"),
+      ),
+    );
+    assert.doesNotMatch(live.html, /cdn\.shopify\.com/);
   } finally {
     await require("../lib/render").closeBrowser();
   }
