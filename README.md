@@ -43,6 +43,13 @@ Notes: the **free** plan spins the service down after inactivity, so the first h
 is a slow cold start — fine for an internal tool. Unlike a sandboxed environment, Render has
 normal outbound internet, so the PNG renderer loads your CDN product images correctly.
 
+Production deploys from `main`. Keep the existing Render service linked to this repository,
+with branch `main` and **Auto-Deploy: On Commit**. Merge release changes through a PR after
+both GitHub test suites pass. A manual deployment of a specific commit can disable automatic
+deploys; if used for recovery, restore auto-deploy afterwards and reconcile any production-only
+commits into `main` before the next release. Confirm the deployed commit in Render and verify
+the affected UI after rollout. Preserve the service's existing database and environment settings.
+
 To get the code into your repo first:
 ```bash
 unzip my-email-builder.zip && cd my-email-builder
