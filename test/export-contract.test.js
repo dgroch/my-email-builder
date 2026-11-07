@@ -91,6 +91,24 @@ test("cascade uses importance, then specificity, then source order", () => {
     '<style>.b{color:red}.b{color:blue}</style><p class="b">x</p>',
   );
   assert.equal(laterOrderWins, '<p class="b" style="color:blue">x</p>');
+
+  const laterStylesheetWins = assembly.inlineStyleElements(
+    '<style>.x{color:green}.target{color:red}</style>' +
+      '<style>.target{color:blue}</style><p class="x target">x</p>',
+  );
+  assert.equal(
+    laterStylesheetWins,
+    '<p class="x target" style="color:blue">x</p>',
+  );
+
+  const laterImportantStylesheetWins = assembly.inlineStyleElements(
+    '<style>.target{color:red!important}</style>' +
+      '<style>.target{color:blue!important}</style><p class="target">x</p>',
+  );
+  assert.equal(
+    laterImportantStylesheetWins,
+    '<p class="target" style="color:blue">x</p>',
+  );
 });
 
 test("!important is always stripped from style attributes, including media-only rows", () => {
@@ -177,6 +195,20 @@ test("media blocks merge into one style per row and ids are stripped after match
       ),
     /LIVE_STYLE_DECLARATION_UNSUPPORTED/,
   );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>@media (max-width:599px){.a > .b{color:red!important}}</style><p class="a"><span class="b">x</span></p>',
+      ),
+    /LIVE_STYLE_SELECTOR_UNSUPPORTED/,
+  );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>@media (max-width:599px){.a{color:red}}</style><p class="a" style="color:blue">x</p>',
+      ),
+    /LIVE_STYLE_DECLARATION_UNSUPPORTED/,
+  );
 });
 
 test("real-style live rows externalise images as asset refs and preserve link bytes", async () => {
@@ -190,7 +222,7 @@ test("real-style live rows externalise images as asset refs and preserve link by
   const href =
     "https://figandbloom.com/products/nebula?utm_source=resend&amp;utm_medium=email&amp;utm_campaign=after_dark_launch_20261107&amp;utm_content=product_nebula";
   const liveHtml =
-    '<style>.promo{color:#123456}@media only screen and (max-width:599px){.promo{font-size:9px}}</style>' +
+    '<style>.promo{color:#123456}@media only screen and (max-width:599px){.promo{font-size:9px!important}}</style>' +
     '<a class="promo" href="' +
     href +
     '"><img src="https://cdn.shopify.com/fixture.png" alt="Fixture"></a>';
@@ -215,7 +247,7 @@ test("real-style live rows externalise images as asset refs and preserve link by
   assert.equal(live.kind, "live");
   assert.match(
     live.html,
-    /^<style>@media \(max-width:599px\)\{\.promo\{font-size:9px;\}\}<\/style>/,
+    /^<style>@media \(max-width:599px\)\{\.promo\{font-size:9px!important;\}\}<\/style>/,
   );
   assert.doesNotMatch(live.html, /data:image|frozen-asset:/i);
   assert.match(live.html, /src="asset:asset-1"/);
