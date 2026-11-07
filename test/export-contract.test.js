@@ -211,6 +211,98 @@ test("media blocks merge into one style per row and ids are stripped after match
   );
 });
 
+test("media dedup keeps non-adjacent source order", () => {
+  const output = assembly.inlineStyleElements(
+    '<style>@media (max-width:599px){.x{color:red!important}}</style>' +
+      '<style>@media (max-width:599px){.x{color:blue!important}}</style>' +
+      '<style>@media (max-width:599px){.x{color:red!important}}</style>' +
+      '<p class="x">x</p>',
+  );
+  assert.equal(
+    output,
+    '<style>@media (max-width:599px){.x{color:red!important;}}' +
+      '@media (max-width:599px){.x{color:blue!important;}}' +
+      '@media (max-width:599px){.x{color:red!important;}}</style>' +
+      '<p class="x">x</p>',
+  );
+
+  const adjacent = assembly.inlineStyleElements(
+    '<style>@media (max-width:599px){.x{color:red!important}}</style>' +
+      '<style>@media (max-width:599px){.x{color:red!important}}</style>' +
+      '<p class="x">x</p>',
+  );
+  assert.equal((adjacent.match(/@media/g) || []).length, 1);
+});
+
+test("style media attributes stay scoped and unsupported scopes fail closed", () => {
+  const scoped = assembly.inlineStyleElements(
+    '<style media="(max-width:599px)">.x{color:red!important}</style><p class="x">x</p>',
+  );
+  assert.equal(
+    scoped,
+    '<style>@media (max-width:599px){.x{color:red!important;}}</style><p class="x">x</p>',
+  );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style media="print">.x{color:red!important}</style><p class="x">x</p>',
+      ),
+    /LIVE_STYLE_UNSUPPORTED/,
+  );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style media="(max-width:599px)">.x{color:red}</style><p class="x">x</p>',
+      ),
+    /LIVE_STYLE_DECLARATION_UNSUPPORTED/,
+  );
+});
+
+test("duplicate declarations honor important precedence", () => {
+  const sheetImportant = assembly.inlineStyleElements(
+    '<style>.x{color:red!important;color:blue}</style><p class="x">x</p>',
+  );
+  assert.equal(sheetImportant, '<p class="x" style="color:red">x</p>');
+
+  const inlineImportant = assembly.inlineStyleElements(
+    '<p class="x" style="color:red!important;color:blue">x</p>',
+  );
+  assert.equal(inlineImportant, '<p class="x" style="color:red">x</p>');
+
+  const laterImportant = assembly.inlineStyleElements(
+    '<style>.x{color:blue;color:red!important}</style><p class="x">x</p>',
+  );
+  assert.equal(laterImportant, '<p class="x" style="color:red">x</p>');
+
+  const laterNormal = assembly.inlineStyleElements(
+    '<style>.x{color:red;color:blue}</style><p class="x">x</p>',
+  );
+  assert.equal(laterNormal, '<p class="x" style="color:blue">x</p>');
+});
+
+test("blockless and unsupported at-rules fail closed without swallowing rules", () => {
+  for (const css of [
+    '@charset "utf-8";.x{color:red}',
+    '@import url("x.css");.x{color:red}',
+    '@namespace svg url(http://www.w3.org/2000/svg);.x{color:red}',
+  ])
+    assert.throws(
+      () =>
+        assembly.inlineStyleElements(
+          "<style>" + css + '</style><p class="x">x</p>',
+        ),
+      /LIVE_STYLE_UNSUPPORTED/,
+      css,
+    );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>@supports (display:block){.x{color:red}}</style><p class="x">x</p>',
+      ),
+    /LIVE_STYLE_UNSUPPORTED/,
+  );
+});
+
 test("real-style live rows externalise images as asset refs and preserve link bytes", async () => {
   const png = await sharp({
     create: { width: 8, height: 8, channels: 3, background: "#123456" },
