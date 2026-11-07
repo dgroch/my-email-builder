@@ -530,7 +530,7 @@ test("six original images summing just over the old 1 MiB cap are captured intac
     assert.ok(captured.has(original.toString("base64")));
 });
 
-test("live html-only card-feature rewrites its captured image to a data URL", async () => {
+test("live html-only card-feature externalises its captured image as an asset reference", async () => {
   const png = await pngOfSize(60000);
   const card = templateSource.resolve("products/card-feature");
   const link =
@@ -582,11 +582,15 @@ test("live html-only card-feature rewrites its captured image to a data URL", as
     );
     const live = result.artifact.rows.find((row) => row.kind === "live");
     assert.ok(live, JSON.stringify(result.artifact.rows));
-    assert.ok(
-      live.html.includes("data:image/png;base64," + png.toString("base64")),
+    const source = live.html.match(/src="asset:([^"]+)"/);
+    assert.ok(source, live.html);
+    const asset = result.artifact.assets.find((item) => item.id === source[1]);
+    assert.ok(asset, JSON.stringify(result.artifact.assets));
+    assert.equal(
+      result.media.find((item) => item.assetId === source[1]).base64,
+      png.toString("base64"),
     );
-    assert.doesNotMatch(live.html, /cdn\.shopify\.com/);
-    assert.doesNotMatch(live.html, /frozen-asset:/);
+    assert.doesNotMatch(live.html, /data:image|cdn\.shopify\.com|frozen-asset:/);
 
     const uncaptured = JSON.parse(JSON.stringify(frozen));
     uncaptured.rendered.blocks[4].html =
@@ -717,12 +721,13 @@ test("After Dark-shaped fixture keeps six UTM links and the native Resend unsubs
     );
     const live = result.artifact.rows.find((row) => row.kind === "live");
     assert.ok(live, JSON.stringify(result.artifact.rows));
-    assert.ok(
-      live.html.includes(
-        "data:image/png;base64," + originals[4].toString("base64"),
-      ),
+    const source = live.html.match(/src="asset:([^"]+)"/);
+    assert.ok(source, live.html);
+    assert.equal(
+      result.media.find((item) => item.assetId === source[1]).base64,
+      originals[4].toString("base64"),
     );
-    assert.doesNotMatch(live.html, /cdn\.shopify\.com/);
+    assert.doesNotMatch(live.html, /data:image|cdn\.shopify\.com|frozen-asset:/);
   } finally {
     await require("../lib/render").closeBrowser();
   }
