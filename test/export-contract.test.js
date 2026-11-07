@@ -22,15 +22,20 @@ function fixtureDesign(blocks) {
   };
 }
 
-test("live style rules are inlined into attributes and style/media elements are dropped", () => {
+test("ordinary rules are inlined and sanctioned media blocks are preserved", () => {
   const input =
-    '<style>td.copy{text-align:left}.promo{color:#fff;font-weight:700!important}@media only screen and (max-width:599px){.promo{font-size:99px}}</style>' +
+    '<style>td.copy{text-align:left}.promo{color:#fff;font-weight:700!important}@media only screen and (max-width:599px){.promo{font-size:99px!important}}</style>' +
     '<table><tr><td class="copy" style="color:#000">Hi <a class="promo" style="color:#111" href="https://figandbloom.com/products/x?utm_source=resend&amp;utm_medium=email&amp;utm_campaign=after_dark_launch_20261107&amp;utm_content=product_x">Go</a></td></tr></table>';
   const output = assembly.inlineStyleElements(input);
-  assert.doesNotMatch(output, /<style|@media|font-size:99px/i);
+  assert.match(
+    output,
+    /^<style>@media \(max-width:599px\)\{\.promo\{font-size:99px!important;\}\}<\/style>/,
+  );
+  assert.equal((output.match(/<style/g) || []).length, 1);
   assert.match(output, /<td class="copy" style="color:#000;text-align:left">/);
   assert.match(output, /<a class="promo" style="color:#111;font-weight:700"/);
-  assert.doesNotMatch(output, /!important/);
+  assert.doesNotMatch(output, /style="[^"]*font-size:99px/);
+  assert.equal((output.match(/!important/g) || []).length, 1);
   assert.equal(
     (output.match(/utm_campaign=after_dark_launch_20261107/g) || []).length,
     1,
@@ -44,6 +49,133 @@ test("tag selectors only match their own element, not its ancestors", () => {
   assert.equal(
     output,
     '<table><tr><td style="color:#123456">Copy</td></tr></table>',
+  );
+});
+
+test("cascade uses importance, then specificity, then source order", () => {
+  const idBeatsClass = assembly.inlineStyleElements(
+    '<style>#x{color:red}.b{color:blue}</style><p id="x" class="b">x</p>',
+  );
+  assert.equal(idBeatsClass, '<p class="b" style="color:red">x</p>');
+
+  const compoundBeatsSingle = assembly.inlineStyleElements(
+    '<style>.a{color:red}.a.b{color:blue}</style><p class="a b">x</p>',
+  );
+  assert.equal(compoundBeatsSingle, '<p class="a b" style="color:blue">x</p>');
+
+  const classBeatsTag = assembly.inlineStyleElements(
+    '<style>td{color:red}.b{color:blue}</style><table><tr><td class="b">x</td></tr></table>',
+  );
+  assert.equal(
+    classBeatsTag,
+    '<table><tr><td class="b" style="color:blue">x</td></tr></table>',
+  );
+
+  const importantBeatsSpecificity = assembly.inlineStyleElements(
+    '<style>#x{color:red}.b{color:blue!important}</style><p id="x" class="b">x</p>',
+  );
+  assert.equal(
+    importantBeatsSpecificity,
+    '<p class="b" style="color:blue">x</p>',
+  );
+
+  const importantSpecificityTie = assembly.inlineStyleElements(
+    '<style>#x{color:red!important}.b{color:blue!important}</style><p id="x" class="b">x</p>',
+  );
+  assert.equal(
+    importantSpecificityTie,
+    '<p class="b" style="color:red">x</p>',
+  );
+
+  const laterOrderWins = assembly.inlineStyleElements(
+    '<style>.b{color:red}.b{color:blue}</style><p class="b">x</p>',
+  );
+  assert.equal(laterOrderWins, '<p class="b" style="color:blue">x</p>');
+});
+
+test("!important is always stripped from style attributes, including media-only rows", () => {
+  const noStyle = assembly.inlineStyleElements(
+    '<p class="b" style="color:blue!important">x</p>',
+  );
+  assert.equal(noStyle, '<p class="b" style="color:blue">x</p>');
+
+  const mediaOnly = assembly.inlineStyleElements(
+    '<style>@media (max-width:599px){.b{color:green!important}}</style><p class="b" style="color:blue!important">x</p>',
+  );
+  assert.match(mediaOnly, /^<style>@media \(max-width:599px\)\{\.b\{color:green!important;\}\}<\/style>/);
+  assert.match(mediaOnly, /<p class="b" style="color:blue">x<\/p>/);
+  assert.doesNotMatch(mediaOnly, /style="[^"]*!important/);
+
+  const inlineImportantWins = assembly.inlineStyleElements(
+    '<style>.b{color:blue}</style><p class="b" style="color:red!important">x</p>',
+  );
+  assert.equal(inlineImportantWins, '<p class="b" style="color:red">x</p>');
+
+  const stylesheetImportantWins = assembly.inlineStyleElements(
+    '<style>.b{color:blue!important}</style><p class="b" style="color:red">x</p>',
+  );
+  assert.equal(stylesheetImportantWins, '<p class="b" style="color:blue">x</p>');
+});
+
+test("unsupported selectors fail closed instead of over-applying", () => {
+  for (const selector of [
+    "a[href]",
+    "a:hover",
+    ".a + .b",
+    ".a ~ .b",
+    ":not(.a, .b)",
+    "*",
+    ".a::before",
+  ])
+    assert.throws(
+      () =>
+        assembly.inlineStyleElements(
+          "<style>" + selector + "{color:red}</style><p class=\"a\">x</p>",
+        ),
+      /LIVE_STYLE_SELECTOR_UNSUPPORTED/,
+      selector,
+    );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>.a, a[href]{color:red}</style><p class="a">x</p>',
+      ),
+    /LIVE_STYLE_SELECTOR_UNSUPPORTED/,
+  );
+  assert.equal(
+    assembly.inlineStyleElements(
+      '<style>.a,.b{color:red}</style><p class="a">a</p><p class="b">b</p>',
+    ),
+    '<p class="a" style="color:red">a</p><p class="b" style="color:red">b</p>',
+  );
+});
+
+test("media blocks merge into one style per row and ids are stripped after matching", () => {
+  const output = assembly.inlineStyleElements(
+    '<style>#hero{color:#000}@media only screen and (max-width:599px){.hero{padding:2px!important}}</style>' +
+      '<p id="hero" class="hero">x</p>' +
+      '<style>@media only screen and (min-width:600px){.hero td{display:block!important}}</style>',
+  );
+  assert.equal((output.match(/<style/g) || []).length, 1);
+  assert.match(
+    output,
+    /^<style>@media \(max-width:599px\)\{\.hero\{padding:2px!important;\}\}@media \(min-width:600px\)\{\.hero td\{display:block!important;\}\}<\/style>/,
+  );
+  assert.doesNotMatch(output, /id="hero"/);
+  assert.match(output, /<p class="hero" style="color:#000">x<\/p>/);
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>@media (max-width:599px){a[href]{color:red}}</style><p>x</p>',
+      ),
+    /LIVE_STYLE_SELECTOR_UNSUPPORTED/,
+  );
+  assert.throws(
+    () =>
+      assembly.inlineStyleElements(
+        '<style>@media (max-width:599px){.a{background:url(x)}}</style><p class="a">x</p>',
+      ),
+    /LIVE_STYLE_DECLARATION_UNSUPPORTED/,
   );
 });
 
@@ -81,11 +213,16 @@ test("real-style live rows externalise images as asset refs and preserve link by
   const result = await assembly.renderFrozenArtifact(frozen);
   const live = result.artifact.rows[0];
   assert.equal(live.kind, "live");
-  assert.doesNotMatch(live.html, /<style|@media|data:image|frozen-asset:/i);
+  assert.match(
+    live.html,
+    /^<style>@media \(max-width:599px\)\{\.promo\{font-size:9px;\}\}<\/style>/,
+  );
+  assert.doesNotMatch(live.html, /data:image|frozen-asset:/i);
   assert.match(live.html, /src="asset:asset-1"/);
   assert.match(live.html, /style="color:#123456"/);
-  assert.doesNotMatch(live.html, /font-size:9px/);
-  assert.ok(live.html.includes(href.replaceAll("&amp;", "&amp;")));
+  assert.doesNotMatch(live.html, /style="[^"]*font-size:9px/);
+  assert.ok(live.html.includes(href));
+  assert.doesNotMatch(live.html, /&amp;amp;/);
   assert.equal(result.artifact.assets.length, 1);
   assert.equal(result.media.length, 1);
   assert.equal(result.media[0].base64, png.toString("base64"));
