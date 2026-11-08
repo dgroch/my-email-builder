@@ -231,6 +231,35 @@ test('unresolved-token gate excludes {{{RESEND_UNSUBSCRIBE_URL}}} but not the do
   assert.deepEqual(exportTargets.unresolvedTokens('{{HEADLINE}} {{{RESEND_UNSUBSCRIBE_URL}}}'), ['{{HEADLINE}}']);
 });
 
+test('leftover-Klaviyo-tag gate names Liquid block and lowercase merge tags, not the Resend token', () => {
+  assert.deepEqual(exportTargets.leftoverKlaviyoTags('<a href="{{{RESEND_UNSUBSCRIBE_URL}}}">x</a>'), []);
+  assert.deepEqual(
+    exportTargets.leftoverKlaviyoTags('{% if person.first_name %}Hi{% endif %}'),
+    ['{% if person.first_name %}', '{% endif %}'],
+  );
+  assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{ first_name }}</p>'), ['{{ first_name }}']);
+  assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{first_name}}</p>'), ['{{first_name}}']);
+  assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{ organization.name }}</p>'), ['{{ organization.name }}']);
+});
+
+test('keepConditionals preserves downlevel-revealed fallbacks and still strips developer comments', () => {
+  const raw = '<!-- COMPONENT: sections/button -->'
+    + '<!--[if gte mso 9]><v:roundrect/><![endif]-->'
+    + '<!--[if !gte mso 9]><!--><a href="#">x</a><!--<![endif]-->';
+
+  const resend = render.stripDocComments(raw, { keepConditionals: true });
+  assert.doesNotMatch(resend, /COMPONENT/);
+  assert.match(resend, /<!--\[if gte mso 9\]><v:roundrect\/><!\[endif\]-->/);
+  assert.match(resend, /<!--\[if !gte mso 9\]><!--><a href="#">x<\/a><!--<!\[endif\]-->/);
+
+  // The default Klaviyo push / Outlook-scanner behaviour is unchanged.
+  const klaviyo = render.stripDocComments(raw);
+  assert.doesNotMatch(klaviyo, /COMPONENT/);
+  assert.match(klaviyo, /<!--\[if gte mso 9\]>/);
+  assert.doesNotMatch(klaviyo, /\[if !gte mso 9\]/);
+  assert.doesNotMatch(klaviyo, /<!--<!\[endif\]-->/);
+});
+
 test('resend validation accepts the provider tag while klaviyo validation does not', () => {
   assert.equal(exportTargets.hasUnsubscribe('{{{RESEND_UNSUBSCRIBE_URL}}}', 'resend'), true);
   assert.equal(exportTargets.hasUnsubscribe('{{{RESEND_UNSUBSCRIBE_URL}}}', 'klaviyo'), false);
@@ -268,6 +297,64 @@ test('resend export: provider footer, subject-line title, preheader, no comments
   assert.doesNotMatch(body.html, /\{\{\s/);
   assert.doesNotMatch(body.html, /<!--\s*COMPONENT:/);
   assert.equal(body.target, 'resend');
+});
+
+test('resend export 422s on Liquid preview text and lowercase body tags instead of leaking them', async () => {
+  const liquid = await post({
+    campaign: simpleCampaign(),
+    previewText: '{% if person.first_name %}Hi{% endif %} plain preview',
+    target: 'resend',
+  });
+  assert.equal(liquid.status, 422, JSON.stringify(liquid.body));
+  assert.equal(liquid.body.code, 'UNRESOLVED_KLAVIYO_TAGS');
+  assert.ok(liquid.body.unresolved.includes('{% if person.first_name %}'));
+  assert.ok(liquid.body.unresolved.includes('{% endif %}'));
+
+  const bodyCampaign = simpleCampaign();
+  bodyCampaign.blocks.find((b) => b.component === 'sections/body-copy-plain').tokens.BODY_P1 =
+    'Hi {{ first_name }}, the capsule is here.';
+  const lower = await post({ campaign: bodyCampaign, previewText: 'Plain preview', target: 'resend' });
+  assert.equal(lower.status, 422, JSON.stringify(lower.body));
+  assert.equal(lower.body.code, 'UNRESOLVED_KLAVIYO_TAGS');
+  assert.ok(lower.body.unresolved.includes('{{ first_name }}'));
+
+  // Plain preview text still exports, and the result carries no Klaviyo syntax.
+  const plain = await post({ campaign: simpleCampaign(), previewText: 'After Dark is here.', target: 'resend' });
+  assert.equal(plain.status, 200, JSON.stringify(plain.body));
+  assert.doesNotMatch(plain.body.html, /\{%|(?<!\{)\{\{(?!\{)/);
+  assert.ok(plain.body.html.includes('After Dark is here.'));
+});
+
+test('resend export keeps the downlevel-revealed MSO fallback around a button CTA', async () => {
+  const buttonDef = schema.components.find((c) => c.name === 'sections/button');
+  const buttonBlock = sampleData.sampleCampaignFor(buttonDef).blocks[0];
+  const campaign = simpleCampaign({ blocks: [
+    { component: 'header', tokens: {} },
+    buttonBlock,
+    { component: 'footer', tokens: {} },
+  ] });
+
+  const { status, body } = await post({ campaign, previewText: 'Plain preview', target: 'resend' });
+  assert.equal(status, 200, JSON.stringify(body));
+  // The production shell has one `<!--[if !mso]><!-->` … `<!--<![endif]-->` pair around its
+  // font block, so the button's pair brings the document to two of each.
+  assert.equal((body.html.match(/<!--\[if !gte mso 9\]><!-->/g) || []).length, 1, 'one button downlevel opener');
+  assert.equal(
+    (body.html.match(/<!--\[if [^\]]*\]><!-->/g) || []).length,
+    (body.html.match(/<!--<!\[endif\]-->/g) || []).length,
+    'every downlevel opener has its closer',
+  );
+  assert.equal((body.html.match(/<v:roundrect/g) || []).length, 1, 'the VML button is still present');
+  const fallback = body.html.match(/<!--\[if !gte mso 9\]><!-->[\s\S]*?<!--<!\[endif\]-->/);
+  assert.ok(fallback && /<a\b[^>]*>[\s\S]*?<\/a>/.test(fallback[0]), 'fallback anchor sits inside the conditional');
+  assert.doesNotMatch(body.html, /<!--\s*COMPONENT:/);
+
+  // The Klaviyo/default path is untouched: no developer-comment strip at all, so its raw
+  // conditionals are still there (see the unit test above for the default strip behaviour).
+  const klaviyo = await post({ campaign, previewText: 'Plain preview' });
+  assert.equal(klaviyo.status, 200, JSON.stringify(klaviyo.body));
+  assert.equal((klaviyo.body.html.match(/<!--\[if !gte mso 9\]><!-->/g) || []).length, 1);
+  assert.equal((klaviyo.body.html.match(/<v:roundrect/g) || []).length, 1);
 });
 
 test('default (klaviyo) export is unchanged: Klaviyo tags, campaign-name title, comments kept', async () => {

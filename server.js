@@ -355,7 +355,9 @@ const server = http.createServer(async (req, res) => {
         html = exportTargets.applyResendFooter(html);
         // Resend parses template tags inside HTML comments, and developer docs have no business
         // in a sent email. Never do this on the Klaviyo path — that output is byte-stable.
-        html = render.stripDocComments(html);
+        // keepConditionals is Resend-only: the downlevel-revealed markers must survive so Outlook
+        // hides the HTML button fallback while it paints the VML roundrect.
+        html = render.stripDocComments(html, { keepConditionals: true });
       }
 
       const validation = validateCampaign(campaign, schema(), { target });
@@ -369,6 +371,18 @@ const server = http.createServer(async (req, res) => {
           error: `Export aborted: ${unresolved.length} unresolved template token(s) would ship in the HTML.`,
           code: 'UNRESOLVED_TOKENS', unresolved, unfilled, validation,
         });
+      }
+      // The uppercase-only gate above is the Klaviyo contract. Resend also understands neither
+      // Liquid block tags nor lowercase Klaviyo merge tags, so a Resend artefact may not ship
+      // them either — fail with the offending tag named rather than return 200 with raw syntax.
+      if (target === 'resend') {
+        const leftover = exportTargets.leftoverKlaviyoTags(html);
+        if (leftover.length) {
+          return json(res, 422, {
+            error: `Export aborted: ${leftover.length} unresolved Klaviyo template tag(s) would ship in a Resend email.`,
+            code: 'UNRESOLVED_KLAVIYO_TAGS', unresolved: leftover, unfilled, validation,
+          });
+        }
       }
       // A host only this machine can resolve is the same defect as an unfilled token, minus the
       // evidence: the markup is well-formed, the gate above passes it, and the images are dead
