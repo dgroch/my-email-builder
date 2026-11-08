@@ -313,12 +313,18 @@ if (jt) {
       `${shellName} scales the image-text image without clipping`);
     ok(/\.dpcc\s*\{[^}]*display:\s*block\s*!important;[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
       `${shellName} stacks designed-product-card columns`);
-    ok(/\.hi\s*\{[^}]*height:\s*240px\s*!important;[^}]*overflow:\s*hidden\s*!important;[^}]*\}/.test(media),
-      `${shellName} keeps a 240px stacked product-image window and clips it`);
+    ok(/\.hi\s*\{[^}]*height:\s*240px\s*!important;[^}]*\}/.test(media),
+      `${shellName} keeps the 240px stacked product-image window`);
     ok(/\.hi\s+img\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*auto\s*!important;[^}]*\}/.test(media),
       `${shellName} does not squash the pre-cropped product image to 240px tall`);
     ok(!/(?:^|\n)\s*(?:table|img|a)(?:\b|\[)/m.test(media),
       `${shellName} does not globally resize semantic tables, images or CTA anchors`);
+  }
+
+  for (const card of ['card-horizontal.html', 'card-horizontal-reversed.html']) {
+    const cardHtml = fs.readFileSync(path.join(DS, 'templates', 'products', card), 'utf8');
+    ok(/<td class="hi"[^>]*overflow:hidden/.test(cardHtml),
+      `${card}: the .hi cell keeps its inline overflow:hidden (it clips the 240px mobile window)`);
   }
 
   const buttonComponent = schema.components.find((c) => c.name === 'sections/button');
