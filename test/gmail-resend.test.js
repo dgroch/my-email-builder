@@ -220,7 +220,7 @@ test('card-horizontal drops the fixed 240px clip and lets the image own the cell
   }
   for (const card of ['card-horizontal.html', 'card-horizontal-reversed.html']) {
     const cardHtml = fs.readFileSync(path.join(render.DS, 'templates', 'products', card), 'utf8');
-    assert.match(cardHtml, /<td class="hi" width="47%" valign="top" style="width:47%;height:auto;padding:0;vertical-align:top;">/);
+    assert.match(cardHtml, /<td class="hi" width="46.6667%" valign="top" style="width:46.6667%;height:auto;padding:0;vertical-align:top;">/);
     assert.doesNotMatch(cardHtml, /<td class="hi"[^>]*(?:height:350px|overflow:hidden)/);
   }
 });
