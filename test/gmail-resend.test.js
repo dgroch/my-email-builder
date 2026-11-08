@@ -56,13 +56,15 @@ test('Shopify crop replaces existing width/height/crop and preserves v=', () => 
     sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 },
   });
   assert.equal(result.issues.length, 0);
-  assert.equal((result.html.match(/[?&]width=/g) || []).length, 1, 'one width param');
-  assert.equal((result.html.match(/[?&]height=/g) || []).length, 1, 'one height param');
-  assert.equal((result.html.match(/[?&]crop=/g) || []).length, 1, 'one crop param');
-  assert.match(result.html, /nebula-model-4x5\.jpg\?v=1793579519&width=600&height=440&crop=center/);
+  assert.equal((result.html.match(/&amp;width=/g) || []).length, 1, 'one width param');
+  assert.equal((result.html.match(/&amp;height=/g) || []).length, 1, 'one height param');
+  assert.equal((result.html.match(/&amp;crop=/g) || []).length, 1, 'one crop param');
+  assert.match(result.html, /nebula-model-4x5\.jpg\?v=1793579519&amp;width=600&amp;height=440&amp;crop=center/);
+  assert.doesNotMatch(result.html, /src="[^"]*[^a]&width=/, 'src attributes must not carry a raw ampersand');
   assert.doesNotMatch(result.html, /object-fit|object-position/);
   assert.match(result.html, /style="[^"]*height:auto/);
   assert.match(result.html, /style="[^"]*width:100%/);
+  assert.match(result.html, /style="[^"]*min-width:100%/);
   assert.match(result.html, /style="[^"]*max-width:600px/);
   assert.match(result.html, /width="600" height="440"/, 'layout attributes stay');
 });
@@ -72,7 +74,7 @@ test('crop width is capped at the source width and height follows the slot ratio
     component: 'blocks/editorial-hero', index: 1,
     sourceSizes: { [AFTER_DARK_HERO]: { width: 400, height: 500 } },
   });
-  assert.match(result.html, /width=400&height=293&crop=center/);
+  assert.match(result.html, /&amp;width=400&amp;height=293&amp;crop=center/);
   assert.ok(result.issues.some((i) => i.type === 'image_source_small' && i.severity === 'warning'));
 });
 
@@ -116,11 +118,12 @@ test('assemble pre-crops the editorial hero and renders it height:auto', () => {
   }] };
   const { html, imageIssues } = render.assemble(campaign, { assetsBase: '/a' });
   assert.equal(imageIssues.length, 0);
-  assert.match(html, /nebula-model-4x5\.jpg\?v=1793579519&width=600&height=440&crop=center/);
+  assert.match(html, /nebula-model-4x5\.jpg\?v=1793579519&amp;width=600&amp;height=440&amp;crop=center/);
   const img = html.match(/<img[^>]*nebula[^>]*>/i);
   assert.ok(img, 'hero image present');
   assert.doesNotMatch(img[0], /object-fit/);
   assert.match(img[0], /height:auto/);
+  assert.match(img[0], /min-width:100%/);
 });
 
 test('primeHtml reads the source size and the next rewrite caps against it', async () => {
@@ -138,7 +141,7 @@ test('primeHtml reads the source size and the next rewrite caps against it', asy
     assert.equal(primed.failed, 0);
     assert.equal(calls[0], AFTER_DARK_HERO, 'fetches the source URL with crop params stripped');
     const rewritten = emailImages.rewriteHtml(html);
-    assert.match(rewritten.html, /width=560&height=411&crop=center/);
+    assert.match(rewritten.html, /&amp;width=560&amp;height=411&amp;crop=center/);
   } finally {
     emailImages.clearSourceSizeCache();
   }
@@ -159,7 +162,7 @@ test('fluid fixed-slot images keep max-width:100% and request the email-column w
   assert.equal(result.issues.length, 0);
   assert.match(result.html, /max-width:100%/);
   assert.doesNotMatch(result.html, /max-width:240px/);
-  assert.match(result.html, /width=600&height=750&crop=center/, 'requests the 600px column, not the 240px slot');
+  assert.match(result.html, /&amp;width=600&amp;height=750&amp;crop=center/, 'requests the 600px column, not the 240px slot');
   assert.equal(result.images[0].fluid, true);
   assert.equal(result.images[0].columnCeiling, 600);
 });
@@ -170,14 +173,73 @@ test('card-horizontal requests the larger fluid ceiling but keeps a fixed image 
     component: 'products/card-horizontal', sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 },
   });
   assert.match(fluid.html, /max-width:100%/);
-  assert.match(fluid.html, /width=600&height=750&crop=top/);
+  assert.match(fluid.html, /&amp;width=600&amp;height=750&amp;crop=top/);
 
   const fixed = emailImages.rewriteHtml(
     `<img src="${AFTER_DARK_HERO}" width="340" height="425" alt="Testimonial" style="display:block;width:340px;height:425px;object-fit:cover;object-position:center top;">`,
     { component: 'products/card-single-testimonial', sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 } },
   );
   assert.match(fixed.html, /max-width:340px/);
-  assert.match(fixed.html, /width=340&height=425&crop=top/);
+  assert.match(fixed.html, /&amp;width=340&amp;height=425&amp;crop=top/);
+});
+
+test('src escaping never doubles an existing entity and always emits crop params as &amp;', () => {
+  assert.equal(emailImages.escapeAmpersands('https://x.test/a?b=1&c=2'), 'https://x.test/a?b=1&amp;c=2');
+  assert.equal(emailImages.escapeAmpersands('https://x.test/a?b=1&amp;c=2'), 'https://x.test/a?b=1&amp;c=2');
+  assert.equal(emailImages.escapeAmpersands('https://x.test/a?b=1&#38;c=2'), 'https://x.test/a?b=1&#38;c=2');
+});
+
+test('editorial-hero omits the accent illo when the lever is off and keeps it visible inline when on', () => {
+  const def = schema.components.find((c) => c.name === 'blocks/editorial-hero');
+  const campaign = sampleData.sampleCampaignFor(def);
+  campaign.blocks[0].tokens.ACCENT_ILLO = 'off';
+  const off = render.assemble(campaign, { assetsBase: '/a', shell: 'production', production: true }).html;
+  assert.doesNotMatch(off, /eh-illo|HandFlower/, 'illo-off must not emit a stylesheet-hidden watermark');
+  assert.doesNotMatch(off, /\.eh \.eh-illo/);
+  campaign.blocks[0].tokens.ACCENT_ILLO = 'on';
+  const on = render.assemble(campaign, { assetsBase: '/a', shell: 'production', production: true }).html;
+  assert.match(on, /class="eh-illo"[^>]*style="[^"]*display:block/);
+  assert.match(on, /HandFlower_Black\.png/);
+});
+
+test('card-feature uses a percentage image cell and an image that cannot exceed it', () => {
+  const def = schema.components.find((c) => c.name === 'products/card-feature');
+  const html = render.assemble(sampleData.sampleCampaignFor(def), { assetsBase: '/a', shell: 'production', production: true }).html;
+  assert.match(html, /<td class="cf-img" width="46\.6667%" valign="middle" style="width:46\.6667%;padding:0;vertical-align:middle;">/);
+  assert.match(html, /<img[^>]*style="display:block;width:100%;min-width:100%;max-width:100%;height:auto;border:0;"/);
+  assert.doesNotMatch(html, /\.cf-img\{width:44%/, 'the column width must not depend on a media query');
+});
+
+test('card-horizontal drops the fixed 240px clip and lets the image own the cell height', () => {
+  for (const shellName of ['shell-preview.html', 'shell-production.html']) {
+    const shell = fs.readFileSync(path.join(render.DS, 'shell', shellName), 'utf8');
+    const mediaStart = shell.indexOf('@media only screen and (max-width:600px)');
+    const media = mediaStart < 0 ? '' : shell.slice(mediaStart, shell.indexOf('</style>', mediaStart));
+    assert.doesNotMatch(media, /\.hi\{[^}]*height:\s*240px/, `${shellName} must not clip the card image at 240px`);
+    assert.match(media, /\.hi\{[^}]*height:\s*auto/, `${shellName} follows the image height`);
+  }
+  for (const card of ['card-horizontal.html', 'card-horizontal-reversed.html']) {
+    const cardHtml = fs.readFileSync(path.join(render.DS, 'templates', 'products', card), 'utf8');
+    assert.match(cardHtml, /<td class="hi" width="47%" valign="top" style="width:47%;height:auto;padding:0;vertical-align:top;">/);
+    assert.doesNotMatch(cardHtml, /<td class="hi"[^>]*(?:height:350px|overflow:hidden)/);
+  }
+});
+
+test('production shell is fluid without its stylesheet and keeps a 600px Word ghost', () => {
+  const def = schema.components.find((c) => c.name === 'blocks/editorial-hero');
+  const html = render.assemble(sampleData.sampleCampaignFor(def), { assetsBase: '/a', shell: 'production', production: true }).html;
+  assert.match(html, /<table class="ew" width="100%"[^>]*style="width:100%;max-width:600px;/);
+  assert.match(html, /<!--\[if mso\]>[\s\S]*?<table\b[^>]*width="600"/);
+  const f600 = [...html.matchAll(/<table\b[^>]*class="[^"]*\bf600\b[^"]*"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(f600.length > 0, 'the hero table is opted in');
+  assert.ok(f600.every((tag) => /width="100%"/.test(tag)), 'every f600 table is percentage-wide in production');
+});
+
+test('body-copy-plain keeps a 440px desktop measure that shrinks without its stylesheet', () => {
+  const def = schema.components.find((c) => c.name === 'sections/body-copy-plain');
+  const html = render.assemble(sampleData.sampleCampaignFor(def), { assetsBase: '/a', shell: 'production', production: true }).html;
+  assert.match(html, /<table width="100%" class="fm"[^>]*style="width:100%;max-width:440px;margin:0 auto;"/);
+  assert.match(html, /<!--\[if mso\]>[\s\S]*?<table\b[^>]*width="440"/);
 });
 
 test('the guard flags surviving object-fit declarations but ignores comments', () => {

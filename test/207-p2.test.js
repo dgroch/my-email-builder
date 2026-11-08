@@ -127,7 +127,23 @@ test('every existing component keeps exact sample, current sample and empty/defa
     const defaults = render.assembleBlocks({blocks:[{component:record.component,tokens:{}}]}).blocks[0].html;
     if (original !== record.html || current !== record.html || defaults !== record.defaultsHtml) changed.push(record.component);
   }
-  assert.deepEqual(changed, []);
+  // This fixture is the historical pre-crop snapshot, kept so render-207-p2 can still show a
+  // before/after. The image components below intentionally differ because their CDN crop src is
+  // now HTML-escaped and their fluid images carry min-width:100%; body-copy-plain's measure is
+  // now fluid with an MSO ghost. Every current byte is pinned by test/fixtures/212-s1-baseline.json.
+  const intentional = [
+    'blocks/annotated-product', 'blocks/caption-bar-hero', 'blocks/comparison-vs',
+    'blocks/designed-product-card', 'blocks/editorial-collage', 'blocks/editorial-hero',
+    'blocks/feature-list', 'blocks/howto-steps', 'blocks/image-text', 'blocks/journal-tile',
+    'blocks/polaroid-collage', 'blocks/story', 'dividers/divider-image',
+    'heroes/hero-b-clay', 'heroes/hero-b-noir', 'heroes/hero-b-white',
+    'heroes/hero-c1', 'heroes/hero-c1-clay', 'heroes/hero-c1-noir',
+    'heroes/hero-c2', 'heroes/hero-c2-clay', 'heroes/hero-c2-noir', 'heroes/hero-image-only',
+    'products/card-horizontal', 'products/card-horizontal-reversed',
+    'products/card-lifestyle-studio', 'products/card-single-testimonial',
+    'sections/body-copy-plain',
+  ];
+  assert.deepEqual(changed.sort(), intentional.sort());
 });
 
 test('10: frozen publication includes the notice in HTML and plain text', async () => {

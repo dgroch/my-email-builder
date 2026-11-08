@@ -52,10 +52,10 @@ table{border-collapse:collapse;}
      on a 375px screen, and everything on it — every block, not just this one — was scaled to
      0.625, which is how 14px body copy arrived at 8.8px. A percentage max-width cannot fix it
      (it resolves to none against an indefinite container); 100vw is definite, so it caps the
-     image at the viewport and lets the table shrink. Height is deliberately left as declared:
-     these crop with object-fit, and letting height follow width would throw away the crop the
-     designer chose with IMG_HEIGHT. Clients without vw support simply behave as they did
-     before, so this can only improve on the status quo. */
+     image at the viewport and lets the table shrink. Images are pre-cropped at the CDN, so
+     height:auto follows the authored crop while the width/height attributes still carry the slot.
+     Clients without vw support simply behave as they did before, so this can only improve on the
+     status quo. */
   .fimg{width:100%!important;max-width:100vw!important;}
   .hh{font-size:38px!important;line-height:1.0!important;}
   .sh{font-size:22px!important;}
@@ -68,7 +68,9 @@ table{border-collapse:collapse;}
   .iti{width:100%!important;height:auto!important;}
   .dpcc{display:block!important;width:100%!important;padding:32px 24px!important;}
   .hc{display:block!important;width:100%!important;}
-  .hi{display:block!important;width:100%!important;height:240px!important;}
+  /* products/card-horizontal — the photo cell follows its image; there is no fixed-height
+     clip window. Mobile stack stays, but the cell's height is never capped at 240px. */
+  .hi{display:block!important;width:100%!important;height:auto!important;}
   .hi img{width:100%!important;height:auto!important;}
   .hinfo{display:block!important;width:100%!important;padding:24px!important;}
   /* products/card-live — stays side by side on a phone so the button stays high. The photo
@@ -123,11 +125,17 @@ table{border-collapse:collapse;}
 </head>
 <body style="margin:0;padding:0;background:{{BODY_BG}};">
 {{PREHEADER}}
+<!--[if mso]>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center"><tr><td width="600">
+<![endif]-->
 <center>
-<table class="ew" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#ffffff;margin:0 auto;">
+<table class="ew" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;margin:0 auto;">
 <!-- COMPONENTS_START -->
 {{COMPONENTS}}
 <!-- COMPONENTS_END -->
 </table>
 </center>
+<!--[if mso]>
+</td></tr></table>
+<![endif]-->
 </body></html>

@@ -288,9 +288,9 @@ if (jt) {
       `every 600px image has an explicit fluid-image contract: ${tag.slice(0, 100)}`);
   }
 
-  ok(/<table\b[^>]*class="[^"]*\bfm\b[^"]*"[^>]*width="440"/i.test(markup)
-      || /<table\b[^>]*width="440"[^>]*class="[^"]*\bfm\b/i.test(markup),
-    'the 440px body-copy measure becomes fluid on narrow screens without losing its desktop width');
+  ok(/<table\b[^>]*class="[^"]*\bfm\b[^"]*"[^>]*style="[^"]*max-width:440px/i.test(markup)
+      && /<!--\[if mso\]>[\s\S]*?<table\b[^>]*width="440"/i.test(markup),
+    'the 440px body-copy measure is fluid on narrow screens and keeps a 440px Word ghost');
   eq((markup.match(/class="[^"]*\bitc\b[^"]*"/g) || []).length, 2,
     'image-text marks both columns for mobile stacking');
   ok(/class="[^"]*\biti\b[^"]*"/.test(markup), 'image-text marks its structural image for fluid mobile sizing');
@@ -313,18 +313,22 @@ if (jt) {
       `${shellName} scales the image-text image without clipping`);
     ok(/\.dpcc\s*\{[^}]*display:\s*block\s*!important;[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
       `${shellName} stacks designed-product-card columns`);
-    ok(/\.hi\s*\{[^}]*height:\s*240px\s*!important;[^}]*\}/.test(media),
-      `${shellName} keeps the 240px stacked product-image window`);
+    ok(/\.hi\s*\{[^}]*height:\s*auto\s*!important;[^}]*\}/.test(media),
+      `${shellName} lets the stacked product image own its height`);
     ok(/\.hi\s+img\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*auto\s*!important;[^}]*\}/.test(media),
-      `${shellName} does not squash the pre-cropped product image to 240px tall`);
+      `${shellName} does not squash or clip the pre-cropped product image`);
+    ok(!/\.hi\s*\{[^}]*height:\s*240px\s*!important/.test(media),
+      `${shellName} has no 240px product-image clip window`);
     ok(!/(?:^|\n)\s*(?:table|img|a)(?:\b|\[)/m.test(media),
       `${shellName} does not globally resize semantic tables, images or CTA anchors`);
   }
 
   for (const card of ['card-horizontal.html', 'card-horizontal-reversed.html']) {
     const cardHtml = fs.readFileSync(path.join(DS, 'templates', 'products', card), 'utf8');
-    ok(/<td class="hi"[^>]*overflow:hidden/.test(cardHtml),
-      `${card}: the .hi cell keeps its inline overflow:hidden (it clips the 240px mobile window)`);
+    ok(/<td class="hi"[^>]*height:auto/.test(cardHtml),
+      `${card}: the .hi cell follows the image height`);
+    ok(!/<td class="hi"[^>]*(?:height:350px|overflow:hidden)/.test(cardHtml),
+      `${card}: the .hi cell is not a fixed-height clip window`);
   }
 
   const buttonComponent = schema.components.find((c) => c.name === 'sections/button');
@@ -582,12 +586,18 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   ok(/<!--\[if !gte mso 9\]><!-->[\s\S]*<a href[\s\S]*<!--<!\[endif\]-->/.test(oo),
     'the opt-out <a> is hidden from Outlook so the button never renders twice');
 
-  // Both measures are fixed-width tables now, not max-width caps that Word discards.
-  for (const [name, width] of [['opt-out', 380], ['body-copy-plain', 440]]) {
+  // The opt-out measure stays a fixed-width table (Word discards max-width). The body-copy
+  // measure is fluid for phone clients that drop the stylesheet, with a 440px Word ghost.
+  for (const [name, width] of [['opt-out', 380]]) {
     const t = tpl(name);
     ok(new RegExp(`<table[^>]*\\bwidth="${width}"`).test(t), `${name} constrains its measure with a ${width}px table`);
     ok(!/max-width/.test(t.replace(/<!--[\s\S]*?-->/g, '')), `${name} no longer relies on a max-width cap`);
   }
+  const bodyCopyTpl = tpl('body-copy-plain');
+  ok(/<table[^>]*width="100%"[^>]*class="fm"[^>]*max-width:440px/.test(bodyCopyTpl),
+    'body-copy-plain measure is fluid with a 440px desktop cap');
+  ok(/<!--\[if mso\]>[\s\S]*?<table[^>]*\bwidth="440"/.test(bodyCopyTpl),
+    'body-copy-plain keeps a 440px Word ghost table');
 
   // The unsubscribe mechanism still survives assembly — the whole point of the block.
   const camp = { campaignName: 't', blocks: [{ component: 'sections/opt-out', tokens: {
