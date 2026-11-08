@@ -240,6 +240,7 @@ test('leftover-Klaviyo-tag gate names Liquid block and lowercase merge tags, not
   assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{ first_name }}</p>'), ['{{ first_name }}']);
   assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{first_name}}</p>'), ['{{first_name}}']);
   assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{ organization.name }}</p>'), ['{{ organization.name }}']);
+  assert.deepEqual(exportTargets.leftoverKlaviyoTags('<p>{{ first_name'), ['{{ first_name'], 'unclosed spaced tag');
 });
 
 test('keepConditionals preserves downlevel-revealed fallbacks and still strips developer comments', () => {
