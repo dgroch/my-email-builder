@@ -295,10 +295,16 @@ const server = http.createServer(async (req, res) => {
       }
 
       const hasBlocks = (c) => !!(c && Array.isArray(c.blocks) && c.blocks.length);
+      const hasText = (v) => v != null && String(v).trim() !== '';
       let design = null;
-      if (!hasBlocks(campaign) && designId) {
+      // Load the saved design when it supplies the campaign body, or (on the Resend path) the
+      // subject/preview lines the body omitted. A body campaign + designId combination still gets
+      // the design's metadata.
+      const needCampaign = !hasBlocks(campaign);
+      const needResendMeta = target === 'resend' && (!hasText(subjectLine) || !hasText(previewText));
+      if (designId && (needCampaign || needResendMeta)) {
         try { design = await designs.get(designId); } catch (_) { /* fall through to the 400 */ }
-        if (design && hasBlocks(design.campaign)) campaign = design.campaign;
+        if (design && needCampaign && hasBlocks(design.campaign)) campaign = design.campaign;
       }
       if (!hasBlocks(campaign)) {
         return json(res, 400, {

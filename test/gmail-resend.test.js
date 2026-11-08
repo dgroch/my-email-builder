@@ -232,6 +232,20 @@ test('the disk store accepts UUID-shaped design ids but still rejects traversal'
   assert.equal(designs.get('a/b'), null);
 });
 
+test('a body campaign + designId still borrows saved subject/preview on the resend path', async () => {
+  const design = await designs.create({
+    name: 'Metadata design', subjectLine: 'Saved subject line',
+    previewText: 'Saved preview line',
+    campaign: simpleCampaign({ campaignName: 'Stored campaign name' }),
+  });
+  const bodyCampaign = simpleCampaign({ campaignName: 'Body campaign name', subjectLine: undefined, previewText: undefined });
+  const resend = await post({ campaign: bodyCampaign, designId: design.id, target: 'resend' });
+  assert.equal(resend.status, 200, JSON.stringify(resend.body));
+  assert.match(resend.body.html, /<title>Saved subject line<\/title>/);
+  assert.ok(resend.body.html.includes('Saved preview line'));
+  assert.ok(resend.body.html.includes('{{{RESEND_UNSUBSCRIBE_URL}}}'));
+});
+
 test('{"designId":"…"} exports the saved design and picks up its subject/preview', async () => {
   const design = await designs.create({
     name: 'Resend design', subjectLine: 'Design subject line',
