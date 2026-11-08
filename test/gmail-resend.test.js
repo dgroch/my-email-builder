@@ -16,6 +16,7 @@ const emailImages = require('../lib/emailImages');
 const exportTargets = require('../lib/exportTargets');
 const render = require('../lib/render');
 const designs = require('../lib/designs');
+const sampleData = require('../lib/sampleData');
 const { validateCampaign } = require('../lib/validate');
 const { buildSchema } = require('../lib/parseTemplates');
 const schema = buildSchema(render.DS);
@@ -148,6 +149,69 @@ test('a local/placeholder asset is exempt from the host error but still loses ob
   assert.equal(result.issues.filter((i) => i.severity === 'error').length, 0);
   assert.doesNotMatch(result.html, /object-fit|object-position/);
   assert.match(result.html, /height:auto/);
+});
+
+test('fluid fixed-slot images keep max-width:100% and request the email-column width', () => {
+  const story = `<img class="st-img" src="${AFTER_DARK_HERO}" width="240" height="300" alt="Story" style="display:block;width:240px;height:300px;object-fit:cover;object-position:center;">`;
+  const result = emailImages.rewriteHtml(story, {
+    component: 'blocks/story', index: 1, sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 },
+  });
+  assert.equal(result.issues.length, 0);
+  assert.match(result.html, /max-width:100%/);
+  assert.doesNotMatch(result.html, /max-width:240px/);
+  assert.match(result.html, /width=600&height=750&crop=center/, 'requests the 600px column, not the 240px slot');
+  assert.equal(result.images[0].fluid, true);
+  assert.equal(result.images[0].columnCeiling, 600);
+});
+
+test('card-horizontal requests the larger fluid ceiling but keeps a fixed image at its slot', () => {
+  const card = `<img src="${AFTER_DARK_HERO}" width="280" height="350" alt="Card" style="display:block;width:280px;height:350px;object-fit:cover;object-position:center top;">`;
+  const fluid = emailImages.rewriteHtml(card, {
+    component: 'products/card-horizontal', sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 },
+  });
+  assert.match(fluid.html, /max-width:100%/);
+  assert.match(fluid.html, /width=600&height=750&crop=top/);
+
+  const fixed = emailImages.rewriteHtml(
+    `<img src="${AFTER_DARK_HERO}" width="340" height="425" alt="Testimonial" style="display:block;width:340px;height:425px;object-fit:cover;object-position:center top;">`,
+    { component: 'products/card-single-testimonial', sourceSizes: { [AFTER_DARK_HERO]: SOURCE_928 } },
+  );
+  assert.match(fixed.html, /max-width:340px/);
+  assert.match(fixed.html, /width=340&height=425&crop=top/);
+});
+
+test('the guard flags surviving object-fit declarations but ignores comments', () => {
+  assert.deepEqual(emailImages.objectFitIssues('<!-- <img style="object-fit:cover"> -->'), []);
+  assert.deepEqual(emailImages.objectFitIssues('<style>/* object-fit:cover is only a note */</style>'), []);
+  const issues = emailImages.objectFitIssues('<style>.eg .eg-grid img { display:block; object-fit: cover; }</style>');
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'object_fit_remaining');
+  assert.equal(issues[0].severity, 'warning');
+  assert.match(issues[0].message, /1 object-fit declaration/);
+});
+
+test('event-gallery CSS object-fit now produces an object_fit_remaining validation warning', () => {
+  const def = schema.components.find((c) => c.name === 'blocks/event-gallery');
+  assert.ok(def, 'event-gallery exists');
+  const report = validateCampaign(sampleData.sampleCampaignFor(def), schema, { requireUnsubscribe: false });
+  assert.equal(report.ok, true, 'a designed block is not rejected outright');
+  assert.ok(report.issues.some((i) => i.type === 'object_fit_remaining' && i.severity === 'warning'));
+});
+
+test('readSourceSize refuses a redirect instead of following it off cdn.shopify.com', async () => {
+  const fakeFetch = async () => ({
+    ok: false, status: 302, url: AFTER_DARK_HERO,
+    headers: { get: () => null }, arrayBuffer: async () => Buffer.alloc(0),
+  });
+  await assert.rejects(
+    () => emailImages.readSourceSize(AFTER_DARK_HERO, { fetchImpl: fakeFetch }),
+    /refusing redirect/i,
+  );
+});
+
+test('render and exportTargets share one PROVIDER_TOKENS set', () => {
+  assert.equal(exportTargets.PROVIDER_TOKENS, render.PROVIDER_TOKENS);
+  assert.deepEqual([...render.PROVIDER_TOKENS], ['RESEND_UNSUBSCRIBE_URL']);
 });
 
 // ── Defect 2: Resend target ───────────────────────────────────────────────────────────────

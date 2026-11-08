@@ -313,8 +313,10 @@ if (jt) {
       `${shellName} scales the image-text image without clipping`);
     ok(/\.dpcc\s*\{[^}]*display:\s*block\s*!important;[^}]*width:\s*100%\s*!important;[^}]*\}/.test(media),
       `${shellName} stacks designed-product-card columns`);
-    ok(/\.hi\s+img\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*240px\s*!important;[^}]*\}/.test(media),
-      `${shellName} fills the existing 240px stacked product-image cell`);
+    ok(/\.hi\s*\{[^}]*height:\s*240px\s*!important;[^}]*overflow:\s*hidden\s*!important;[^}]*\}/.test(media),
+      `${shellName} keeps a 240px stacked product-image window and clips it`);
+    ok(/\.hi\s+img\s*\{[^}]*width:\s*100%\s*!important;[^}]*height:\s*auto\s*!important;[^}]*\}/.test(media),
+      `${shellName} does not squash the pre-cropped product image to 240px tall`);
     ok(!/(?:^|\n)\s*(?:table|img|a)(?:\b|\[)/m.test(media),
       `${shellName} does not globally resize semantic tables, images or CTA anchors`);
   }
