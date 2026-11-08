@@ -76,5 +76,21 @@ test('all other component samples are byte-identical to the pre-fix baseline', (
     const hash = crypto.createHash('sha256').update(blockHtml(record.campaign)).digest('hex');
     if (hash !== record.sha256) changed.push(record.component);
   }
-  assert.deepEqual(changed.sort(), ['footer', 'heroes/hero-image-only']);
+  // footer/hero-image-only already differed (pre-existing typography fix). The rest are the
+  // fixed-slot images intentionally rewritten by the Gmail crop fix (object-fit removed,
+  // CDN-cropped src, height:auto), plus body-copy-plain's fluid 440px measure. Every one is
+  // pinned byte-for-byte by the 212 baseline.
+  const imageCrop = [
+    'blocks/annotated-product', 'blocks/caption-bar-hero', 'blocks/comparison-vs',
+    'blocks/designed-product-card', 'blocks/editorial-collage', 'blocks/editorial-hero',
+    'blocks/feature-list', 'blocks/howto-steps', 'blocks/image-text', 'blocks/journal-tile',
+    'blocks/polaroid-collage', 'blocks/story', 'dividers/divider-image',
+    'heroes/hero-b-clay', 'heroes/hero-b-noir', 'heroes/hero-b-white',
+    'heroes/hero-c1', 'heroes/hero-c1-clay', 'heroes/hero-c1-noir',
+    'heroes/hero-c2', 'heroes/hero-c2-clay', 'heroes/hero-c2-noir', 'heroes/hero-image-only',
+    'products/card-horizontal', 'products/card-horizontal-reversed',
+    'products/card-lifestyle-studio', 'products/card-single-testimonial',
+    'sections/body-copy-plain',
+  ];
+  assert.deepEqual(changed.sort(), [...new Set(['footer', ...imageCrop])].sort());
 });

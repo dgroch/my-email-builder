@@ -32,14 +32,16 @@ RULES:
 </style>
 <table width="600" cellpadding="0" cellspacing="0" border="0" class="eh ts-{{TYPE_SCALE}} illo-{{ACCENT_ILLO}} f600">
   <tr>
-    <td style="padding:0;overflow:hidden;line-height:0;">
+    <td style="padding:0;line-height:0;">
       <img class="fimg" src="{{HERO_IMAGE_URL}}" width="600" height="440" alt="{{HEADLINE}}" style="display:block;width:100%;max-width:600px;height:440px;object-fit:cover;object-position:center;">
     </td>
   </tr>
   <tr>
     <td style="padding:0 50px 48px;text-align:center;position:relative;">
-      <!-- ACCENT_ILLO: faint brand illustration behind the plate (background-image — never a broken <img>) -->
-      <div class="eh-illo" style="position:absolute;right:24px;bottom:18px;width:120px;height:120px;background:url('{{ASSETS_BASE}}/HandFlower_Black.png') no-repeat center/contain;opacity:0.08;"></div>
+      <!-- ACCENT_ILLO: faint brand illustration behind the plate (background-image — never a broken <img>).
+           componentLevers removes this node entirely when ACCENT_ILLO=off; when on, the inline
+           display:block keeps it visible even in a client that drops <style> blocks. -->
+      <div class="eh-illo" style="display:block;position:absolute;right:24px;bottom:18px;width:120px;height:120px;background:url('{{ASSETS_BASE}}/HandFlower_Black.png') no-repeat center/contain;opacity:0.08;"></div>
       <!-- Editorial plate — pulled up over the photo (the layering) -->
       <div class="eh-plate" style="position:relative;margin:-88px auto 0;max-width:472px;background:#ffffff;border:1px solid #e8e2da;padding:42px 44px 44px;text-align:center;">
         <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:9px;letter-spacing:.20em;text-transform:uppercase;color:#aaaaaa;margin:0 0 14px 0;">{{SUPER_LABEL}}</p>

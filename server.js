@@ -8,6 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const { buildSchema } = require('./lib/parseTemplates');
 const render = require('./lib/render');
+const emailImages = require('./lib/emailImages');
+const exportTargets = require('./lib/exportTargets');
 const klaviyo = require('./lib/klaviyo');
 const images = require('./lib/imageOptimiser');
 const { validateCampaign } = require('./lib/validate');
@@ -272,12 +274,56 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // Export is the *production* HTML — the thing that gets pushed to Klaviyo — so the footer
-    // keeps its real merge tags. The preview substitution ({% unsubscribe %} → "unsubscribe
-    // here") is for the on-screen iframe only; leaking it into the export shipped emails whose
-    // unsubscribe link was inert text.
+    // Export is the *production* HTML — the thing that gets pushed to Klaviyo or pasted into a
+    // Resend broadcast — so the footer keeps its real provider tags. The preview substitution
+    // ({% unsubscribe %} → "unsubscribe here") is for the on-screen iframe only; leaking it into
+    // the export shipped emails whose unsubscribe link was inert text.
+    //
+    // `target` selects the provider dialect. It defaults to "klaviyo", whose output must remain
+    // byte-for-byte unchanged apart from the email-image crop fix. `designId` loads the saved
+    // design's campaign (and its subject/preview lines) so {"designId":"…"} is a real export
+    // rather than a 200 with an empty shell.
     if (req.method === 'POST' && p === '/api/export') {
-      const { campaign, previewText } = await readBody(req);
+      const body = await readBody(req);
+      let { campaign, previewText, subjectLine, designId } = body;
+
+      let target;
+      try {
+        target = exportTargets.normalizeTarget(body.target);
+      } catch (e) {
+        return json(res, 400, { error: String(e.message || e), code: e.code || 'INVALID_EXPORT_TARGET' });
+      }
+
+      const hasBlocks = (c) => !!(c && Array.isArray(c.blocks) && c.blocks.length);
+      const hasText = (v) => v != null && String(v).trim() !== '';
+      let design = null;
+      // Load the saved design when it supplies the campaign body, or (on the Resend path) the
+      // subject/preview lines the body omitted. A body campaign + designId combination still gets
+      // the design's metadata.
+      const needCampaign = !hasBlocks(campaign);
+      const needResendMeta = target === 'resend' && (!hasText(subjectLine) || !hasText(previewText));
+      if (designId && (needCampaign || needResendMeta)) {
+        try { design = await designs.get(designId); } catch (_) { /* fall through to the 400 */ }
+        if (design && needCampaign && hasBlocks(design.campaign)) campaign = design.campaign;
+      }
+      if (!hasBlocks(campaign)) {
+        return json(res, 400, {
+          error: 'No campaign blocks to export. Pass a `campaign` with blocks, or a `designId` whose saved design has blocks.',
+        });
+      }
+
+      // Request → saved-design metadata → campaign, in that order. A designId's top-level
+      // subjectLine/previewText are the source of truth (the campaign copy inside it can be
+      // stale), and only the Resend path auto-resolves these: the default Klaviyo output must
+      // not gain a preheader/title it did not have.
+      const firstText = (...values) => {
+        for (const v of values) if (v != null && String(v).trim() !== '') return String(v);
+        return '';
+      };
+      const resolvedSubject = firstText(subjectLine, design && design.subjectLine, campaign.subjectLine);
+      const resolvedPreview = firstText(previewText, design && design.previewText, campaign.previewText);
+      if (target === 'resend') previewText = resolvedPreview;
+
       // previewText (optional) is baked into the shell as a hidden preheader so manually
       // pasted exports control their inbox snippet the same way the sliced push does.
       //
@@ -287,22 +333,56 @@ const server = http.createServer(async (req, res) => {
       // verbatim and every bundled illustration 404'd in the sent email.
       const assetsBase = assetsBaseFor(req);
       // `shell: 'production'` is the point of this endpoint: the HTML leaves here to be pasted
-      // into Klaviyo and sent. The preview shell embeds ~263KB of base64 font before any copy,
-      // which puts the document past Gmail's ~102KB clip inside the <head> — the reader gets
-      // "[Message clipped]" and the unsubscribe tag never renders — and it declares no
+      // into Klaviyo/Resend and sent. The preview shell embeds ~263KB of base64 font before any
+      // copy, which puts the document past Gmail's ~102KB clip inside the <head> — the reader
+      // gets "[Message clipped]" and the unsubscribe tag never renders — and it declares no
       // color-scheme, so the email inverts in dark mode as a patchwork of designed slices and
       // flipped live HTML. shell-production.html exists for exactly these reasons.
-      const { html, unfilled } = render.assemble(campaign || {}, { assetsBase, production: true, shell: 'production', previewText });
-      const validation = validateCampaign(campaign || {}, schema());
-      // Export is the artefact that gets pasted into Klaviyo, so a surviving {{TOKEN}} is a
-      // hole in a sent email, not a note in a report. Fail the request rather than hand back
-      // HTML that looks complete.
-      const unresolved = [...new Set((html.match(/\{\{\s*[A-Z0-9_]+\s*\}\}/g) || []))];
+      const assembleOpts = { assetsBase, production: true, shell: 'production', previewText };
+      // Resend's <title> is the subject line; Klaviyo's is the campaign name. Pass an override
+      // instead of mutating the campaign (the saved design must never be rewritten).
+      if (target === 'resend') assembleOpts.campaignName = resolvedSubject || campaign.campaignName || 'Untitled campaign';
+
+      let assembled = render.assemble(campaign, assembleOpts);
+
+      // Read the intrinsic size of every Shopify image that needs a crop, then assemble again so
+      // the requested width is capped at the source width. The first pass is never exported.
+      const primed = await emailImages.primeHtml(assembled.html);
+      if (primed.fetched > primed.failed) assembled = render.assemble(campaign, assembleOpts);
+
+      let { html, unfilled, imageIssues } = assembled;
+      if (target === 'resend') {
+        html = exportTargets.applyResendFooter(html);
+        // Resend parses template tags inside HTML comments, and developer docs have no business
+        // in a sent email. Never do this on the Klaviyo path — that output is byte-stable.
+        // keepConditionals is Resend-only: the downlevel-revealed markers must survive so Outlook
+        // hides the HTML button fallback while it paints the VML roundrect.
+        html = render.stripDocComments(html, { keepConditionals: true });
+      }
+
+      const validation = validateCampaign(campaign, schema(), { target });
+      // Export is the artefact that gets sent, so a surviving {{TOKEN}} is a hole in a sent
+      // email, not a note in a report. Fail the request rather than hand back HTML that looks
+      // complete. Triple-brace provider tags ({{{RESEND_UNSUBSCRIBE_URL}}}) are resolved by the
+      // provider at send time and are NOT unresolved tokens.
+      const unresolved = exportTargets.unresolvedTokens(html);
       if (unresolved.length) {
         return json(res, 422, {
           error: `Export aborted: ${unresolved.length} unresolved template token(s) would ship in the HTML.`,
           code: 'UNRESOLVED_TOKENS', unresolved, unfilled, validation,
         });
+      }
+      // The uppercase-only gate above is the Klaviyo contract. Resend also understands neither
+      // Liquid block tags nor lowercase Klaviyo merge tags, so a Resend artefact may not ship
+      // them either — fail with the offending tag named rather than return 200 with raw syntax.
+      if (target === 'resend') {
+        const leftover = exportTargets.leftoverKlaviyoTags(html);
+        if (leftover.length) {
+          return json(res, 422, {
+            error: `Export aborted: ${leftover.length} unresolved Klaviyo template tag(s) would ship in a Resend email.`,
+            code: 'UNRESOLVED_KLAVIYO_TAGS', unresolved: leftover, unfilled, validation,
+          });
+        }
       }
       // A host only this machine can resolve is the same defect as an unfilled token, minus the
       // evidence: the markup is well-formed, the gate above passes it, and the images are dead
@@ -315,7 +395,12 @@ const server = http.createServer(async (req, res) => {
           code: 'UNREACHABLE_ASSET_BASE', assetsBase, unfilled, validation,
         });
       }
-      return json(res, 200, { html, unfilled, validation, campaign, missingGlyphs: glyphs.auditCampaign(campaign || {}, schema()) });
+      return json(res, 200, {
+        html, unfilled, validation, campaign, target,
+        subjectLine: resolvedSubject, previewText,
+        imageIssues,
+        missingGlyphs: glyphs.auditCampaign(campaign, schema()),
+      });
     }
 
     // Rasterise every block to its own PNG ("slices"). Also returns each block's default
