@@ -327,7 +327,7 @@ const server = http.createServer(async (req, res) => {
       const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
       const { slices, brokenImages } = await render.renderSlices(html, { scale: optCfg.scale });
       const meta = render.assembleBlocks(campaign || {});
-      const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
+      const htmlOnly = [...((schema().assembly && schema().assembly.html_only_components) || []), 'story', 'testimonial'];
       // A block that stays live HTML (footer/unsubscribe, html_only components) is still
       // rasterised here so the preview grid can show it, but it is never uploaded to Klaviyo —
       // so it must not count toward the weight total the push endpoint budgets against.
@@ -401,9 +401,8 @@ const server = http.createServer(async (req, res) => {
       }catch(e){return json(res,e.status||503,{errorCode:e.status?e.message:'EXPORT_UNAVAILABLE'});}
     }
 
-    // Create a *draft* campaign in Klaviyo, built from per-block image slices so each block
-    // becomes its own image with its own link (never one giant PNG). The footer stays live
-    // HTML so its {% unsubscribe %} tag works. `links` is an optional {index: url} override.
+    // Create a *draft* campaign using live HTML for copy/interactive blocks and
+    // per-block images for designed content. The footer keeps its unsubscribe tag. `links` is an optional {index: url} override.
     if (req.method === 'POST' && p === '/api/klaviyo-draft') {
       const { campaign: bodyCampaign, listId, fromEmail, fromLabel, replyToEmail, subject, previewText, links, designId } = await readBody(req);
       const apiKey = process.env.KLAVIYO_API_KEY;
@@ -443,24 +442,23 @@ const server = http.createServer(async (req, res) => {
       const assetsBase = assetsBaseFor(req);
       const linkOverride = links || {};
       try {
-        const optCfg = images.config();
-        // 1. Rasterise each block from the production-shelled, block-marked HTML.
-        const { html: markedHtml } = render.assemble(campaign, { assetsBase, production: true, markBlocks: true });
-        const { slices: rendered } = await render.renderSlices(markedHtml, { scale: optCfg.scale });
-
-        // 1a. Work out which blocks stay live HTML (footer/unsubscribe, html_only components —
-        //     see the rows loop below) *before* optimising, so their slices are excluded from
-        //     the weight budget. Every block still gets rasterised (renderSlices doesn't know
-        //     about html_only), but a block that never reaches Klaviyo as an image must not
-        //     count toward, or be able to trip, the budget that gates what does.
+        // Resolve publish mode before rasterisation or any Klaviyo request. Recipient
+        // tags must never become pixels; story and testimonial keep selectable copy.
         const meta = render.assembleBlocks(campaign, { assetsBase });
-        // Blocks declared html_only in the manifest stay LIVE HTML (never sliced), so a
-        // multi-link block keeps all its anchors — e.g. blocks/journal-tile's 2–3 per-tile
-        // post links. Slicing would flatten the block to one PNG with a single click-through.
-        const htmlOnly = (schema().assembly && schema().assembly.html_only_components) || [];
+        const htmlOnly = [...((schema().assembly && schema().assembly.html_only_components) || []), 'story', 'testimonial'];
         const notUploadedIndexes = new Set(meta.blocks
           .filter((b) => render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly))
           .map((b) => b.index));
+        // ASSETS_BASE is a builder resource token, resolved by applyTokens before pixels.
+        // Resolve it in the raw token scan too; recipient tags must still be refused.
+        for (const b of meta.blocks) {
+          if (!notUploadedIndexes.has(b.index) && /\{\{[\s\S]*?\}\}/.test(render.stripDocComments(b.html) + JSON.stringify(b.tokens).split('{{ASSETS_BASE}}').join(assetsBase))) {
+            return json(res, 422, { error: `Refusing to rasterise ${b.component} (block ${b.index}): source contains a {{ ... }} merge tag. Use a live HTML component.`, code: 'MERGE_TAG_IN_IMAGE_SLICE' });
+          }
+        }
+        const optCfg = images.config();
+        const { html: markedHtml } = render.assemble(campaign, { assetsBase, production: true, markBlocks: true });
+        const { slices: rendered } = await render.renderSlices(markedHtml, { scale: optCfg.scale, skipIndexes: [...notUploadedIndexes] });
 
         // 1b. Optimise every rasterised slice and enforce the weight budget against only the
         //     bytes that will actually reach Klaviyo. Nothing that is uploaded skips this stage
@@ -502,14 +500,24 @@ const server = http.createServer(async (req, res) => {
           // fails the ENTIRE template's render (400), and footer's comment would emit a second,
           // invisible {% unsubscribe %}. Strip the author docs on the way out (sliced blocks get
           // this for free — the comment is rasterised away).
-          if (render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly)) { rows.push(render.stripDocComments(b.html)); continue; }
+          if (render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly)) {
+            let liveHtml = render.stripDocComments(b.html);
+            // A blank story headline must not erase the portrait description. Reuse
+            // supplied copy; recipient tags remain untouched in the live paragraph.
+            if (b.component === 'blocks/story') {
+              const portraitAlt = b.tokens.PORTRAIT_IMAGE_ALT || b.tokens.IMAGE_ALT || b.tokens.HEADLINE || b.tokens.BODY_P2 || '';
+              const escaped = String(portraitAlt).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+              liveHtml = liveHtml.replace(/(<img\b[^>]*\balt=)""/gi, (_match, prefix) => `${prefix}"${escaped}"`);
+            }
+            rows.push(liveHtml); continue;
+          }
           const segs = segmentsByIndex[b.index];
           if (!segs || !segs.length) { rows.push(render.stripDocComments(b.html)); continue; } // fallback: live HTML if no slice
           const href = (Object.prototype.hasOwnProperty.call(linkOverride, b.index) ? linkOverride[b.index] : render.deriveLink(b.tokens)) || '';
           // Alt text comes from the block's own copy tokens, never the component name — an
           // internal identifier in the first slice's alt is what the Gmail snippet scraper
           // leads with when it walks the body.
-          const alt = render.deriveAlt(b.tokens);
+          const alt = render.deriveAlt(b.tokens) || render.visibleText(b.html);
           // A column-split block (one partial-width GIF with content beside it, e.g.
           // blocks/image-text with an animated image) recomposes into ONE row of side-by-side
           // cells: PNG column(s) uploaded as usual, the GIF column referenced live so it keeps
@@ -535,7 +543,7 @@ const server = http.createServer(async (req, res) => {
             // to its own post URL. The whole slice row is the link (the padding is clickable too).
             const isRegion = s.name != null;
             const rowHref = isRegion ? (s.href || '') : href;
-            const rowAlt = isRegion ? (s.alt || '') : alt;
+            const rowAlt = s.alt || alt;
             if (s.kind === 'gif') {
               rows.push(klaviyo.imageRow(s.src, { href: rowHref, alt: rowAlt }));
               continue;
