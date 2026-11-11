@@ -5,15 +5,16 @@ TOKENS:
   {{REVIEWER_NAME}}  — e.g. "Emily T., Melbourne"
 RULES:
   - Background #EBE5DF is locked
-  - Face2 illustration bottom-right is locked
+  - Face2 is a faded bottom-right CSS background decoration; Outlook Word and unsupported clients show none.
+  - Keep gradient + URL in one declaration, with no URL-only fallback or HTML background attribute.
   - No quotation mark — stars sit above text
 -->
 <tr><td>
 <table class="f600" width="600" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e8e2da;">
   <tr>
-    <td class="sp" align="center" style="padding:48px 64px;background:#EBE5DF;text-align:center;position:relative;overflow:hidden;">
-      <!-- Face2 illustration — bottom-right, locked -->
-      <!--[if !mso]><!--><img src="{{ASSETS_BASE}}/Face2_Black.png" alt="" style="position:absolute;right:-16px;bottom:-20px;height:200px;width:auto;opacity:0.11;display:block;"><!--<![endif]-->
+    <td class="sp testimonial-face2" align="center" style="padding:48px 64px;background-color:#EBE5DF;text-align:center;position:relative;overflow:hidden;background-position:0 0,right -16px bottom -20px;background-size:100% 100%,auto 200px;background-repeat:no-repeat;">
+      <!-- Optional Face2: delete the single style line below to disable. Keep embedded to avoid Gmail Android's inline gradient rewrite; never add a URL-only fallback. -->
+      <style>.testimonial-face2{background-image:linear-gradient(rgba(235,229,223,0.89),rgba(235,229,223,0.89)),url('{{ASSETS_BASE}}/Face2_Black.png');}</style>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:14px;color:#C8A888;letter-spacing:.10em;margin:0 0 20px 0;position:relative;z-index:1;">{{REVIEW_STARS}}</p>
       <p style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:300;font-size:14px;color:#333333;font-style:italic;line-height:1.8;max-width:400px;margin:0 auto 16px auto;position:relative;z-index:1;">{{REVIEW_TEXT}}</p>
       <cite style="font-family:'NeuzeitGro','Gill Sans','Gill Sans MT',Calibri,sans-serif;font-weight:700;font-size:11px;letter-spacing:.06em;color:#999999;font-style:normal;display:block;position:relative;z-index:1;">{{REVIEWER_NAME}}</cite>

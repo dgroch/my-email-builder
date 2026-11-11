@@ -408,7 +408,7 @@
         }
       ]
     },
-    "sha256": "466f2b5ddd2b2b6ac342ffb7b77ec021e1790f33db5697753a4bff9d43c51db6"
+    "sha256": "81a642c50fe8789e720532ff8dab7b95468dd0d85786da07c06d33dfbe8e8526"
   },
   {
     "component": "dividers/divider-illo-50clay",
@@ -1112,7 +1112,7 @@
         }
       ]
     },
-    "sha256": "0248f15e02262d5350b1e2843052fceeeea63009d1d4559f60d10be1c992509b"
+    "sha256": "9a739a3fa308b3bbff1730c30a33b43ef41840bb144d3dc9cf249e0d54edb026"
   },
   {
     "component": "sections/three-column-steps-50clay",

@@ -1,5 +1,5 @@
 'use strict';
-// Refresh only the samples changed by R3. Preserve historical intentional differences
+// Refresh only the samples changed by R3/R4. Preserve historical intentional differences
 // in the 207 baselines and 212's original component set/source revision.
 const fs = require('fs');
 const os = require('os');
@@ -12,7 +12,7 @@ process.env.DATA_DIR = path.join(scratch, 'data');
 const render = require('../lib/render');
 const sample = require('../lib/sampleData');
 const schema = require('../lib/parseTemplates').buildSchema(render.DS);
-const names = ['products/card-single-testimonial', 'sections/testimonial'];
+const names = ['products/card-single-testimonial', 'sections/testimonial', 'blocks/story'];
 try {
   for (const file of ['207-p1', '207-p2']) {
     const target = path.join(root, 'test/fixtures', file + '-baseline.json');

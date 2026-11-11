@@ -33,9 +33,8 @@ test('G-O c: every image has alt; slices/content have non-empty alt; only locked
   const { images } = inspect(captured.html);
   assert.ok(images.length > 0);
   // Exact design-system URLs only: a content/upload URL with the same filename
-  // cannot qualify. These three locked illustrations are documented in templates.
+  // cannot qualify. These two locked illustrations are documented in templates.
   const decorativeAssets = new Set([
-    'https://cdn.example.com/Face2_Black.png',
     'https://cdn.example.com/HandRose_White.png',
     'https://cdn.example.com/BodyFlower_White_wide.png',
   ]);
@@ -48,7 +47,7 @@ test('G-O c: every image has alt; slices/content have non-empty alt; only locked
       assert.ok(img.alt === '' || img.alt.trim(), `Whitespace-only alt: ${img.src}`);
     }
   }
-  assert.ok(images.some(img => img.src === 'https://cdn.example.com/Face2_Black.png' && img.alt === ''), 'Face2 keeps its decorative empty alt');
+  assert.ok(!images.some(img => /Face2_Black/.test(img.src)), 'Face2 is a CSS decoration, never an img');
   const block = fixture.campaign.blocks.find(b => b.component === 'products/card-feature');
   assert.ok(images.some(img => img.alt === block.tokens.IMAGE_ALT));
 });
@@ -81,10 +80,10 @@ const outlook = html => html
   .replace(/<!--\[if !mso\]><!-->[\s\S]*?<!--<!\[endif\]-->/gi, '')
   .replace(/<!--\[if (?:mso|gte mso 9)\]>([\s\S]*?)<!\[endif\]-->/gi, '$1');
 function assertFaceHidden(html, frozen = false) {
-  assert.match(html, /<!--\[if !mso\]><!-->\s*<img\b[^>]*>\s*<!--<!\[endif\]-->/);
-  if (!frozen) assert.match(html, /<!--\[if !mso\]><!-->\s*<img\b[^>]*Face2_Black\.png[^>]*>\s*<!--<!\[endif\]-->/);
-  assert.doesNotMatch(outlook(html), /Face2_Black/);
-  assert.doesNotMatch(outlook(html), /<img\b[^>]*opacity:0\.11/);
+  assert.doesNotMatch(html, /<img\b[^>]*Face2_Black/);
+  assert.match(html, /background-image:linear-gradient\(rgba\(235,229,223,0\.89\),rgba\(235,229,223,0\.89\)\),url\(/);
+  assert.doesNotMatch(html, /\sbackground\s*=/);
+  if (!frozen) assert.match(html, /<style>\.testimonial-face2\{background-image:linear-gradient/);
 }
 function savedDesign() {
   return { id: 'send8-r3', updatedAt: '2026-11-12T00:00:00Z', name: 'Send 8',
@@ -95,12 +94,12 @@ async function freeze(design = savedDesign()) {
   const png = await require('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer();
   return assembly.freezeSavedDesign(design, { loadImage: async () => png });
 }
-test('R3 1: Face2 is non-MSO only in captured push, comment stripper and export inliner', () => {
+test('R3 1: Face2 background survives captured push, comment stripper and export inliner', () => {
   assertFaceHidden(captured.html);
   const html = render.assembleBlocks(fixture.campaign).blocks.find(b => b.component === 'sections/testimonial').html;
   assertFaceHidden(render.stripDocComments(html));
-  assertFaceHidden(assembly.inlineStyleElements(render.stripDocComments(html)));
-  assert.doesNotMatch(render.applyOutlookDegradation(captured.html), /Face2_Black/);
+  assertFaceHidden(assembly.inlineStyleElements(render.stripDocComments(html)), true);
+  assert.match(render.applyOutlookDegradation(captured.html), /background-image: none !important/);
 });
 test('R3 2: manifest controls story/testimonial publication and honest Outlook risk', () => {
   const list = require('../design-system/manifest.json').assembly.html_only_components;
@@ -161,7 +160,7 @@ test('R3 6: freeze send 8 preserves exact live greeting; image-bound merge still
   design.campaign.blocks.find(b => b.component === 'blocks/editorial-hero').tokens.HEADLINE = '{# x #}';
   await assert.rejects(freeze(design), /Unsupported dynamic template/);
 });
-test('R3 1 publication: frozen artifact retains MSO markers and exact greeting in live rows', async () => {
+test('R3 1 publication: frozen artifact preserves greeting and fails closed on live CSS assets', async () => {
   const design = savedDesign();
   // Isolate publication of testimonial and greeting from the existing engine
   // restriction on story's CSS background asset. R3 6 freezes the exact fixture.
@@ -173,10 +172,9 @@ test('R3 1 publication: frozen artifact retains MSO markers and exact greeting i
   const png = await require('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer();
   render.renderSlices = async () => ({ slices: frozen.rendered.blocks.filter(b => !b.live && !b.footer).map(b => ({ index: b.index, buffer: png, width: 600, height: 2, kind: 'png' })), brokenImages: [] });
   try {
-    const { artifact } = await assembly.renderFrozenArtifact(frozen);
-    const html = artifact.rows.filter(r => r.kind === 'live').map(r => r.html).join('\n');
-    assertFaceHidden(html, true);
-    assert.ok(html.includes('Hi {{ first_name|default:"there" }},'));
+    assert.ok(frozen.rendered.blocks.some(b => b.live && b.html.includes('Hi {{ first_name|default:"there" }},')));
+    // Face2 now shares story's existing CSS asset export limitation. Fail closed.
+    await assert.rejects(assembly.renderFrozenArtifact(frozen), /LIVE_CSS_ASSET_UNSUPPORTED/);
   } finally { render.renderSlices = original; }
 });
 test('R3 minor: capture restores environment', async () => {
@@ -185,4 +183,42 @@ test('R3 minor: capture restores environment', async () => {
   for (const key of new Set([...Object.keys(before), ...Object.keys(process.env)])) {
     assert.ok(process.env[key] === before[key], `${key} must be restored`);
   }
+});
+
+for (const variant of ['normal', 'gmail', 'gmail-nobg']) test(`R4 render ${variant}: testimonial preserves desktop and mobile height in isolated and full send 8`, async () => {
+  const { gmailSimulation, measure, localFace } = require('./helpers/g-o-client-render');
+  const browser = await require('puppeteer').launch({ headless: 'new', executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox', '--disable-dev-shm-usage'] });
+  try {
+    const page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on('request', r => r.url().startsWith('data:') ? r.continue() : r.abort());
+    const isolated = render.assemble({ blocks: fixture.campaign.blocks.filter(b => b.component === 'sections/testimonial') }, { assetsBase: 'https://cdn.example.com' }).html;
+    for (const source of [isolated, captured.html]) {
+      const simulated = variant === 'normal' ? source : gmailSimulation(source, variant === 'gmail-nobg');
+      if (variant !== 'normal') assert.doesNotMatch(simulated, /(?<![\w-])(?:position|top|right|bottom|left|z-index)\s*:/i);
+      const html = localFace(simulated);
+      for (const width of [600, 390]) {
+        const result = await measure(page, html, width);
+        assert.ok(Math.abs(result.height - (width === 600 ? 192 : 217)) <= 1, `${variant} ${width}: ${result.height}px`);
+        assert.equal(result.faceImages, 0);
+        if (variant === 'gmail-nobg') assert.equal(result.backgroundImage, 'none');
+        else {
+          assert.match(result.backgroundImage, /^linear-gradient\(.*\), url\(/);
+          assert.match(result.backgroundRepeat, /^no-repeat/);
+          assert.match(result.backgroundPosition, /100% \+ 16px.*100% \+ 20px/);
+          assert.equal(result.backgroundSize, '100% 100%, auto 200px');
+          assert.match(result.backgroundPosition, /^0px 0px, /); // Overlay covers every pixel of the cell.
+        }
+      }
+    }
+    // An unsupported gradient invalidates the complete list, never retaining URL alone.
+    await page.setContent('<table><tr><td style="background:#EBE5DF;background-image:unsupported-gradient(red,red),url(data:image/png;base64,AA);">x</td></tr></table>');
+    assert.equal(await page.$eval('td', e => getComputedStyle(e).backgroundImage), 'none');
+  } finally { await browser.close(); }
+});
+for (const component of ['sections/testimonial', 'blocks/story']) test(`R4 outlookRisks: detects background image in ${component}`, () => {
+  const risk = render.outlookRisks(fixture.campaign).find(r => r.component === component);
+  assert.equal(risk.atRisk, true);
+  assert.equal(risk.rasterisedOnPublish, false);
+  assert.ok(risk.unsupported.some(r => r.property === 'background-image'), component);
 });

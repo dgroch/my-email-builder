@@ -559,7 +559,7 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
   const schemaCampaign = { blocks: schema.components.map((c) => ({ component: c.name, tokens: {} })) };
   const atRisk = render.outlookRisks(schemaCampaign).filter((r) => r.atRisk);
   eq(atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort().join(' | '),
-    'blocks/story: box-shadow+object-fit+opacity+padding on <a>+position:absolute+position:relative+transform | sections/testimonial: max-width+position:relative',
+    'blocks/story: background-image+box-shadow+object-fit+opacity+padding on <a>+position:absolute+position:relative+transform | sections/testimonial: background-image+max-width+position:relative',
     'live story/testimonial report their remaining Outlook risks');
 }
 
