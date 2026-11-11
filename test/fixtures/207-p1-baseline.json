@@ -934,12 +934,12 @@
             "PRODUCT_URL": "https://figandbloom.com/products/lucerne",
             "REVIEW_STARS": "★★★★★",
             "REVIEW_TEXT": "Ordered from interstate for my mum and they were perfect — the note made her cry (the good kind).",
-            "REVIEWER_NAME": "— Sarah, Brisbane"
+            "REVIEWER_NAME": "Sarah, Brisbane"
           }
         }
       ]
     },
-    "sha256": "3350906cb42aaf6c93b7301e48e68a946e7c7b5731946df5b9d9829db707d38a"
+    "sha256": "7a4b95b969e343b584e2c66d2dbe6767c50d696411b86727afdd03ba938a7fb2"
   },
   {
     "component": "sections/body-copy",
@@ -1107,12 +1107,12 @@
           "tokens": {
             "REVIEW_STARS": "★★★★★",
             "REVIEW_TEXT": "Ordered from interstate and they were perfect — the note made her cry (the good kind).",
-            "REVIEWER_NAME": "— Sarah, Brisbane"
+            "REVIEWER_NAME": "Sarah, Brisbane"
           }
         }
       ]
     },
-    "sha256": "58a4a2ddd3c7e0ed888966a79798758d28426fb4481b16b72ed50e8aa3f715a7"
+    "sha256": "0248f15e02262d5350b1e2843052fceeeea63009d1d4559f60d10be1c992509b"
   },
   {
     "component": "sections/three-column-steps-50clay",

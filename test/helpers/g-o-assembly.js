@@ -13,6 +13,8 @@ const fixture = require('../fixtures/send8-marseille-403fdc24.json');
 
 async function capturePush(campaign = structuredClone(fixture.campaign), options = {}) {
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'eb-go-'));
+  const envKeys = ['DATA_DIR', 'KLAVIYO_API_KEY', 'PUBLIC_ASSETS_BASE', 'IMAGE_OPT_CACHE', 'DATABASE_URL', 'NOTION_TOKEN', 'NOTION_DESIGNS_DB'];
+  const savedEnv = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));
   // This helper is used only in dedicated test/script processes; never load integrations.
   process.env.DATA_DIR = scratch;
   process.env.KLAVIYO_API_KEY = 'offline-test-key';
@@ -88,6 +90,10 @@ async function capturePush(campaign = structuredClone(fixture.campaign), options
     https.request = originalRequest;
     global.fetch = originalFetch;
     await require('../../lib/db').close();
+    for (const key of envKeys) {
+      if (savedEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = savedEnv[key];
+    }
     fs.rmSync(scratch, { recursive: true, force: true });
   }
 }

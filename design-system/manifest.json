@@ -26,15 +26,16 @@
       "card-live",
       "card-feature",
       "text-band",
-      "top-line"
+      "top-line",
+      "story",
+      "testimonial"
     ],
     "slice_components": [
       "header",
       "all hero variants (including hero-image-only)",
       "all product cards except card-live",
-      "all designed blocks (blocks/*)",
+      "all designed blocks except story (blocks/*)",
       "body-copy",
-      "testimonial",
       "upsell-noir",
       "trust-bar",
       "divider-illo-*"

@@ -71,3 +71,118 @@ test('G-O e: real rasterizer excludes live block indexes from screenshots', asyn
     assert.ok(slices[0].buffer.length > 0);
   } finally { await render.closeBrowser(); }
 });
+
+// R3 regressions intentionally use public entry points so they also run on 9da60db5.
+const fs = require('node:fs');
+const path = require('node:path');
+const render = require('../lib/render');
+const assembly = require('../lib/publishAssembly');
+const outlook = html => html
+  .replace(/<!--\[if !mso\]><!-->[\s\S]*?<!--<!\[endif\]-->/gi, '')
+  .replace(/<!--\[if (?:mso|gte mso 9)\]>([\s\S]*?)<!\[endif\]-->/gi, '$1');
+function assertFaceHidden(html, frozen = false) {
+  assert.match(html, /<!--\[if !mso\]><!-->\s*<img\b[^>]*>\s*<!--<!\[endif\]-->/);
+  if (!frozen) assert.match(html, /<!--\[if !mso\]><!-->\s*<img\b[^>]*Face2_Black\.png[^>]*>\s*<!--<!\[endif\]-->/);
+  assert.doesNotMatch(outlook(html), /Face2_Black/);
+  assert.doesNotMatch(outlook(html), /<img\b[^>]*opacity:0\.11/);
+}
+function savedDesign() {
+  return { id: 'send8-r3', updatedAt: '2026-11-12T00:00:00Z', name: 'Send 8',
+    subjectLine: fixture.campaign.subjectLine, previewText: fixture.campaign.previewText,
+    campaign: structuredClone(fixture.campaign) };
+}
+async function freeze(design = savedDesign()) {
+  const png = await require('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer();
+  return assembly.freezeSavedDesign(design, { loadImage: async () => png });
+}
+test('R3 1: Face2 is non-MSO only in captured push, comment stripper and export inliner', () => {
+  assertFaceHidden(captured.html);
+  const html = render.assembleBlocks(fixture.campaign).blocks.find(b => b.component === 'sections/testimonial').html;
+  assertFaceHidden(render.stripDocComments(html));
+  assertFaceHidden(assembly.inlineStyleElements(render.stripDocComments(html)));
+  assert.doesNotMatch(render.applyOutlookDegradation(captured.html), /Face2_Black/);
+});
+test('R3 2: manifest controls story/testimonial publication and honest Outlook risk', () => {
+  const list = require('../design-system/manifest.json').assembly.html_only_components;
+  for (const name of ['story', 'testimonial']) assert.ok(list.includes(name), name);
+  const risks = render.outlookRisks(fixture.campaign);
+  for (const component of ['blocks/story', 'sections/testimonial']) {
+    const risk = risks.find(r => r.component === component);
+    assert.ok(risk, component);
+    assert.equal(risk.rasterisedOnPublish, false);
+    assert.equal(risk.atRisk, true);
+  }
+  const testimonial = risks.find(r => r.component === 'sections/testimonial');
+  assert.ok(!testimonial.unsupported.some(r => ['position:absolute', 'opacity'].includes(r.property)));
+  assert.ok(testimonial.unsupported.some(r => r.property === 'max-width'));
+  const source = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+  assert.doesNotMatch(source, /htmlOnly\s*=.*['"]story['"].*['"]testimonial['"]/);
+});
+for (const [label, value] of [
+  ['control', '{% if first_name %}Hi {{ first_name }}{% endif %}'],
+  ['comment', '{# x #}'],
+  ['numeric', '&#123;&#123; first_name &#125;&#125;'],
+  ['named', '&lbrace;&lbrace; x &rbrace;&rbrace;'],
+  ['hex', '&#X7B;&#x7b; first_name &#125;&#125;'],
+  ['percent', '&lcub;&percnt; if first_name %}Hi{% endif %}'],
+  ['numeric-percent', '&#123;&#37; if first_name %}Hi{% endif %}'],
+]) test(`R3 3 ${label}: image merge tags refuse before rendering or HTTPS`, async () => {
+  const campaign = structuredClone(fixture.campaign);
+  campaign.blocks.find(b => b.component === 'blocks/editorial-hero').tokens.HEADLINE = value;
+  const result = await capturePush(campaign);
+  assert.equal(result.response.status, 422);
+  assert.equal(result.response.body.code, 'MERGE_TAG_IN_IMAGE_SLICE');
+  assert.deepEqual(result.requests, []);
+  assert.deepEqual(result.rasterized, []);
+  assert.equal(result.html, undefined);
+});
+test('R3 4: missing builder SUBHEADLINE has its own actionable error', async () => {
+  const campaign = structuredClone(fixture.campaign);
+  delete campaign.blocks.find(b => b.component === 'blocks/editorial-hero').tokens.SUBHEADLINE;
+  const result = await capturePush(campaign);
+  assert.equal(result.response.status, 422);
+  assert.equal(result.response.body.code, 'UNRESOLVED_TOKENS');
+  assert.deepEqual(result.response.body.tokens, ['SUBHEADLINE']);
+  assert.match(result.response.body.error, /Supply.*token values/);
+  assert.deepEqual(result.requests, []);
+});
+test('R3 5: reviewer samples have no leading dash', () => {
+  const schema = require('../lib/parseTemplates').buildSchema(render.DS);
+  for (const component of ['products/card-single-testimonial', 'sections/testimonial']) {
+    const sample = require('../lib/sampleData').sampleCampaignFor(schema.components.find(c => c.name === component));
+    assert.equal(sample.blocks[0].tokens.REVIEWER_NAME, 'Sarah, Brisbane');
+  }
+});
+test('R3 6: freeze send 8 preserves exact live greeting; image-bound merge still rejects', async () => {
+  const frozen = await freeze();
+  assert.ok(frozen.rendered.blocks.some(b => b.live && b.html.includes('Hi {{ first_name|default:"there" }},')));
+  assertFaceHidden(frozen.rendered.blocks.find(b => b.component === 'sections/testimonial').html, true);
+  const design = savedDesign();
+  design.campaign.blocks.find(b => b.component === 'blocks/editorial-hero').tokens.HEADLINE = '{# x #}';
+  await assert.rejects(freeze(design), /Unsupported dynamic template/);
+});
+test('R3 1 publication: frozen artifact retains MSO markers and exact greeting in live rows', async () => {
+  const design = savedDesign();
+  // Isolate publication of testimonial and greeting from the existing engine
+  // restriction on story's CSS background asset. R3 6 freezes the exact fixture.
+  const story = design.campaign.blocks.find(b => b.component === 'blocks/story');
+  design.campaign.blocks = design.campaign.blocks.filter(b => b !== story);
+  design.campaign.blocks.find(b => b.component === 'sections/body-copy-plain').tokens.BODY_P1 = story.tokens.BODY_P1;
+  const frozen = await freeze(design);
+  const original = render.renderSlices;
+  const png = await require('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#ffffff' } }).png().toBuffer();
+  render.renderSlices = async () => ({ slices: frozen.rendered.blocks.filter(b => !b.live && !b.footer).map(b => ({ index: b.index, buffer: png, width: 600, height: 2, kind: 'png' })), brokenImages: [] });
+  try {
+    const { artifact } = await assembly.renderFrozenArtifact(frozen);
+    const html = artifact.rows.filter(r => r.kind === 'live').map(r => r.html).join('\n');
+    assertFaceHidden(html, true);
+    assert.ok(html.includes('Hi {{ first_name|default:"there" }},'));
+  } finally { render.renderSlices = original; }
+});
+test('R3 minor: capture restores environment', async () => {
+  const before = { ...process.env };
+  await capturePush();
+  for (const key of new Set([...Object.keys(before), ...Object.keys(process.env)])) {
+    assert.ok(process.env[key] === before[key], `${key} must be restored`);
+  }
+});

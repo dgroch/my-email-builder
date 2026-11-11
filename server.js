@@ -327,7 +327,7 @@ const server = http.createServer(async (req, res) => {
       const { html } = render.assemble(campaign || {}, { assetsBase: '{{ASSETS_BASE}}', markBlocks: true });
       const { slices, brokenImages } = await render.renderSlices(html, { scale: optCfg.scale });
       const meta = render.assembleBlocks(campaign || {});
-      const htmlOnly = [...((schema().assembly && schema().assembly.html_only_components) || []), 'story', 'testimonial'];
+      const htmlOnly = render.htmlOnlyComponents();
       // A block that stays live HTML (footer/unsubscribe, html_only components) is still
       // rasterised here so the preview grid can show it, but it is never uploaded to Klaviyo —
       // so it must not count toward the weight total the push endpoint budgets against.
@@ -445,15 +445,21 @@ const server = http.createServer(async (req, res) => {
         // Resolve publish mode before rasterisation or any Klaviyo request. Recipient
         // tags must never become pixels; story and testimonial keep selectable copy.
         const meta = render.assembleBlocks(campaign, { assetsBase });
-        const htmlOnly = [...((schema().assembly && schema().assembly.html_only_components) || []), 'story', 'testimonial'];
+        const htmlOnly = render.htmlOnlyComponents();
         const notUploadedIndexes = new Set(meta.blocks
           .filter((b) => render.isUnsubscribeBlock(b.component, b.html) || render.isHtmlOnlyComponent(b.component, htmlOnly))
           .map((b) => b.index));
-        // ASSETS_BASE is a builder resource token, resolved by applyTokens before pixels.
-        // Resolve it in the raw token scan too; recipient tags must still be refused.
+        const { hasMergeTags, unresolvedBuilderTokens } = require('./lib/templateTags');
         for (const b of meta.blocks) {
-          if (!notUploadedIndexes.has(b.index) && /\{\{[\s\S]*?\}\}/.test(render.stripDocComments(b.html) + JSON.stringify(b.tokens).split('{{ASSETS_BASE}}').join(assetsBase))) {
-            return json(res, 422, { error: `Refusing to rasterise ${b.component} (block ${b.index}): source contains a {{ ... }} merge tag. Use a live HTML component.`, code: 'MERGE_TAG_IN_IMAGE_SLICE' });
+          if (notUploadedIndexes.has(b.index)) continue;
+          const source = render.stripDocComments(b.html);
+          const missing = unresolvedBuilderTokens(source);
+          if (missing.length) return json(res, 422, {
+            error: `Unresolved builder tokens in ${b.component}: ${missing.join(', ')}. Supply these token values before pushing.`,
+            code: 'UNRESOLVED_TOKENS', tokens: missing,
+          });
+          if (hasMergeTags(source + JSON.stringify(b.tokens).split('{{ASSETS_BASE}}').join(assetsBase))) {
+            return json(res, 422, { error: `Refusing to rasterise ${b.component} (block ${b.index}): source contains a merge tag. Use a live HTML component.`, code: 'MERGE_TAG_IN_IMAGE_SLICE' });
           }
         }
         const optCfg = images.config();
@@ -505,7 +511,7 @@ const server = http.createServer(async (req, res) => {
             // A blank story headline must not erase the portrait description. Reuse
             // supplied copy; recipient tags remain untouched in the live paragraph.
             if (b.component === 'blocks/story') {
-              const portraitAlt = b.tokens.PORTRAIT_IMAGE_ALT || b.tokens.IMAGE_ALT || b.tokens.HEADLINE || b.tokens.BODY_P2 || '';
+              const portraitAlt = b.tokens.IMAGE_ALT || b.tokens.HEADLINE || b.tokens.BODY_P2 || '';
               const escaped = String(portraitAlt).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
               liveHtml = liveHtml.replace(/(<img\b[^>]*\balt=)""/gi, (_match, prefix) => `${prefix}"${escaped}"`);
             }
@@ -579,6 +585,7 @@ const server = http.createServer(async (req, res) => {
           apiKey, listId, fromEmail, fromLabel, replyToEmail, subject: subjectLine, previewText: preview,
           name: meta.campaignName, html: fullHtml,
         });
+        // sliceCount counts optimised raster slices, excluding blocks kept as live HTML.
         return json(res, 200, { ...result, sliceCount: slices.length, imageWeight });
       } catch (e) {
         return json(res, 502, { error: String((e && e.message) || e) });
