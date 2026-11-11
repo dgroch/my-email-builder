@@ -1,0 +1,155 @@
+{
+ "campaign": {
+  "campaignName": "Nov B2 v1.3",
+  "subjectLine": "The purple we'll never put in a bouquet",
+  "previewText": "Jacaranda season is short and the flowers don't travel. Here's what we send instead.",
+  "bodyBg": "#2c2825",
+  "objective": "product_spotlight",
+  "blocks": [
+   {
+    "component": "header",
+    "tokens": {}
+   },
+   {
+    "component": "blocks/editorial-hero",
+    "tokens": {
+     "HERO_IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/6e5860e8-9b4e-4094-9190-39dec1124b91.jpeg",
+     "SUPER_LABEL": "",
+     "ACCENT_SCRIPT": "",
+     "HEADLINE": "The purple we'll never put in a bouquet.",
+     "SUBHEADLINE": "",
+     "CTA_TEXT": "",
+     "CTA_URL": "",
+     "TYPE_SCALE": "regular",
+     "ACCENT_ILLO": "off"
+    }
+   },
+   {
+    "component": "blocks/story",
+    "tokens": {
+     "PORTRAIT_IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/5027e1ea-f17e-4232-b056-3fadfadce61e.jpeg",
+     "SUPER_LABEL": "",
+     "HEADLINE": "",
+     "BODY_P1": "Hi {{ first_name|default:\"there\" }},",
+     "BODY_P2": "Every spring, jacarandas turn whole streets purple for a few weeks. Brisbane's usually go first, then Sydney's. Melbourne's tend to come last, around late November.",
+     "SIGNATURE": "",
+     "CTA_TEXT": "",
+     "CTA_URL": "",
+     "TYPE_SCALE": "regular",
+     "ROTATION": "flat",
+     "ACCENT_ILLO": "off",
+     "PANEL_BG": "#ffffff",
+     "PANEL_TEXT": "#444444",
+     "PANEL_SUB": "#aaaaaa",
+     "PANEL_BORDER": "#e8e2da"
+    }
+   },
+   {
+    "component": "sections/body-copy-plain",
+    "tokens": {
+     "SUPER_LABEL": "",
+     "HEADLINE": "",
+     "BODY_P1": "You'd think a florist would want them. We don't. Jacaranda isn't sold as a cut flower: the trumpets fall within a day or two of cutting, and they bruise easily. They're made for footpaths, not vases.",
+     "BODY_P2": "So we leave them on the trees, for everyone. And for the friend who stops under every one of them, we send the lilac another way."
+    }
+   },
+   {
+    "component": "sections/testimonial",
+    "tokens": {
+     "REVIEW_STARS": "★★★★★",
+     "REVIEW_TEXT": "The Marseille. It was given as a birthday gift and my boss loved it.",
+     "REVIEWER_NAME": "Joseph"
+    }
+   },
+   {
+    "component": "products/card-lifestyle-studio",
+    "tokens": {
+     "SECTION_SUPER": "",
+     "SECTION_HEADLINE": "",
+     "LIFESTYLE_IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/a7d56429-fe8a-47d4-96e8-d39a33b835a2.jpeg",
+     "STUDIO_IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/7368b6c6-c471-439c-828b-b412957b1425.jpeg",
+     "PRODUCT_LABEL": "",
+     "PRODUCT_NAME": "Marseille, from $155",
+     "PRODUCT_OCCASION": "",
+     "PRODUCT_DESC": "Soft pink, lilac and fuchsia, layered into something tender and romantic. Roses at its heart, with gypsophila and snapdragon. The kind of arrangement that says what you meant before they've read the card.",
+     "PRODUCT_PRICE": "Gesture $155 / Signature $220 / Statement $275",
+     "CTA_TEXT": "",
+     "CTA_URL": "https://figandbloom.com/products/marseille?utm_source=klaviyo&utm_medium=email&utm_campaign=2026-11-12-jacaranda&utm_content=tile-marseille"
+    }
+   },
+   {
+    "component": "products/card-horizontal",
+    "tokens": {
+     "PRODUCT_IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/25c40170-1114-4f2e-b904-98c45bad98c9.jpeg",
+     "PRODUCT_LABEL": "",
+     "PRODUCT_NAME": "Marseille & Vase, $250",
+     "PRODUCT_OCCASION": "Our Signature-size Marseille bouquet, with a white ceramic vase included. For the desk, or the friend who's never owned a vase.",
+     "PRODUCT_PRICE": "",
+     "PRODUCT_URL": "https://figandbloom.com/products/marseille-vase?utm_source=klaviyo&utm_medium=email&utm_campaign=2026-11-12-jacaranda&utm_content=tile-marseille-vase"
+    }
+   },
+   {
+    "component": "sections/button",
+    "tokens": {
+     "CTA_TEXT": "Send Marseille",
+     "CTA_URL": "https://figandbloom.com/products/marseille?utm_source=klaviyo&utm_medium=email&utm_campaign=2026-11-12-jacaranda&utm_content=cta-button",
+     "ALIGN": "center",
+     "BTN_WIDTH": "260px",
+     "PADDING_TOP": "32px",
+     "PADDING_BOTTOM": "24px",
+     "PANEL_BG": "#ffffff",
+     "BTN_BG": "#000000",
+     "BTN_TEXT": "#ffffff"
+    }
+   },
+   {
+    "component": "sections/body-copy-plain",
+    "tokens": {
+     "SUPER_LABEL": "",
+     "HEADLINE": "",
+     "BODY_P1": "Choose your day at checkout.",
+     "BODY_P2": ""
+    }
+   },
+   {
+    "component": "products/card-feature",
+    "tokens": {
+     "IMAGE_URL": "https://cdn.klaviyomail.com/company/RHSpV7/images/43632de8-fb0d-47c7-9e13-8d10af30ea12.jpeg",
+     "IMAGE_ALT": "A cloud of pink gypsophila spilling over a pink archway, with soft pink roses tucked into one end.",
+     "LINK_URL": "https://figandbloom.com/blogs/journal/theres-no-such-thing-as-filler?utm_source=klaviyo&utm_medium=email&utm_campaign=2026-11-12-jacaranda&utm_content=journal-filler",
+     "SUPER_LABEL": "From the Journal",
+     "TITLE": "There's no such thing as filler",
+     "LINK_LABEL": "",
+     "BODY_P1": "\"The quiet stems are usually where the care went.\"",
+     "BODY_P2": "",
+     "LINK_ROW": "",
+     "CTA_TEXT": "Read the Journal",
+     "BTN_WIDTH": "200px",
+     "IMG_SIDE": "left"
+    }
+   },
+   {
+    "component": "sections/body-copy-plain",
+    "tokens": {
+     "SUPER_LABEL": "",
+     "HEADLINE": "",
+     "BODY_P1": "Leave the jacarandas on the trees. Send the lilac.",
+     "BODY_P2": ""
+    }
+   },
+   {
+    "component": "sections/body-copy-plain",
+    "tokens": {
+     "SUPER_LABEL": "",
+     "HEADLINE": "",
+     "BODY_P1": "Daniel and the Fig & Bloom team",
+     "BODY_P2": ""
+    }
+   },
+   {
+    "component": "footer",
+    "tokens": {}
+   }
+  ]
+ }
+}

@@ -554,11 +554,13 @@ eq(render.deriveLink({ CTA_URL: 'https://figandbloom.com/x' }), 'https://figandb
 
   // The at-risk set is pinned exactly. Every entry is a decision someone made; a new one means
   // a block that ships as live HTML picked up CSS Word drops, which is the regression this
-  // whole report exists to catch. It is currently empty, and should stay that way.
+  // whole report exists to catch. Story/testimonial intentionally stay live, so
+  // their remaining exposure is pinned here.
   const schemaCampaign = { blocks: schema.components.map((c) => ({ component: c.name, tokens: {} })) };
   const atRisk = render.outlookRisks(schemaCampaign).filter((r) => r.atRisk);
   eq(atRisk.map((r) => `${r.component}: ${r.unsupported.map((u) => u.property).sort().join('+')}`).sort().join(' | '),
-    '', 'no component is exposed to the Outlook renderer');
+    'blocks/story: background-image+box-shadow+object-fit+opacity+padding on <a>+position:absolute+position:relative+transform | sections/testimonial: background-image+max-width+position:relative',
+    'live story/testimonial report their remaining Outlook risks');
 }
 
 // ── The two components that were exposed, and how they were closed ────────────────────
