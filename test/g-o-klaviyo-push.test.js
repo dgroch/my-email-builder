@@ -209,7 +209,7 @@ for (const variant of ['normal', 'gmail', 'gmail-nobg']) test(`R4 render ${varia
         else {
           assert.match(result.backgroundImage, /^linear-gradient\(.*\), url\(/);
           assert.match(result.backgroundRepeat, /^no-repeat/);
-          assert.match(result.backgroundPosition, /100% \+ 16px.*100% \+ 20px/);
+          assert.match(result.backgroundPosition, /^0px 0px, (?:calc\(100% \+ 16px\) calc\(100% \+ 20px\)|right -16px bottom -20px)$/);
           assert.equal(result.backgroundSize, '100% 100%, auto 200px');
           assert.match(result.backgroundPosition, /^0px 0px, /); // Overlay covers every pixel of the cell.
         }
