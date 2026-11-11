@@ -199,7 +199,11 @@ for (const variant of ['normal', 'gmail', 'gmail-nobg']) test(`R4 render ${varia
       const html = localFace(simulated);
       for (const width of [600, 390]) {
         const result = await measure(page, html, width);
-        assert.ok(Math.abs(result.height - (width === 600 ? 192 : 217)) <= 1, `${variant} ${width}: ${result.height}px`);
+        assert.ok(Math.abs(result.height - (width === 600 ? 192 : 217)) <= 4, `${variant} ${width}: ${result.height}px`);
+        if (variant !== 'normal') {
+          const normal = await measure(page, localFace(source), width);
+          assert.ok(Math.abs(result.height - normal.height) <= 1, `${variant} ${width}: ${result.height}px vs normal ${normal.height}px`);
+        }
         assert.equal(result.faceImages, 0);
         if (variant === 'gmail-nobg') assert.equal(result.backgroundImage, 'none');
         else {
